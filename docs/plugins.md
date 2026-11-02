@@ -2,7 +2,7 @@
 
 截图吧通过 `.jtbplugin` ZIP 包安装插件。系统托盘右键菜单或剪贴板窗口右下角菜单中的“安装插件”会检查清单和包内路径、限制解压大小，并将插件安装到数据目录的 `plugins/<id>/`。同 ID 的安装包会更新现有插件，并保留启用状态；“管理插件”可以启用、停用或卸载插件。插件是本机可执行程序，具有当前用户权限，安装前请确认来源可信。
 
-插件项目和示例位于 [jietuba-plugins](https://github.com/adoin/jietuba-plugins)。发布页提供已构建的 `.jtbplugin` 文件。插件单独发布，不依赖截图吧的 Qt 版本。
+插件项目和示例位于 [jietuma-plugins](https://github.com/adoin/jietuma-plugins)。发布页提供已构建的 `.jtbplugin` 文件。插件单独发布，不依赖截图吧的 Qt 版本。
 
 ## 清单与执行
 

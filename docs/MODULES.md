@@ -784,4 +784,4 @@ Program-wide extensions declare screenshot lifecycle hooks, toolbar slots and co
 - `plugin_file_open.*`: Unicode command-line package opening and installation requests forwarded to a running instance.
 - `extension_host.*`, `plugin_actions.*`, `plugin_filters.*`, `clipboard_extensions.*`: lifecycle dispatch, action execution, capture filters and clipboard type/metadata extensions.
 
-See [plugin development and installation](plugins.md), [branding and release ownership](branding.md), and the [plugin project](https://github.com/adoin/jietuba-plugins). This distribution's updater uses the matching installer and supports optional automatic updates; see the localized README for the user flow.
+See [plugin development and installation](plugins.md), [branding and release ownership](branding.md), and the [plugin project](https://github.com/adoin/jietuma-plugins). This distribution's updater uses the matching installer and supports optional automatic updates; see the localized README for the user flow.

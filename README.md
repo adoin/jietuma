@@ -18,7 +18,7 @@ This is **Jietuma**, an independent distribution of [jietuba](https://github.com
 
 ## Plugin ecosystem
 
-Program-wide extensions can join screenshot lifecycle hooks, toolbar slots and pipelines, and add clipboard previews, types, metadata and paste actions. Plugins are installed separately as `.jtbplugin` packages. Batch installation remembers the folder and keeps only the newest version of each plugin ID; packages and the manager show plugin icons. See [plugin development and installation](docs/plugins.md) and the [plugin repository](https://github.com/adoin/jietuba-plugins).
+Program-wide extensions can join screenshot lifecycle hooks, toolbar slots and pipelines, and add clipboard previews, types, metadata and paste actions. Plugins are installed separately as `.jtbplugin` packages. Batch installation remembers the folder and keeps only the newest version of each plugin ID; packages and the manager show plugin icons. See [plugin development and installation](docs/plugins.md) and the [plugin repository](https://github.com/adoin/jietuma-plugins).
 
 ## Overview
 
