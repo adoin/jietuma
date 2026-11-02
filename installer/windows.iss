@@ -85,7 +85,7 @@ VersionInfoVersion={#AppVersion}
 VersionInfoOriginalFileName={#OutputName}.exe
 VersionInfoCompany={#AppPublisher}
 LicenseFile=..\LICENSE
-; Check the exact installed executable ourselves; never force-close a tray app.
+; Only close the exact installed executable, after interactive consent.
 CloseApplications=no
 RestartApplications=no
 SetupLogging=yes
@@ -99,8 +99,14 @@ english.ProductName={#AppName}
 chinesesimp.ProductName={#AppNameZh}
 english.PluginPackage={#AppName} Plugin Package
 chinesesimp.PluginPackage={#AppNameZh}插件包
-english.AppRunning=Please exit %1 from its system tray menu, then retry.
-chinesesimp.AppRunning=请从系统托盘退出 %1 后重试。
+english.AppRunning=%1 is still running. Close it before continuing.
+chinesesimp.AppRunning=%1 仍在运行，请关闭后继续。
+english.CloseApp=Detected %1 running from:%n%2%n%nClose it and continue? Save your work before proceeding.
+chinesesimp.CloseApp=检测到 %1 正在运行：%n%2%n%n是否退出程序并继续？请先保存正在处理的内容。
+english.ForceCloseApp=%1 has not exited or does not support an exit request.%n%nEnd its process and continue? Unsaved captures, recordings or exports may be lost. Choose No to return and close it yourself.
+chinesesimp.ForceCloseApp=%1 尚未退出，或当前版本不支持退出请求。%n%n是否结束进程并继续？未保存的截图、录制或导出可能丢失。选择“否”返回后可自行关闭程序。
+english.CloseAppFailed=Unable to close %1. It may be running with higher privileges. Close it manually and retry.
+chinesesimp.CloseAppFailed=无法关闭 %1，程序可能以更高权限运行。请手动退出后重试。
 english.ProcessCheckFailed=Unable to check whether %1 is running. Close it and retry, or check Windows Management Instrumentation.
 chinesesimp.ProcessCheckFailed=无法确认 %1 是否正在运行。请退出程序并重试，或检查 Windows 管理规范服务。
 english.StartupTaskRemovalFailed=The elevated startup task could not be removed. Remove it in Windows Task Scheduler if it still points to this installation.
@@ -135,42 +141,150 @@ Root: HKA; Subkey: "Software\Classes\{#AppPrefix}.Plugin\DefaultIcon"; ValueType
 Root: HKA; Subkey: "Software\Classes\{#AppPrefix}.Plugin\shell\open\command"; ValueType: string; ValueData: """{app}\{#AppExeName}"" --install-plugins ""%1"""
 
 [Code]
-function InstalledExecutableIsRunning: Boolean;
+const
+  ProcessQueryLimitedInformation = $1000;
+  ProcessTerminate = $0001;
+  SynchronizeAccess = $00100000;
+  EventModifyState = $0002;
+  WaitTimeout = $00000102;
+
+function OpenProcess(Access: LongWord; InheritHandle: Boolean; ProcessId: LongWord): THandle;
+  external 'OpenProcess@kernel32.dll stdcall';
+function QueryFullProcessImageName(Process: THandle; Flags: LongWord; ImageName: String; var Size: LongWord): Boolean;
+  external 'QueryFullProcessImageNameW@kernel32.dll stdcall';
+function WaitForSingleObject(Handle: THandle; Milliseconds: LongWord): LongWord;
+  external 'WaitForSingleObject@kernel32.dll stdcall';
+function TerminateProcess(Process: THandle; ExitCode: LongWord): Boolean;
+  external 'TerminateProcess@kernel32.dll stdcall';
+function OpenEvent(Access: LongWord; InheritHandle: Boolean; Name: String): THandle;
+  external 'OpenEventW@kernel32.dll stdcall';
+function SetEvent(Handle: THandle): Boolean;
+  external 'SetEvent@kernel32.dll stdcall';
+function CloseHandle(Handle: THandle): Boolean;
+  external 'CloseHandle@kernel32.dll stdcall';
+
+function InstalledProcesses: Variant;
 var
-  Locator, Service, Processes: Variant;
-  Path, Query: String;
+  Locator, Service: Variant;
+  Path: String;
 begin
   Path := ExpandConstant('{app}\{#AppExeName}');
+  Log('Checking installed application: ' + Path);
   StringChangeEx(Path, '\', '\\', True);
-  Query := 'SELECT ProcessId FROM Win32_Process WHERE ExecutablePath = "' + Path + '"';
+  StringChangeEx(Path, '"', '\"', True);
   Locator := CreateOleObject('WbemScripting.SWbemLocator');
   Service := Locator.ConnectServer('', 'root\CIMV2', '', '');
-  Processes := Service.ExecQuery(Query);
+  Result := Service.ExecQuery('SELECT ProcessId FROM Win32_Process WHERE ExecutablePath = "' + Path + '"');
+end;
+
+function InstalledExecutableIsRunning: Boolean;
+var
+  Processes: Variant;
+begin
+  Processes := InstalledProcesses;
   Result := Processes.Count > 0;
 end;
 
-function StopCheckMessage: String;
+procedure CloseInstalledProcesses(Force: Boolean);
+var
+  Processes, Process: Variant;
+  Index: Integer;
+  Pid, Access, Size: LongWord;
+  Handle, ExitEvent: THandle;
+  Image: String;
+begin
+  Processes := InstalledProcesses;
+  for Index := 0 to Processes.Count - 1 do begin
+    Process := Processes.ItemIndex(Index);
+    Pid := Process.ProcessId;
+    Access := ProcessQueryLimitedInformation or SynchronizeAccess;
+    if Force then Access := Access or ProcessTerminate;
+    Handle := OpenProcess(Access, False, Pid);
+    if Handle <> 0 then begin
+      try
+        Size := 32768;
+        SetLength(Image, Size);
+        if QueryFullProcessImageName(Handle, 0, Image, Size) then begin
+          SetLength(Image, Size);
+          { Check the pinned process handle, not just a name or a possibly reused PID. }
+          if (CompareText(Image, ExpandConstant('{app}\{#AppExeName}')) = 0) and
+             (WaitForSingleObject(Handle, 0) = WaitTimeout) then begin
+            if Force then begin
+              Log(Format('Ending installed application PID %d: %s', [Pid, Image]));
+              if TerminateProcess(Handle, 0) then WaitForSingleObject(Handle, 5000);
+            end else begin
+              ExitEvent := OpenEvent(EventModifyState, False, 'Local\{#AppPrefix}.InstallerExit.' + IntToStr(Pid));
+              if ExitEvent <> 0 then begin
+                try
+                  Log(Format('Requesting application exit, PID %d: %s', [Pid, Image]));
+                  if SetEvent(ExitEvent) then WaitForSingleObject(Handle, 10000);
+                finally
+                  CloseHandle(ExitEvent);
+                end;
+              end;
+            end;
+          end;
+        end;
+      finally
+        CloseHandle(Handle);
+      end;
+    end;
+  end;
+end;
+
+function EnsureInstalledApplicationClosed(Interactive: Boolean): String;
 begin
   Result := '';
   try
+    if not InstalledExecutableIsRunning then Exit;
+    Result := FmtMessage(CustomMessage('AppRunning'), [CustomMessage('ProductName')]);
+    { Silent installs never implicitly terminate an application. }
+    if not Interactive then Exit;
+    if MsgBox(FmtMessage(CustomMessage('CloseApp'), [CustomMessage('ProductName'),
+        ExpandConstant('{app}\{#AppExeName}')]), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) <> IDYES then Exit;
+    CloseInstalledProcesses(False);
+    if InstalledExecutableIsRunning then begin
+      if MsgBox(FmtMessage(CustomMessage('ForceCloseApp'), [CustomMessage('ProductName')]),
+          mbConfirmation, MB_YESNO or MB_DEFBUTTON2) <> IDYES then Exit;
+      CloseInstalledProcesses(True);
+    end;
     if InstalledExecutableIsRunning then
-      Result := FmtMessage(CustomMessage('AppRunning'), [CustomMessage('ProductName')]);
+      Result := FmtMessage(CustomMessage('CloseAppFailed'), [CustomMessage('ProductName')])
+    else Result := '';
   except
-    Log('Could not query the installed executable: ' + GetExceptionMessage);
+    Log('Could not close the installed executable: ' + GetExceptionMessage);
     Result := FmtMessage(CustomMessage('ProcessCheckFailed'), [CustomMessage('ProductName')]);
+  end;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  Error: String;
+begin
+  Result := True;
+  if CurPageID = wpReady then begin
+    Error := EnsureInstalledApplicationClosed(not WizardSilent);
+    Result := Error = '';
+    if not Result then begin
+      Log(Error);
+      if (not WizardSilent) and
+         (Error <> FmtMessage(CustomMessage('AppRunning'), [CustomMessage('ProductName')])) then
+        MsgBox(Error, mbError, MB_OK);
+    end;
   end;
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
-  Result := StopCheckMessage;
+  { Recheck in case an instance started after the Ready page. }
+  Result := EnsureInstalledApplicationClosed(not WizardSilent);
 end;
 
 function InitializeUninstall: Boolean;
 var
   Error: String;
 begin
-  Error := StopCheckMessage;
+  Error := EnsureInstalledApplicationClosed(not UninstallSilent);
   Result := Error = '';
   if not Result then begin
     Log(Error);
