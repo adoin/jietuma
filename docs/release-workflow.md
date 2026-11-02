@@ -4,20 +4,26 @@
 
 更新沿用已内置的更新器，按当前架构和完整版/轻量版选择 Release ZIP，原地替换主程序并保留配置、插件、剪贴板历史和模型；无需重新运行安装向导。Release 中仍同时提供安装包。旧版本只有手动更新入口，需要先手动安装含此开关的版本才能使用自动更新。
 
-`origin` 是自己的仓库，`upstream` 是官方仓库。保持 `master2` 用于跟进官方，`feat/plugin-ecosystem` 保留自己的插件和品牌改动。发布工作流从标签指向的提交读取，不依赖分支名称，因此要对包含该工作流、品牌配置和所需功能的提交打标签。官方纯净分支没有这些修改时，对其打标签不会自动变成个人版本。
+`origin` 是自己的仓库 `adoin/jietuma`，`upstream` 是官方仓库 `1003129155/jietuba`。
 
-先提交或妥善保存当前未提交的工作，再同步官方分支：
+- `main` 是默认分支，保留截图妈的品牌、插件生态和业务功能；日常开发与 PR 以它为目标。
+- `upstream-sync` 是官方代码的同步分支，保持与 `upstream/master2` 一致，不提交截图妈的改动。先更新它，再通过合并将官方改动吸收到 `main`。
+
+本地 `main` 跟踪 `origin/main`；`upstream-sync` 跟踪 `upstream/master2`，推送目标设为 `origin`。发布工作流从标签指向的提交读取，不依赖分支名称，因此要对包含截图妈功能和发布配置的提交打标签。官方同步分支不会自动变成截图妈发行版。
+
+先提交或妥善保存当前未提交的工作，再同步官方代码：
 
 ```powershell
 git fetch upstream --no-tags
-git switch master2
+git switch upstream-sync
 git merge --ff-only upstream/master2
-git push origin master2
-git switch feat/plugin-ecosystem
-git merge upstream/master2
+git push origin upstream-sync
+git switch main
+git merge upstream-sync
+git push origin main
 ```
 
-个人分支若与官方更新冲突，解决冲突并完成验证后再提交。`--ff-only` 不会覆盖或重写自己的分支历史；若它失败，先检查分歧，不要强推。官方标签不自动取回，也不使用 `git push --tags` 批量推送，避免意外触发发布。
+合并到 `main` 时若发生冲突，保留截图妈所需的品牌和插件功能，完成验证后再提交、推送；也可从同步分支发起目标为 `main` 的 PR 进行审查。`--ff-only` 不会覆盖或重写历史；若同步分支快进失败，先检查是否混入了业务提交，不要强推。官方标签不自动取回，也不使用 `git push --tags` 批量推送，避免意外触发发布。
 
 主程序使用 `release-<VERSION>`，其中版本必须与仓库的 `VERSION` 文件一致。发布前先将 `VERSION` 改为未使用的新版本并提交；例如改为 `2.2.4` 后：
 
@@ -32,4 +38,4 @@ git push origin release-2.2.4
 
 不要覆盖、移动或强推已有标签。单独的 `lite.yml` 可手动构建测试制品，但不创建 Release。插件仓库使用 `v<版本>` 标签，详见插件仓库文档。
 
-若标签推送未触发 Actions，可从含新工作流的分支手动重试已有标签：`gh workflow run build.yml --ref feat/plugin-ecosystem -f release_tag=release-2.2.4`。入口会核对标签确实存在且等于其代码中的 `release-<VERSION>`；所有构建、打包和检查仍检出该标签，不把工作流分支的应用代码混入发布包。
+若标签推送未触发 Actions，可从主分支手动重试已有标签：`gh workflow run build.yml --ref main -f release_tag=release-2.2.4`。入口会核对标签确实存在且等于其代码中的 `release-<VERSION>`；所有构建、打包和检查仍检出该标签，不把工作流分支的应用代码混入发布包。

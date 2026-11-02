@@ -1,15 +1,15 @@
 name: C++
 
 # The C++ version (cpp/) built against this commit's rust_libs, with its tests and line coverage.
-# Its `test` job is the required check of master2, so pull requests run it whatever they touch:
+# Its `test` job checks main, so pull requests run it whatever they touch:
 # with a path filter, a pull request outside these folders would wait for it forever.
 on:
   workflow_dispatch:
   push:
-    branches: [master2]
+    branches: [main]
     paths: ["cpp/**", "rust_libs/**", ".github/workflows/cpp.yml"]
   pull_request:
-    branches: [master2]
+    branches: [main]
 
 permissions:
   contents: read
@@ -48,7 +48,7 @@ jobs:
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: cpp/native -> ../build/coverage-build/native
-          save-if: ${{ github.ref == 'refs/heads/master2' }}
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Install coverage tools
         run: |

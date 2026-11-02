@@ -4,11 +4,12 @@ name: Rust
 # 这些 crate 由 C++ 版经 cpp/native 静态链接，不再单独发布。
 on:
   push:
-    branches: [master2, master]
+    branches: [main]
     paths:
       - "rust_libs/**"
       - ".github/workflows/rust.yml"
   pull_request:
+    branches: [main]
     paths:
       - "rust_libs/**"
       - ".github/workflows/rust.yml"

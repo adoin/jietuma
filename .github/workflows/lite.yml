@@ -80,8 +80,8 @@ jobs:
         with:
           workspaces: cpp/native -> ../build/static${{ matrix.arch == 'arm64' && '-arm64' || '' }}${{ matrix.variant == 'full' && '-full' || '' }}/native
           key: ${{ matrix.arch }}-${{ matrix.variant }}
-          # Tags and other branches restore from master2; saving theirs would only crowd the cache.
-          save-if: ${{ github.ref == 'refs/heads/master2' }}
+          # Tags and other branches restore from main; saving theirs would only crowd the cache.
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - run: .\build.cmd -Static -Arch ${{ matrix.arch }}${{ matrix.variant == 'full' && ' -Full' || '' }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
