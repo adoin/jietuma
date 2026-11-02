@@ -5,7 +5,7 @@ appears once per executable; a line counts as covered if any of them hit it. Pat
 relative to the repository root with the case git uses, which is what diff-cover matches against.
 
     python coverage_report.py raw1.xml [raw2.xml ...] --out coverage.xml --summary summary.txt [--fail-under 60]
-        [--changed-since origin/master2]
+        [--changed-since origin/main]
 
 A source file no test executable links never appears in the collector's report, and diff-cover
 skips files without data; --changed-since fails when a changed .cpp under cpp/src has none.

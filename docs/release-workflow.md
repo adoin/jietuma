@@ -11,6 +11,17 @@
 
 本地 `main` 跟踪 `origin/main`；`upstream-sync` 跟踪 `upstream/master2`，推送目标设为 `origin`。发布工作流从标签指向的提交读取，不依赖分支名称，因此要对包含截图妈功能和发布配置的提交打标签。官方同步分支不会自动变成截图妈发行版。
 
+新克隆中，添加官方远程并配置同步分支：
+
+```powershell
+git remote add upstream https://github.com/1003129155/jietuba.git
+git config remote.upstream.tagOpt --no-tags
+git fetch upstream
+git switch -c upstream-sync --track upstream/master2
+git config branch.upstream-sync.pushRemote origin
+git switch main
+```
+
 先提交或妥善保存当前未提交的工作，再同步官方代码：
 
 ```powershell
