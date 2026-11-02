@@ -1302,7 +1302,7 @@ std::function<void()> ClipboardWindow::resolve_item_context_menu_handler(qint64 
             if(!result || !plugins::apply_action_payload(*result,item_id,id.section('.',0,0),manager)) {show_warning_dialog(this,tr_text("Plugins"),tr_text("Plugin action failed."));return;}
             if(result->value("kind")=="clipboard" || result->value("kind")=="original") {close();controller->paste_prepared_clipboard();}
             else show_toast(tr_text("Copied to clipboard"));
-        });
+        },{},QJsonObject{{"target_window",QString::number(controller->foreground_tracker().target_hwnd())}});
         if (!started) show_warning_dialog(this, tr_text("Plugins"), tr_text("Plugin action failed."));
     };
     if (action_key == "remove_from_group") return [this, item_id] { controller->move_to_group(item_id, std::nullopt); };

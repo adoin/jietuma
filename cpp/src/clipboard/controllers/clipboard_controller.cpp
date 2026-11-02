@@ -8,6 +8,8 @@
 #include "settings/color_formats.h"
 #include "settings/tool_settings.h"
 #include "ui/dialogs.h"
+#include "plugins/plugin_actions.h"
+#include "plugins/clipboard_extensions.h"
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
@@ -306,9 +308,32 @@ void ClipboardController::send_paste_keystroke(bool explicit_paste) {
 }
 
 bool ClipboardController::paste_item(qint64 item_id, const CloseCallback &on_close_callback, bool explicit_paste) {
+    const auto generation=property("_clipboardPasteGeneration").toULongLong()+1;
+    setProperty("_clipboardPasteGeneration",generation);
     bool move_to_top = get_tool_settings_manager()->get_clipboard_move_to_top_on_paste();
     // Only the history view moves it to the top; pasting in a group keeps the order.
     if (!shows_history()) move_to_top = false;
+    if (paste_with_html && (auto_paste_enabled || explicit_paste)) {
+        const auto target = foreground_tracker_.target_hwnd();
+        const auto item = manager.get_item(item_id);
+        const auto plugin = item ? plugins::default_paste_plugin(*item) : std::nullopt;
+        if (plugin && plugins::run_action_payload(*plugin,*item,manager,this,
+            [this,item_id,on_close_callback,explicit_paste,move_to_top,target,generation](std::optional<QJsonObject> result) {
+                if (property("_clipboardPasteGeneration").toULongLong()!=generation) return;
+                if (!result || result->value("kind")=="error") {
+                    show_warning_dialog(nullptr,tr_window("Plugins"),result && result->value("data").isString()?result->value("data").toString():tr_window("Plugin action failed."));
+                    return;
+                }
+                const auto kind=result->value("kind").toString();
+                const bool ok=(kind=="original" || kind=="none") ? manager.paste_item(item_id,paste_with_html,move_to_top)
+                    : plugins::apply_action_payload(*result,item_id,QString(),manager);
+                if (!ok) {show_warning_dialog(nullptr,tr_window("Plugins"),tr_window("Plugin action failed."));return;}
+                if (kind!="original" && kind!="none") manager.record_plugin_paste(item_id,move_to_top);
+                if (move_to_top) move_item_to_top(item_id);
+                if (on_close_callback) on_close_callback();
+                if (explicit_paste || auto_paste_enabled) QTimer::singleShot(50,this,[target] { paste_to_target(target); });
+            },{},QJsonObject{{"target_window",QString::number(target)}})) return true;
+    }
     if (!manager.paste_item(item_id, paste_with_html, move_to_top)) return false;
     log_info(T("已粘贴项 {item_id} (带格式: {with_html}, 移到最前: {move_to_top})", {{"item_id", item_id}, {"with_html", paste_with_html}, {"move_to_top", move_to_top}}),
              "Clipboard");

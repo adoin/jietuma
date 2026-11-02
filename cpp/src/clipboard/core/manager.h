@@ -65,6 +65,7 @@ public:
     bool toggle_pin(qint64 item_id);
     // Writes the item to the system clipboard and counts the paste.
     bool paste_item(qint64 item_id, bool with_html = true, bool move_to_top = false);
+    bool record_plugin_paste(qint64 item_id, bool move_to_top);
     // Writes the files a path item names to the clipboard; false when none of them exists.
     bool paste_as_files(qint64 item_id);
     // Merges several items into one clipboard write; the ids actually used, empty when nothing was written.

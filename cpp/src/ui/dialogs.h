@@ -24,6 +24,7 @@ class StandardDialog : public QDialog {
     Q_OBJECT
 public:
     StandardDialog(QWidget *parent, const QString &title, const QString &message);
+    QPushButton *add_button(const QString &text, QDialogButtonBox::ButtonRole role);
     QLabel *label;
     QDialogButtonBox *button_box;
     QVariant result_action;

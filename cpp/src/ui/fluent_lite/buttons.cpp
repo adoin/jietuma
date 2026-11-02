@@ -2,9 +2,50 @@
 #include "core/ui_scale.h"
 #include <QDesktopServices>
 #include <QUrl>
+#include <QStylePainter>
+#include <QStyleOptionButton>
+#include <QLinearGradient>
+#include <algorithm>
 
 namespace jietuba {
 namespace {
+void paint_action_button(QPushButton *button, QStylePainter &painter, QStyleOptionButton option, bool primary) {
+    const auto &t = ui_tokens(button);
+    const bool dark = t.is_dark();
+    const bool down = button->isDown() || button->isChecked();
+    const bool hover = button->underMouse() && button->isEnabled();
+    QColor top, bottom, edge;
+    if (primary) {
+        const QColor accent(t.accent_strong);
+        top = down ? accent.darker(108) : accent.lighter(hover ? 116 : 108);
+        bottom = down ? accent.darker(108) : accent.darker(hover ? 100 : 104);
+        edge = accent.darker(115);
+    } else {
+        const float hue = std::max(0.0f,QColor(t.accent).hslHueF());
+        const float lightness = dark ? (down ? 0.19f : hover ? 0.26f : 0.22f) : (down ? 0.92f : hover ? 0.99f : 0.975f);
+        top = bottom = QColor::fromHslF(hue,0.10f,lightness);
+        edge = QColor::fromHslF(hue,0.12f,dark ? 0.34f : 0.79f);
+    }
+    painter.setRenderHint(QPainter::Antialiasing);
+    const QRectF bounds = QRectF(button->rect()).adjusted(0.75,0.75,-0.75,-0.75);
+    const qreal radius = widget_scaled(button,8);
+    if (!button->isEnabled()) painter.setOpacity(0.45);
+    QLinearGradient fill(bounds.topLeft(),bounds.bottomLeft());
+    fill.setColorAt(0,top); fill.setColorAt(1,bottom);
+    painter.setBrush(fill);
+    painter.setPen(QPen(edge,1));
+    painter.drawRoundedRect(bounds,radius,radius);
+    if (button->hasFocus() && option.state.testFlag(QStyle::State_KeyboardFocusChange)) {
+        QColor focus(primary ? Qt::white : QColor(t.accent));
+        focus.setAlpha(primary ? 180 : 190);
+        painter.setBrush(Qt::NoBrush);
+        painter.setPen(QPen(focus,1.5));
+        painter.drawRoundedRect(bounds.adjusted(2,2,-2,-2),radius-2,radius-2);
+    }
+    option.palette.setColor(QPalette::ButtonText,primary ? Qt::white : QColor(t.text));
+    painter.drawControl(QStyle::CE_PushButtonLabel,option);
+}
+
 QString base_style(const QWidget *widget) {
     const auto &t = ui_tokens(widget);
     auto s = [widget](double v) { return widget_scaled(widget, v); };
@@ -113,9 +154,25 @@ QString ColorSwatchButton::style_sheet() const {
 
 PrimaryPushButton::PrimaryPushButton(const QString &text, QWidget *parent, const IconSource &icon) : PushButton(text, parent, icon) {
     setProperty("_materialPrimary",true);
+    setProperty("_materialNative",true);
     _apply_theme();
 }
 QString PrimaryPushButton::style_sheet() const { return primary_style(this); }
+void PrimaryPushButton::paintEvent(QPaintEvent *) {
+    QStylePainter painter(this);
+    QStyleOptionButton option; initStyleOption(&option);
+    paint_action_button(this,painter,option,true);
+}
+
+SecondaryPushButton::SecondaryPushButton(const QString &text, QWidget *parent) : PushButton(text,parent) {
+    setProperty("_materialNative",true);
+    _apply_theme();
+}
+void SecondaryPushButton::paintEvent(QPaintEvent *) {
+    QStylePainter painter(this);
+    QStyleOptionButton option; initStyleOption(&option);
+    paint_action_button(this,painter,option,false);
+}
 TransparentPushButton::TransparentPushButton(const QString &text, QWidget *parent, const IconSource &icon) : PushButton(text, parent, icon) { _apply_theme(); }
 QString TransparentPushButton::style_sheet() const { return transparent_style(this); }
 

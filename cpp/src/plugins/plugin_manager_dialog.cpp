@@ -19,6 +19,13 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QSpinBox>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QDir>
+#include <QBuffer>
+#include <QImageReader>
+#include <QStandardPaths>
+#include "settings/tool_settings.h"
 
 namespace jietuba::plugins {
 namespace {
@@ -97,12 +104,51 @@ void edit_settings(QWidget *parent, const QString &id, const QJsonArray &setting
 }
 
 void install_plugin_interactively(QWidget *parent, const QString &plugin_root) {
-    const QString path = get_open_file_name(parent, tr("Install Plugin"), {}, tr("Plugin Packages (*.jtbplugin)")).first;
-    if (path.isEmpty()) return;
-    if (!show_confirm_dialog(parent, tr("Install Plugin"), tr("Plugins can access screenshots, clipboard contents and files. Install only plugins you trust."))) return;
-    const auto result = install_plugin_package(path, plugin_root);
-    if (result.ok) show_info_dialog(parent, tr("Install Plugin"), tr("Plugin installed: %1").arg(result.id));
-    else show_warning_dialog(parent, tr("Install Plugin"), tr(result.error.toUtf8().constData()));
+    QString folder=get_tool_settings_manager()->get_app_setting("plugin_install_directory").toString();
+    if(!QDir(folder).exists()||folder.isEmpty())folder=QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    QFileDialog chooser(parent,tr("Install Plugin"),folder,tr("Plugin Packages (*.jtbplugin)"));
+    chooser.setFileMode(QFileDialog::ExistingFiles);
+    if(exec_dialog(&chooser)!=QDialog::Accepted || chooser.selectedFiles().isEmpty())return;
+    get_tool_settings_manager()->set_app_setting("plugin_install_directory",QFileInfo(chooser.selectedFiles().front()).absolutePath());
+    install_plugin_packages_interactively(parent,chooser.selectedFiles(),plugin_root);
+}
+
+void install_plugin_packages_interactively(QWidget *parent,const QStringList &paths,const QString &plugin_root) {
+    const auto plan=plan_plugin_install(paths,plugin_root);if(plan.isEmpty())return;
+    get_tool_settings_manager()->set_app_setting("plugin_install_directory",QFileInfo(paths.front()).absolutePath());
+    StandardDialog dialog(parent,tr("Install Plugin"),tr("Plugins can access screenshots, clipboard contents and files. Install only plugins you trust."));
+    dialog.setObjectName("standardDialog");dialog.resize(scaled(590),scaled(420));
+    auto *list=new QListWidget(&dialog);list->setObjectName("pluginInstallList");list->setIconSize(QSize(scaled(36),scaled(36)));
+    const auto &tokens=get_ui_theme()->tokens();
+    apply_style_sheet(list,QString("QListWidget { background: %1; color: %2; border: none; border-radius: 8px; padding: 8px; } QListWidget::item { padding: 6px; border-radius: 6px; } QListWidget::item:selected { background: %3; }").arg(tokens.window,tokens.text,tokens.accent_soft));
+    int eligible=0;
+    for(const auto &entry:plan) {
+        const auto &package=entry.package;
+        const QString name=package.name.isEmpty()?QFileInfo(package.path).fileName():package.name;
+        QString description=entry.status;
+        if(package.ok)description=tr(entry.status.toUtf8().constData());
+        auto *item=new QListWidgetItem(name+"  "+package.version+"\n"+(entry.installed_version.isEmpty()?QString():tr("Installed: %1").arg(entry.installed_version)+" · ")+description,list);
+        QBuffer image_data;image_data.setData(package.icon);image_data.open(QIODevice::ReadOnly);QImageReader reader(&image_data);
+        const auto size=reader.size();
+        const auto image=size.isValid()&&size.width()<=1024&&size.height()<=1024?reader.read():QImage();
+        item->setIcon(image.isNull()?QIcon(":/app.ico"):QIcon(QPixmap::fromImage(image)));
+        item->setSizeHint(QSize(0,scaled(64)));item->setToolTip(package.id+"\n"+package.path);eligible+=entry.installable;
+    }
+    static_cast<QVBoxLayout *>(dialog.layout())->insertWidget(1,list,1);
+    auto *install=dialog.add_button(tr("Install %1 plugins").arg(eligible),QDialogButtonBox::AcceptRole);install->setEnabled(eligible>0);
+    auto *cancel=dialog.add_button(tr("Cancel"),QDialogButtonBox::RejectRole);cancel->setDefault(true);cancel->setFocus();
+    QObject::connect(install,&QPushButton::clicked,&dialog,&QDialog::accept);QObject::connect(cancel,&QPushButton::clicked,&dialog,&QDialog::reject);
+    if(exec_dialog(&dialog)!=QDialog::Accepted)return;
+    int installed=0,skipped=0;QStringList errors;
+    for(const auto &entry:plan) {
+        if(!entry.installable){++skipped;continue;}
+        const auto result=install_plugin_package(entry.package.path,plugin_root);
+        if(!result.ok)errors<<entry.package.name+": "+tr(result.error.toUtf8().constData());
+        else if(result.skipped)++skipped;else ++installed;
+    }
+    QString summary=tr("Installed: %1; skipped: %2").arg(installed).arg(skipped);
+    if(!errors.isEmpty())show_warning_dialog(parent,tr("Install Plugin"),summary+"\n\n"+errors.join('\n'));
+    else show_info_dialog(parent,tr("Install Plugin"),summary);
 }
 
 void show_plugin_manager(QWidget *parent, const QString &plugin_root) {
@@ -116,13 +162,17 @@ void show_plugin_manager(QWidget *parent, const QString &plugin_root) {
     layout->setSpacing(scaled(12));
     auto *list = new QListWidget(&dialog);
     list->setObjectName("pluginList");
+    list->setIconSize(QSize(scaled(32),scaled(32)));
     layout->addWidget(list);
     auto *buttons = new QHBoxLayout;
+    auto *add = new PrimaryPushButton(tr("Install Plugin"), &dialog);
+    add->setObjectName("installPlugins");
     auto *remove = new QPushButton(tr("Uninstall"), &dialog);
     remove->setObjectName("uninstallPlugin");
     auto *settings = new QPushButton(tr("Plugin Settings"), &dialog);
     settings->setObjectName("pluginSettings");
     auto *close = new QPushButton(tr("Close"), &dialog);
+    buttons->addWidget(add);
     buttons->addWidget(remove);
     buttons->addWidget(settings);
     buttons->addStretch();
@@ -134,6 +184,7 @@ void show_plugin_manager(QWidget *parent, const QString &plugin_root) {
         for (const auto &plugin : installed_plugins(plugin_root)) {
             const QString caption = plugin.version.isEmpty() ? plugin.name : plugin.name + "  " + plugin.version;
             auto *row = new QListWidgetItem(caption, list);
+            row->setIcon(plugin.icon_path.isEmpty()?QIcon(":/app.ico"):QIcon(plugin.icon_path));
             row->setData(Qt::UserRole, plugin.id);
             row->setData(Qt::UserRole + 1, QJsonDocument(plugin.settings).toJson(QJsonDocument::Compact));
             row->setToolTip(plugin.id);
@@ -165,6 +216,7 @@ void show_plugin_manager(QWidget *parent, const QString &plugin_root) {
                                                            QJsonDocument::fromJson(item->data(Qt::UserRole + 1).toByteArray()).array(), plugin_root);
     });
     QObject::connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
+    QObject::connect(add,&QPushButton::clicked,&dialog,[&]{install_plugin_interactively(&dialog,plugin_root);refresh();});
     refresh();
     exec_dialog(&dialog, parent);
 }

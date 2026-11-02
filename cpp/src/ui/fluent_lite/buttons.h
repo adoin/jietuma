@@ -45,6 +45,15 @@ public:
     explicit PrimaryPushButton(QWidget *parent) : PrimaryPushButton(QString(), parent) {}
 protected:
     QString style_sheet() const override;
+    void paintEvent(QPaintEvent *event) override;
+};
+
+class SecondaryPushButton : public PushButton {
+    Q_OBJECT
+public:
+    explicit SecondaryPushButton(const QString &text = {}, QWidget *parent = nullptr);
+protected:
+    void paintEvent(QPaintEvent *event) override;
 };
 
 class TransparentPushButton : public PushButton {

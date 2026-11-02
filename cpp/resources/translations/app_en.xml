@@ -3215,7 +3215,17 @@ This action cannot be undone.</translation>
         <source>Save</source>
         <translation>Save as</translation>
     </message>
-</context>
+    <message><source>A newer or identical package is selected</source><translation>A newer or identical package is selected</translation></message>
+    <message><source>Latest version already installed</source><translation>Latest version already installed</translation></message>
+    <message><source>Install</source><translation>Install</translation></message>
+    <message><source>Update</source><translation>Update</translation></message>
+    <message><source>Installed: %1</source><translation>Installed: %1</translation></message>
+    <message><source>Install %1 plugins</source><translation>Install %1 plugins</translation></message>
+    <message><source>Installed: %1; skipped: %2</source><translation>Installed: %1; skipped: %2</translation></message>
+    <message><source>Invalid plugin version</source><translation>Invalid plugin version</translation></message>
+    <message><source>Invalid plugin icon</source><translation>Invalid plugin icon</translation></message>
+    <message><source>Another plugin installation is running</source><translation>Another plugin installation is running</translation></message>
+  </context>
 
 <!-- ========== Clipboard Management Dialog ========== -->
 <context>

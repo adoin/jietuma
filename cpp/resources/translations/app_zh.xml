@@ -3327,7 +3327,17 @@ This action cannot be undone.</source>
         <source>Save</source>
         <translation>另存为</translation>
     </message>
-</context>
+    <message><source>A newer or identical package is selected</source><translation>已选择更新或同版本的安装包</translation></message>
+    <message><source>Latest version already installed</source><translation>已安装同版本或更新版本</translation></message>
+    <message><source>Install</source><translation>安装</translation></message>
+    <message><source>Update</source><translation>更新</translation></message>
+    <message><source>Installed: %1</source><translation>当前版本：%1</translation></message>
+    <message><source>Install %1 plugins</source><translation>安装 %1 个插件</translation></message>
+    <message><source>Installed: %1; skipped: %2</source><translation>已安装 %1 个，已跳过 %2 个</translation></message>
+    <message><source>Invalid plugin version</source><translation>插件版本号无效</translation></message>
+    <message><source>Invalid plugin icon</source><translation>插件图标无效</translation></message>
+    <message><source>Another plugin installation is running</source><translation>另一个插件安装任务正在进行</translation></message>
+  </context>
 
 <!-- ========== Clipboard Management Dialog ========== -->
 <context>

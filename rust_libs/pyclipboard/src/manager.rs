@@ -296,6 +296,8 @@ pub fn set_clipboard_formats(json: &str) -> Result<(), String> {
             }
         }
         if formats.is_empty() || total>4*1024*1024 {return Err("Invalid clipboard payload size".into());}
+        // Rich plugin formats precede the plain-text fallback (Win32 enumeration order).
+        formats.sort_by_key(|(format,_)| *format == win_clipboard::CF_UNICODETEXT);
         if !win_clipboard::write(&formats) {return Err("Clipboard is busy".into());}
         mark_own_clipboard_write();Ok(())
     }
@@ -1406,6 +1408,14 @@ impl ClipboardManager {
             }
             Ok(true)
         }
+    }
+
+    /// Account for a plugin-prepared paste without replacing its clipboard data.
+    pub fn record_plugin_paste(&self, id:i64, move_to_top:bool) -> Result<(),String> {
+        let db=self.db.lock();
+        db.increment_paste_count(id).map_err(|e|e.to_string())?;
+        if move_to_top {db.move_item_to_top(id).map_err(|e|e.to_string())?;}
+        Ok(())
     }
 
     /// 把路径文本里还在的文件当作文件写进剪贴板（CF_HDROP），粘到资源管理器、聊天窗口里就是文件本身。

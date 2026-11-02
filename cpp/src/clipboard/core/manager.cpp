@@ -451,6 +451,12 @@ bool ClipboardManager::paste_item(qint64 item_id, bool with_html, bool move_to_t
     return ok;
 }
 
+bool ClipboardManager::record_plugin_paste(qint64 item_id,bool move_to_top) {
+    const auto backend=this->backend();if(!backend) return false;
+    char error[ERROR_LEN]={};
+    return jb_clipboard_record_plugin_paste(backend.get(),item_id,move_to_top,error,ERROR_LEN);
+}
+
 QList<qint64> ClipboardManager::paste_items(const QList<qint64> &item_ids, bool with_html, bool move_to_top, const QString &separator, bool plain_text,
                                             const QString &layout, bool keep_in_history) {
     const auto backend = this->backend();

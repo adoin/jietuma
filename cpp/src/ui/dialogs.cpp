@@ -72,37 +72,13 @@ StandardDialog::StandardDialog(QWidget *parent, const QString &title, const QStr
     setWindowFlags(Qt::Dialog | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
     setWindowModality(Qt::WindowModal);
     if (windowIcon().isNull()) setWindowIcon(QIcon(QStringLiteral(":/app.ico")));
-    apply_style_sheet(this, R"(
-            QDialog#standardDialog {
-                background: #FFFFFF;
-                color: #202124;
-            }
-            .QLabel {
-                background: transparent;
-                color: #202124;
-                font-size: 13px;
-            }
-            QCheckBox {
-                background: transparent;
-                color: #202124;
-                font-size: 13px;
-            }
-            QPushButton {
-                min-width: 84px;
-                min-height: 30px;
-                padding: 4px 14px;
-                background: #FFFFFF;
-                color: #202124;
-                border: 1px solid #D0D7DE;
-                border-radius: 6px;
-            }
-            QPushButton:hover {
-                background: #F5F7FA;
-            }
-            QPushButton:pressed {
-                background: #EBEEF2;
-            }
-        )");
+    const auto apply_theme = [this] {
+        const auto &t = ui_tokens(this);
+        apply_style_sheet(this, QString("QDialog#standardDialog { background: %1; color: %2; } "
+                                       "QLabel, QCheckBox { background: transparent; color: %2; font-size: 13px; }").arg(t.window, t.text));
+    };
+    apply_theme();
+    connect(get_ui_theme(), &UIThemeManager::theme_changed, this, [apply_theme] { apply_theme(); });
     auto *layout = new QVBoxLayout(this);
     layout->setSpacing(12);
     layout->setContentsMargins(20, 16, 20, 16);
@@ -111,6 +87,16 @@ StandardDialog::StandardDialog(QWidget *parent, const QString &title, const QStr
     layout->addWidget(label);
     button_box = new QDialogButtonBox(this);
     layout->addWidget(button_box);
+}
+
+QPushButton *StandardDialog::add_button(const QString &text, QDialogButtonBox::ButtonRole role) {
+    const bool primary = role == QDialogButtonBox::AcceptRole || role == QDialogButtonBox::YesRole || role == QDialogButtonBox::ActionRole;
+    PushButton *button = primary ? static_cast<PushButton *>(new PrimaryPushButton(text, this)) : new SecondaryPushButton(text, this);
+    button->setMinimumWidth(84);
+    button_box->addButton(button, role);
+    // Focus must not promote an affirmative button over an explicit safe default.
+    button->setAutoDefault(false);
+    return button;
 }
 
 QDialog *track_modeless_dialog(QDialog *dialog) {
@@ -126,8 +112,8 @@ QVariant show_custom_confirm_dialog(QWidget *parent, const QString &title, const
             break;
         }
     for (const auto &cfg : buttons_config) {
-        auto *button = dialog.button_box->addButton(cfg.text, cfg.role);
-        if (cfg.is_default) button->setDefault(true);
+        auto *button = dialog.add_button(cfg.text, cfg.role);
+        if (cfg.is_default) { button->setDefault(true); button->setFocus(); }
         const auto id = cfg.id;
         QObject::connect(button, &QPushButton::clicked, &dialog, [&dialog, id] { dialog.result_action = id; });
         if (cfg.role == QDialogButtonBox::RejectRole || cfg.role == QDialogButtonBox::NoRole)
@@ -155,9 +141,10 @@ std::pair<bool, bool> show_confirm_checkbox_dialog(QWidget *parent, const QStrin
     checkbox->setChecked(checkbox_checked);
     auto *layout = static_cast<QVBoxLayout *>(dialog.layout());
     layout->insertWidget(layout->count() - 1, checkbox);
-    auto *yes_button = dialog.button_box->addButton(dialog_tr("Yes"), QDialogButtonBox::YesRole);
-    auto *no_button = dialog.button_box->addButton(dialog_tr("No"), QDialogButtonBox::NoRole);
+    auto *yes_button = dialog.add_button(dialog_tr("Yes"), QDialogButtonBox::YesRole);
+    auto *no_button = dialog.add_button(dialog_tr("No"), QDialogButtonBox::NoRole);
     no_button->setDefault(true);
+    no_button->setFocus();
     QObject::connect(yes_button, &QPushButton::clicked, &dialog, &QDialog::accept);
     QObject::connect(no_button, &QPushButton::clicked, &dialog, &QDialog::reject);
     const bool confirmed = exec_dialog(&dialog) == QDialog::Accepted;
@@ -202,7 +189,7 @@ void show_text_dialog(QWidget *parent, const QString &title, const QString &cont
     scroll->setWidget(content_widget);
     auto *layout = static_cast<QVBoxLayout *>(dialog.layout());
     layout->insertWidget(layout->count() - 1, scroll, 1);
-    auto *ok_button = dialog.button_box->addButton(dialog_tr("OK"), QDialogButtonBox::AcceptRole);
+    auto *ok_button = dialog.add_button(dialog_tr("OK"), QDialogButtonBox::AcceptRole);
     ok_button->setDefault(true);
     QObject::connect(ok_button, &QPushButton::clicked, &dialog, &QDialog::accept);
     exec_dialog(&dialog);
@@ -239,10 +226,10 @@ void show_update_dialog(QWidget *parent, const QString &title, const QString &co
     scroll->setWidget(content_widget);
     auto *layout = static_cast<QVBoxLayout *>(dialog.layout());
     layout->insertWidget(layout->count() - 1, scroll, 1);
-    auto *download_button = dialog.button_box->addButton(download_button_text, QDialogButtonBox::AcceptRole);
+    auto *download_button = dialog.add_button(download_button_text, QDialogButtonBox::AcceptRole);
     QObject::connect(download_button, &QPushButton::clicked, &dialog, [download_url] { QDesktopServices::openUrl(QUrl(download_url)); });
     QObject::connect(download_button, &QPushButton::clicked, &dialog, &QDialog::accept);
-    auto *ok_button = dialog.button_box->addButton(dialog_tr("OK"), QDialogButtonBox::RejectRole);
+    auto *ok_button = dialog.add_button(dialog_tr("OK"), QDialogButtonBox::RejectRole);
     QObject::connect(ok_button, &QPushButton::clicked, &dialog, &QDialog::accept);
     exec_dialog(&dialog);
 }
@@ -252,7 +239,7 @@ QDialog *show_modeless_warning_dialog(QWidget *parent, const QString &title, con
     dialog->setWindowModality(Qt::NonModal);
     dialog->setAttribute(Qt::WA_DeleteOnClose, true);
     dialog->setAttribute(Qt::WA_ShowWithoutActivating, true);
-    auto *ok_button = dialog->button_box->addButton(dialog_tr("OK"), QDialogButtonBox::AcceptRole);
+    auto *ok_button = dialog->add_button(dialog_tr("OK"), QDialogButtonBox::AcceptRole);
     ok_button->setDefault(true);
     QObject::connect(ok_button, &QPushButton::clicked, dialog, &QDialog::accept);
     if (single_line) {
@@ -263,7 +250,7 @@ QDialog *show_modeless_warning_dialog(QWidget *parent, const QString &title, con
         path_field->setReadOnly(true);
         path_field->setFrame(false);
         path_field->setFocusPolicy(Qt::ClickFocus);
-        set_own_style(path_field, "background: transparent; color: #202124; font-size: 13px;");
+        set_own_style(path_field, "background: transparent; font-size: 13px;");
         path_field->setCursorPosition(0);
         static_cast<QVBoxLayout *>(dialog->layout())->insertWidget(0, path_field);
         path_field->ensurePolished();

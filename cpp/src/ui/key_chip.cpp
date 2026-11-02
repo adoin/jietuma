@@ -130,8 +130,7 @@ void KeyChipLineEdit::paintEvent(QPaintEvent *) {
     } else if (focused) {
         fill = css_color(t.surface_hover), border = css_color(t.accent), width = 1.5;
     } else {
-        // In the dark theme input_background equals the card colour and the chip would be only an outline.
-        fill = css_color(t.surface_hover);
+        fill = css_color(t.input_background);
         border = css_color(underMouse() ? t.accent : t.border_hover);
     }
     const double inset = width / 2;

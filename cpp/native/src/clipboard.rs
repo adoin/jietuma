@@ -678,6 +678,14 @@ pub unsafe extern "C" fn jb_clipboard_get_group_filtered(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn jb_clipboard_record_plugin_paste(ptr:*const JbClipboard,id:i64,move_to_top:bool,error:*mut c_char,error_len:usize)->bool {
+    guard_error(false,error,error_len,|| {
+        let manager=manager_or_fail!(ptr,error,error_len);
+        finish(manager.record_plugin_paste(id,move_to_top),error,error_len,|_|{})
+    })
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn jb_clipboard_paste_item(
     ptr: *const JbClipboard,
     id: i64,

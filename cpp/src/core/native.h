@@ -273,6 +273,7 @@ bool jb_clipboard_get_by_group(const JbClipboard *clipboard, const int64_t *grou
 bool jb_clipboard_get_group_filtered(const JbClipboard *clipboard, int64_t group_id, int64_t offset, int64_t limit, const char *search, const char *kind,
                                      const int64_t *start, const int64_t *end, char **out_json, char *error, size_t error_len);
 bool jb_clipboard_paste_item(const JbClipboard *clipboard, int64_t id, bool with_html, bool move_to_top, bool *out_ok, char *error, size_t error_len);
+bool jb_clipboard_record_plugin_paste(const JbClipboard *clipboard, int64_t id, bool move_to_top, char *error, size_t error_len);
 bool jb_clipboard_paste_as_files(const JbClipboard *clipboard, int64_t id, bool *out_ok, char *error, size_t error_len);
 bool jb_clipboard_paste_items(const JbClipboard *clipboard, const int64_t *ids, size_t count, bool with_html, bool move_to_top, const char *separator,
                               bool plain_text, const char *layout, bool keep_in_history, int64_t **out_ids, size_t *out_count, char *error, size_t error_len);

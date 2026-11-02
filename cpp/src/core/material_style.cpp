@@ -35,14 +35,13 @@
 namespace jietuba {
 MaterialPalette material_palette(const QColor &accent, bool dark) {
     const float hue=std::max(0.0f,accent.hslHueF());
-    const float saturation=accent.hslSaturationF();
-    // Preserve the chosen hue; material depth comes from S/L, not black overlays.
-    return dark ? MaterialPalette{QColor::fromHslF(hue,saturation*0.18f,0.16f),
-                                  QColor::fromHslF(hue,saturation*0.24f,0.095f),
-                                  QColor::fromHslF(hue,saturation*0.12f,0.245f)}
-                : MaterialPalette{QColor::fromHslF(hue,saturation*0.12f,0.967f),
-                                  QColor::fromHslF(hue,saturation*0.20f,0.84f),
-                                  QColor::fromHslF(hue,saturation*0.08f,0.995f)};
+    // Material S/L are independent of accent saturation and lightness: (H2,S1,L1).
+    return dark ? MaterialPalette{QColor::fromHslF(hue,0.13f,0.16f),
+                                  QColor::fromHslF(hue,0.17f,0.095f),
+                                  QColor::fromHslF(hue,0.085f,0.245f)}
+                : MaterialPalette{QColor::fromHslF(hue,0.10f,0.94f),
+                                  QColor::fromHslF(hue,0.14f,0.84f),
+                                  QColor::fromHslF(hue,0.055f,0.995f)};
 }
 const UIThemeTokens &material_tokens(const QWidget *widget) {
     for (auto *parent = widget; parent; parent = parent->parentWidget()) {

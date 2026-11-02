@@ -53,6 +53,7 @@ QList<ActionSpec> actions(const clipboard::ClipboardItem &item, const QString &r
             const auto entry=entry_value.toObject();auto action=capability;
             if(!object.value("contributes").toObject().value("commands").toArray().contains(entry.value("command"))) continue;
             action.insert("command",entry.value("command"));
+            action.insert("default_for_paste",capability.value("default_for_paste").toBool() && entry.value("command")==capability.value("command"));
             const QString title=entry.value("name_i18n").toObject().value(I18nManager::get_current_language()).toString(entry.value("name").toString());
             result.append({id+"."+entry.value("id").toString(),title,folder,executable,action});
         }
@@ -67,8 +68,14 @@ QList<ActionPlugin> action_plugins(const clipboard::ClipboardItem &item, const Q
     return result;
 }
 
+std::optional<QString> default_paste_plugin(const clipboard::ClipboardItem &item, const QString &root) {
+    for (const auto &spec : actions(item,root.isEmpty()?plugin_directory():root))
+        if (spec.manifest.value("default_for_paste").toBool()) return spec.id;
+    return std::nullopt;
+}
+
 bool run_action_payload(const QString &id, const clipboard::ClipboardItem &item, clipboard::ClipboardManager &manager,
-                QObject *context, std::function<void(std::optional<QJsonObject>)> callback, const QString &root) {
+                QObject *context, std::function<void(std::optional<QJsonObject>)> callback, const QString &root,const QJsonObject &invocation) {
     if (!context || !callback) return false;
     const auto specs = actions(item, root.isEmpty() ? plugin_directory() : root);
     auto found = std::find_if(specs.begin(), specs.end(), [&id](const auto &spec) { return spec.id == id; });
@@ -98,7 +105,8 @@ bool run_action_payload(const QString &id, const clipboard::ClipboardItem &item,
     const QJsonObject payload = item.content_type == "text" && requested.isEmpty()
         ? QJsonObject{{"kind", "text"}, {"data", item.content}}
         : QJsonObject{{"kind", "clipboard"}, {"data", input}};
-    const QJsonObject details{{"source_app", item.source_app.value_or(QString())}, {"language", I18nManager::get_current_language()}};
+    QJsonObject details=invocation;
+    details.insert("source_app",item.source_app.value_or(QString()));details.insert("language",I18nManager::get_current_language());
     const QJsonObject envelope{{"api_version", 2}, {"type", "extension"}, {"event", "command"}, {"command", found->manifest.value("command")},
                                {"payload", payload}, {"context", details}};
     const QByteArray request = QJsonDocument(envelope).toJson(QJsonDocument::Compact);
@@ -137,13 +145,13 @@ bool run_action_payload(const QString &id, const clipboard::ClipboardItem &item,
         const auto payload = result.value("payload").toObject();
         const QString kind=payload.value("kind").toString();
         if(result.value("api_version").toInt()!=2 || !result.value("ok").toBool() ||
-           !QStringList{"text","clipboard","original","error"}.contains(kind) ||
+           !QStringList{"text","clipboard","original","error","none"}.contains(kind) ||
            (kind=="text" && (!payload.value("data").isString() || payload.value("data").toString().contains(QChar(u'\0'))))) {
             finish(std::nullopt);return;
         }
         finish(payload);
     });
-    timer->start(5000);
+    timer->start(std::clamp(found->manifest.value("timeout_ms").toInt(5000),1000,30000));
     process->start();
     return true;
 }

@@ -28,9 +28,9 @@ UpdateDialog::UpdateDialog(const ReleaseInfo &release) : StandardDialog(nullptr,
     progress = new QProgressBar(this);
     progress->setRange(0, 100);
     box->insertWidget(box->count() - 1, progress);
-    action = button_box->addButton(tr_dialog("Update and Restart"), QDialogButtonBox::ActionRole);
+    action = add_button(tr_dialog("Update and Restart"), QDialogButtonBox::ActionRole);
     connect(action, &QPushButton::clicked, this, &UpdateDialog::update_requested);
-    cancel_button = button_box->addButton(tr_dialog("Cancel"), QDialogButtonBox::RejectRole);
+    cancel_button = add_button(tr_dialog("Cancel"), QDialogButtonBox::RejectRole);
     connect(cancel_button, &QPushButton::clicked, this, &QWidget::close);
 }
 

@@ -1,6 +1,7 @@
 #include "clipboard_test_support.h"
 #include "clipboard/controllers/foreground_tracker.h"
 #include "plugins/plugin_package.h"
+#include "plugins/plugin_file_open.h"
 #include "plugins/extension_host.h"
 #include "plugins/plugin_manager_dialog.h"
 #include "plugins/plugin_actions.h"
@@ -27,6 +28,7 @@
 #include "ui/settings_ui/special_paste_dialog.h"
 #include "ui/toolbar.h"
 #include <QBuffer>
+#include <QProcess>
 #include <QDesktopServices>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -735,7 +737,7 @@ private slots:
         QFile executable(fixture);
         QVERIFY(executable.open(QIODevice::ReadOnly));
         const QByteArray binary = executable.readAll();
-        const QByteArray manifest = R"({"id":"example","api_version":2,"type":"extension","command":"preview.exe","contributes":{"commands":["render"],"clipboard":{"preview":{"command":"render","content_types":["text"]}}}})";
+        const QByteArray manifest = R"({"id":"example","version":"1.0.0","api_version":2,"type":"extension","command":"preview.exe","contributes":{"commands":["render"],"clipboard":{"preview":{"command":"render","content_types":["text"]}}}})";
         const auto package = [&](const QString &name, const QByteArray &metadata, const QString &extra = {}) {
             const QString path = dir.filePath(name + ".jtbplugin");
             QZipWriter zip(path);
@@ -788,7 +790,7 @@ private slots:
         QVERIFY(!jietuba::plugins::install_plugin_package(package("unsafe", manifest, "../escape.txt"), dir.filePath("other")).ok);
         QVERIFY(!QFileInfo::exists(dir.filePath("escape.txt")));
         QVERIFY(!jietuba::plugins::install_plugin_package(package("bad", "{}"), dir.filePath("other")).ok);
-        const QByteArray action_manifest = R"({"id":"null-action","api_version":2,"type":"extension","command":"preview.exe","contributes":{"commands":["transform"],"clipboard":{"action":{"command":"transform","content_types":["text"]}}}})";
+        const QByteArray action_manifest = R"({"id":"null-action","version":"1.0.0","api_version":2,"type":"extension","command":"preview.exe","contributes":{"commands":["transform"],"clipboard":{"action":{"command":"transform","content_types":["text"]}}}})";
         QVERIFY(jietuba::plugins::install_plugin_package(package("null-action", action_manifest), root).ok);
         auto nul_item = make_item(9, "text", QString("a") + QChar(u'\0') + "b");
         QObject context;
@@ -803,7 +805,7 @@ private slots:
         QVERIFY(jietuba::plugins::uninstall_plugin("example", root));
         QVERIFY(jietuba::plugins::installed_plugins(root).isEmpty());
         QCOMPARE(jietuba::plugins::read_plugin_config("example", root).value("ignored_apps").toString(), QString("secret.exe"));
-        const QByteArray filter_manifest = R"({"id":"bad-filter","api_version":2,"type":"extension","command":"preview.exe","contributes":{"hooks":[{"event":"clipboard.before_capture","content_types":["text"]}]}})";
+        const QByteArray filter_manifest = R"({"id":"bad-filter","version":"1.0.0","api_version":2,"type":"extension","command":"preview.exe","contributes":{"hooks":[{"event":"clipboard.before_capture","content_types":["text"]}]}})";
         QVERIFY(jietuba::plugins::install_plugin_package(package("bad-filter", filter_manifest), root).ok);
         bool failed = false;
         const QByteArray capture = R"({"content_type":"text","content":"sample"})";
@@ -837,8 +839,8 @@ private slots:
             zip.close();
             return path;
         };
-        const QByteArray a = R"({"id":"a","api_version":2,"type":"extension","command":"extension.exe","contributes":{"commands":["append","fail"],"hooks":[{"event":"screenshot.before_export","priority":10}],"clipboard":{"action":{"command":"append","content_types":["text"]}},"toolbar":[{"id":"test","location":"screenshot","name":"Example action","pipeline":[{"plugin":"a","command":"append"},{"plugin":"b","command":"append"}]}]}})";
-        const QByteArray b = R"({"id":"b","api_version":2,"type":"extension","command":"extension.exe","contributes":{"commands":["append"],"hooks":[{"event":"screenshot.before_export","priority":20}]}})";
+        const QByteArray a = R"({"id":"a","version":"1.0.0","api_version":2,"type":"extension","command":"extension.exe","contributes":{"commands":["append","fail"],"hooks":[{"event":"screenshot.before_export","priority":10}],"clipboard":{"action":{"command":"append","content_types":["text"]}},"toolbar":[{"id":"test","location":"screenshot","name":"Example action","pipeline":[{"plugin":"a","command":"append"},{"plugin":"b","command":"append"}]}]}})";
+        const QByteArray b = R"({"id":"b","version":"1.0.0","api_version":2,"type":"extension","command":"extension.exe","contributes":{"commands":["append"],"hooks":[{"event":"screenshot.before_export","priority":20}]}})";
         QVERIFY(install_plugin_package(package("a", a), root).ok);
         QVERIFY(install_plugin_package(package("b", b), root).ok);
         const auto buttons = toolbar_contributions("screenshot", root);
@@ -876,7 +878,7 @@ private slots:
         session->pipeline(buttons.first().pipeline, initial, {}, &receiver, [&](ExtensionResult result) { if (result.ok) callbacks.append("pipeline"); });
         session->finish();
         QTRY_COMPARE_WITH_TIMEOUT(callbacks, QList<QString>({"hook", "pipeline"}), 15000);
-        const auto invalid = R"({"id":"x","api_version":2,"type":"extension","command":"extension.exe","contributes":{"toolbar":[{"id":"bad","location":"screenshot","name":"bad","pipeline":[{"plugin":"../x","command":"append"}]}]}})";
+        const auto invalid = R"({"id":"x","version":"1.0.0","api_version":2,"type":"extension","command":"extension.exe","contributes":{"toolbar":[{"id":"bad","location":"screenshot","name":"bad","pipeline":[{"plugin":"../x","command":"append"}]}]}})";
         QVERIFY(!install_plugin_package(package("invalid", invalid), root).ok);
     }
 
@@ -990,6 +992,69 @@ private slots:
         QVERIFY(jietuba::plugins::save_plugin_config("code-highlight",QJsonObject{{"line_numbers",false},{"theme","dark"}},root.path()));
         const auto config=jietuba::plugins::read_plugin_config("code-highlight",root.path());QVERIFY(config.value("line_numbers").isBool());QCOMPARE(config.value("theme").toString(),QString("dark"));
     }
+    void pluginBatchesKeepOnlyTheNewestVersionAndItsIcon() {
+        using namespace jietuba::plugins;
+        QVERIFY(compare_plugin_versions("1.10.0","1.9.0").value()>0);
+        QVERIFY(compare_plugin_versions("1.0.0","1.0.0-rc.9").value()>0);
+        QVERIFY(compare_plugin_versions("1.0.0-rc.10","1.0.0-rc.2").value()>0);
+        QCOMPARE(compare_plugin_versions("1.0.0+one","1.0.0+two").value(),0);
+        QVERIFY(!compare_plugin_versions("01.0.0","1.0.0"));
+        QTemporaryDir dir;QVERIFY(dir.isValid());const auto root=dir.filePath("plugins");
+        const auto package=[&](const QString &version) {
+            const QString path=dir.filePath("demo-"+version+".jtbplugin");
+            QJsonObject manifest{{"id","demo"},{"name","Demo"},{"version",version},{"icon","icon.png"},{"api_version",2},{"type","extension"},
+                {"contributes",QJsonObject{{"clipboard",QJsonObject{{"metadata",QJsonObject{{"content_types",QJsonArray{"text"}},{"fields",QJsonArray{QJsonObject{{"key","note"},{"label","Note"},{"type","line"}}}}}}}}}}};
+            QZipWriter zip(path);zip.addFile("plugin.json",QJsonDocument(manifest).toJson());
+            QImage image(16,16,QImage::Format_ARGB32);image.fill(Qt::blue);QByteArray png;QBuffer buffer(&png);buffer.open(QIODevice::WriteOnly);image.save(&buffer,"PNG");zip.addFile("icon.png",png);zip.close();return path;
+        };
+        const auto old=package("1.0.0"),current=package("1.1.0"),latest=package("1.2.0");
+        QVERIFY(install_plugin_package(current,root).ok);
+        QVERIFY(set_plugin_enabled("demo",false,root));
+        QVERIFY(save_plugin_config("demo",QJsonObject{{"keep","value"}},root));
+        const auto plan=plan_plugin_install({latest,old,current,latest},root);int selected=0;
+        for(const auto &entry:plan)if(entry.installable){++selected;QCOMPARE(entry.package.version,QString("1.2.0"));QVERIFY(!entry.package.icon.isEmpty());}
+        QCOMPARE(selected,1);const auto downgrade=install_plugin_package(old,root);QVERIFY(downgrade.ok&&downgrade.skipped);
+        QVERIFY(install_plugin_package(latest,root).ok);const auto same=install_plugin_package(latest,root);QVERIFY(same.ok&&same.skipped);
+        const auto installed=installed_plugins(root);QCOMPARE(installed.size(),1);QCOMPARE(installed.front().version,QString("1.2.0"));QVERIFY(QFileInfo::exists(installed.front().icon_path));QVERIFY(!installed.front().enabled);
+        QCOMPARE(read_plugin_config("demo",root).value("keep").toString(),QString("value"));
+        QFile invalid(dir.filePath("invalid-icon.jtbplugin"));QVERIFY(invalid.open(QIODevice::WriteOnly));invalid.write(QByteArray("\0\0\1\0\0\0",6));invalid.close();
+        QVERIFY(!inspect_plugin_package(invalid.fileName()).ok);
+    }
+    void pluginFileRequestsAreBatchedWithoutRestartingTheProcess() {
+        QObject owner;int calls=0;QStringList received;
+        const QString channel="test-"+QString::number(QCoreApplication::applicationPid());
+        QVERIFY(jietuba::plugins::receive_plugin_files(&owner,{},[&](QStringList paths){++calls;received=paths;},false,channel));
+        const auto one=QDir::temp().filePath("first.jtbplugin"),two=QDir::temp().filePath("第二个 插件.jtbplugin");
+        QVERIFY(jietuba::plugins::forward_plugin_files({one,two},channel));
+        QVERIFY(jietuba::plugins::forward_plugin_files({one},channel));
+        QTRY_COMPARE_WITH_TIMEOUT(calls,1,2000);QCOMPARE(received,QStringList({one,two}));
+    }
+    void commandLinePackageOpenForwardsToTheExistingProcess() {
+        const auto executable=qEnvironmentVariable("JIETUMA_TEST_APP_EXE");if(executable.isEmpty())QSKIP("No application executable supplied");
+        QObject owner;QStringList received;int calls=0;
+        if(!jietuba::plugins::receive_plugin_files(&owner,{},[&](QStringList paths){received=paths;++calls;}))QSKIP("An application already owns the install receiver");
+        QTemporaryDir dir;QVERIFY(dir.isValid());const auto first=dir.filePath("example.jtbplugin"),second=dir.filePath("中文 插件.jtbplugin");
+        QProcess child;child.start(executable,{"--install-plugins",first,second});
+        QTRY_VERIFY_WITH_TIMEOUT(child.state()==QProcess::NotRunning,5000);QCOMPARE(child.exitCode(),0);
+        QTRY_COMPARE_WITH_TIMEOUT(calls,1,2000);QCOMPARE(received,QStringList({first,second}));
+    }
+    void batchInstallDialogShowsIconsAndRemembersDirectory() {
+        const auto folder=qEnvironmentVariable("JIETUMA_TEST_PACKAGES_DIR");if(folder.isEmpty())QSKIP("No package directory supplied");
+        const auto previous_language=I18nManager::get_current_language();I18nManager::load_language("zh");
+        const auto restore_language=qScopeGuard([&]{I18nManager::load_language(previous_language);});
+        QStringList paths;for(const auto &file:QDir(folder).entryList({"*.jtbplugin"},QDir::Files))paths<<QDir(folder).filePath(file);
+        QVERIFY(!paths.isEmpty());QTemporaryDir root;QVERIFY(root.isValid());bool seen=false;
+        QTimer::singleShot(0,qApp,[&] {
+            auto *dialog=qobject_cast<QDialog *>(QApplication::activeModalWidget());if(!dialog)return;
+            auto *list=dialog->findChild<QListWidget *>("pluginInstallList");if(!list){dialog->reject();return;}
+            seen=list->count()==paths.size();for(int i=0;i<list->count();++i)seen=seen&&!list->item(i)->icon().isNull();
+            if(const auto output=qEnvironmentVariable("JIETUMA_INSTALL_PREVIEW");!output.isEmpty())seen=seen&&dialog->grab().save(output);
+            dialog->reject();
+        });
+        jietuba::plugins::install_plugin_packages_interactively(nullptr,paths,root.path());QVERIFY(seen);
+        QCOMPARE(get_tool_settings_manager()->get_app_setting("plugin_install_directory").toString(),QFileInfo(paths.front()).absolutePath());
+        QVERIFY(jietuba::plugins::installed_plugins(root.path()).isEmpty());
+    }
     void realSpreadsheetPluginProducesTypedPastePayloads() {
         const auto package=qEnvironmentVariable("JIETUMA_TEST_SPREADSHEET_PACKAGE");if(package.isEmpty()) QSKIP("No spreadsheet plugin package supplied");
         QTemporaryDir root;QVERIFY(root.isValid());const auto installed=jietuba::plugins::install_plugin_package(package,root.path());QVERIFY2(installed.ok,qPrintable(installed.error));
@@ -997,11 +1062,15 @@ private slots:
         const auto preview=resolve_preview(*item,manager,root.path());QVERIFY(preview);QVERIFY(preview->text.contains("<table"));
         if(const auto output=qEnvironmentVariable("JIETUMA_EXTENSION_VISUAL_DIR");!output.isEmpty()) {QDir().mkpath(output);TextEdit editor;editor.setHtml(preview->text);editor.resize(600,300);editor.show();QApplication::processEvents();QVERIFY(editor.grab().save(output+"/spreadsheet-preview.png"));}
         const auto actions=jietuba::plugins::action_plugins(*item,root.path());QCOMPARE(actions.size(),5);
+        QCOMPARE(jietuba::plugins::default_paste_plugin(*item,root.path()),std::optional<QString>("spreadsheet.default"));
         QObject context;bool done=false;std::optional<QJsonObject> result;
         QVERIFY(jietuba::plugins::run_action_payload("spreadsheet.values",*item,manager,&context,[&](std::optional<QJsonObject> value){result=value;done=true;},root.path()));
         QTRY_VERIFY_WITH_TIMEOUT(done,7000);QVERIFY(result);QCOMPARE(result->value("kind").toString(),QString("clipboard"));
         const auto raw=QByteArray::fromBase64(result->value("data").toObject().value("formats_base64").toObject().value("XML Spreadsheet").toString().toLatin1());
         QVERIFY(raw.contains("<Table>"));QVERIFY(raw.contains("42"));QVERIFY(!raw.contains("ss:Formula="));
+        done=false;result.reset();
+        QVERIFY(jietuba::plugins::run_action_payload("spreadsheet.default",*item,manager,&context,[&](std::optional<QJsonObject> value){result=value;done=true;},root.path()));
+        QTRY_VERIFY_WITH_TIMEOUT(done,7000);QVERIFY(result);QCOMPARE(result->value("kind").toString(),QString("original"));
     }
     void realPluginSettingsUseTypedEditorsAndPersist() {
         const auto package=qEnvironmentVariable("JIETUMA_TEST_CODE_PACKAGE");if(package.isEmpty()) QSKIP("No code plugin package supplied");

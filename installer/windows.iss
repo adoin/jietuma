@@ -48,6 +48,7 @@
 #endif
 
 [Setup]
+ChangesAssociations=yes
 AppId={#ApplicationId}
 AppName={cm:ProductName}
 AppVersion={#AppVersion}
@@ -96,6 +97,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [CustomMessages]
 english.ProductName={#AppName}
 chinesesimp.ProductName={#AppNameZh}
+english.PluginPackage={#AppName} Plugin Package
+chinesesimp.PluginPackage={#AppNameZh}插件包
 english.AppRunning=Please exit %1 from its system tray menu, then retry.
 chinesesimp.AppRunning=请从系统托盘退出 %1 后重试。
 english.ProcessCheckFailed=Unable to check whether %1 is running. Close it and retry, or check Windows Management Instrumentation.
@@ -123,6 +126,13 @@ Name: "{#DesktopDir}\{cm:ProductName}"; Filename: "{app}\{#AppExeName}"; Working
 
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{cm:ProductName}}"; WorkingDir: "{app}"; Flags: nowait postinstall skipifsilent
+
+[Registry]
+Root: HKA; Subkey: "Software\Classes\.jtbplugin"; ValueType: string; ValueData: "{#AppPrefix}.Plugin"
+Root: HKA; Subkey: "Software\Classes\.jtbplugin\OpenWithProgids"; ValueType: string; ValueName: "{#AppPrefix}.Plugin"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\{#AppPrefix}.Plugin"; ValueType: string; ValueData: "{cm:PluginPackage}"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\{#AppPrefix}.Plugin\DefaultIcon"; ValueType: string; ValueData: """%1"""
+Root: HKA; Subkey: "Software\Classes\{#AppPrefix}.Plugin\shell\open\command"; ValueType: string; ValueData: """{app}\{#AppExeName}"" --install-plugins ""%1"""
 
 [Code]
 function InstalledExecutableIsRunning: Boolean;
@@ -200,6 +210,15 @@ begin
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  Root: Integer;
+  Owner: String;
 begin
-  if CurUninstallStep = usUninstall then RemoveOwnedStartupEntries;
+  if CurUninstallStep = usUninstall then begin
+    RemoveOwnedStartupEntries;
+    if IsAdminInstallMode then Root := HKLM else Root := HKCU;
+    if RegQueryStringValue(Root, 'Software\Classes\.jtbplugin', '', Owner) then
+      if CompareText(Owner, '{#AppPrefix}.Plugin') = 0 then
+        RegDeleteValue(Root, 'Software\Classes\.jtbplugin', '');
+  end;
 end;

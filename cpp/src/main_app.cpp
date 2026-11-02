@@ -1,4 +1,6 @@
 #include "main_app.h"
+#include "plugins/plugin_file_open.h"
+#include "plugins/plugin_manager_dialog.h"
 #include "ui/update_dialog.h"
 #include "core/branding.h"
 #include "clipboard/core/manager.h"
@@ -174,6 +176,7 @@ MainApp::MainApp(int &argc, char **argv) : app(std::make_unique<QApplication>(ar
     // capture -> toolbar -> OCR -> settings, then the main UI.
     preloader_ = std::make_unique<PreloadManager>(this);
     preloader_->build_and_start();
+    plugins::receive_plugin_files(app.get(),{},[](QStringList paths){plugins::install_plugin_packages_interactively(nullptr,paths);});
 }
 
 bool MainApp::starting_up() const { return preloader_ && !preloader_->finished(); }

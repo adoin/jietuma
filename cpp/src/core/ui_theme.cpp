@@ -34,7 +34,7 @@ void apply_accent(UIThemeTokens &t) {
     const auto material=material_palette(accent,t.is_dark());
     t.window=t.window_top=t.window_bottom=material.surface.name();
     t.surface=t.surface_strong=t.surface_subtle=t.input_background=t.popup_background=t.window;
-    t.surface_hover=QColor::fromHslF(std::max(0.0f,accent.hslHueF()),accent.hslSaturationF()*0.14,t.is_dark()?0.19:0.95).name();
+    t.surface_hover=QColor::fromHslF(std::max(0.0f,accent.hslHueF()),0.10f,t.is_dark()?0.19f:0.95f).name();
     t.accent = accent.name();
     t.accent_hover = accent.darker(108).name();
     t.accent_pressed = accent.darker(118).name();

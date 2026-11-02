@@ -1,4 +1,11 @@
 #include "core/bootstrap.h"
+#include "plugins/plugin_file_open.h"
+#include "plugins/plugin_manager_dialog.h"
+#include "core/i18n.h"
+#include "core/ui_theme.h"
+#include "core/theme.h"
+#include "core/ui_scale.h"
+#include <QApplication>
 #include "clipboard/ui/windows/clipboard_window.h"
 #include "core/shortcut_manager.h"
 #include "ui/dialogs.h"
@@ -362,6 +369,16 @@ bool PreloadManager::threads_running() const { return ocr_preload_thread_ && ocr
 int run(int argc, char **argv) {
     // 1. Environment, before Qt.
     setup_environment();
+    const auto packages=plugins::plugin_files_from_command_line();
+    if(!packages.isEmpty()) {
+        if(plugins::forward_plugin_files(packages))return 0;
+        set_app_user_model_id();
+        QApplication app(argc,argv);app.setQuitOnLastWindowClosed(false);app.setWindowIcon(QIcon(":/app.ico"));
+        auto *config=get_tool_settings_manager();I18nManager::load_language(config->get_language(I18nManager::get_system_language()));
+        get_ui_theme()->init(config,&app);get_theme().init(config);get_ui_scale().init(config);get_dialog_scale().init(config);
+        if(!plugins::receive_plugin_files(&app,packages,[](QStringList paths){plugins::install_plugin_packages_interactively(nullptr,paths);},true))return plugins::forward_plugin_files(packages)?0:1;
+        return app.exec();
+    }
     // 2./3. Module paths and pinning onefile resources do not apply to a native build.
     // 4. The taskbar identity, before QApplication exists.
     set_app_user_model_id();

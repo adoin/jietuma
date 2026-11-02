@@ -3,11 +3,14 @@
 #include "core/i18n.h"
 #include "core/shortcut_manager.h"
 #include "core/ui_scale.h"
+#include "core/material_style.h"
+#include "core/theme.h"
 #include "pin/pin_toolbar.h"
 #include "settings/color_formats.h"
 #include "settings/tool_settings.h"
 #include "ui/base_settings_panel.h"
 #include "ui/dialogs.h"
+#include "ui/fluent_lite/buttons.h"
 #include "ui/fluent_lite/inputs.h"
 #include "ui/fluent_lite/labels.h"
 #include "ui/hotkey_edit.h"
@@ -65,6 +68,8 @@
 #include <QTest>
 #include <QTimer>
 #include <QWindow>
+#include <QPainter>
+#include <QVBoxLayout>
 #include <QToolButton>
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -293,6 +298,138 @@ private slots:
     }
 
     // ---- Standard dialogs ----
+
+    void materialChangesOnlyHueAndRefreshesOpenWidgets() {
+        auto *theme = get_ui_theme();
+        const auto previous_mode = theme->mode();
+        const auto previous_accent = get_theme().theme_color();
+        const auto restore = qScopeGuard([&] {
+            get_theme().set_theme_color(previous_accent);
+            theme->set_mode(ui_theme_mode_value(previous_mode), false);
+        });
+        StandardDialog dialog(nullptr, "Theme", "Preview");
+        auto *input = new LineEdit(&dialog);
+        static_cast<QVBoxLayout *>(dialog.layout())->insertWidget(1, input);
+        for (const bool dark : {false,true}) {
+            theme->set_mode(dark ? "dark" : "light", false);
+            const auto reference = material_palette(QColor::fromHslF(0.1f,0.2f,0.3f),dark);
+            for (const auto hue : {0.02f,0.35f,0.62f,0.85f}) {
+                for (const auto saturation : {0.15f,0.95f}) {
+                    const auto accent = QColor::fromHslF(hue,saturation,saturation < 0.5f ? 0.25f : 0.75f);
+                    const auto palette = material_palette(accent,dark);
+                    const QList<QColor> colors{palette.surface,palette.shadow,palette.highlight};
+                    const QList<QColor> baselines{reference.surface,reference.shadow,reference.highlight};
+                    for (int i=0;i<colors.size();++i) {
+                        QVERIFY(std::abs(colors[i].hslHueF()-hue)<0.0001);
+                        QCOMPARE(colors[i].hslSaturationF(),baselines[i].hslSaturationF());
+                        QCOMPARE(colors[i].lightnessF(),baselines[i].lightnessF());
+                    }
+                    get_theme().set_theme_color(accent);
+                    const auto ground = palette.surface.name();
+                    QCOMPARE(theme->tokens().window,ground);
+                    QVERIFY(dialog.styleSheet().contains(ground));
+                    QVERIFY(input->styleSheet().contains(ground));
+                }
+            }
+        }
+    }
+
+    void recessedInputsHaveVisibleHighlightsOnTheRightInBothModes() {
+        const auto previous_font = QApplication::font();
+        const int font_id = QFontDatabase::addApplicationFont(qEnvironmentVariable("WINDIR") + "/Fonts/msyh.ttc");
+        const auto families = QFontDatabase::applicationFontFamilies(font_id);
+        if (!families.isEmpty()) QApplication::setFont(QFont(families.front(), 10));
+        const auto restore_font = qScopeGuard([&] {
+            QApplication::setFont(previous_font);
+            if (font_id >= 0) QFontDatabase::removeApplicationFont(font_id);
+        });
+        auto *theme = get_ui_theme();
+        const auto previous = theme->mode();
+        const auto restore = qScopeGuard([&] { theme->set_mode(ui_theme_mode_value(previous), false); });
+        for (const auto &mode : {QString("light"), QString("dark")}) {
+            theme->set_mode(mode, false);
+            const QColor ground(theme->tokens().window);
+            QImage image(240, 36, QImage::Format_ARGB32_Premultiplied);
+            image.fill(ground);
+            { QPainter painter(&image); paint_material_surface(painter, QRectF(1,1,238,34), 8, ground, MaterialDepth::Recessed); }
+            const auto contrast = [ground](const QColor &color) {
+                return std::abs(color.red()-ground.red()) + std::abs(color.green()-ground.green()) + std::abs(color.blue()-ground.blue());
+            };
+            // Both inset edges must remain visible against the shared surface.
+            QVERIFY(contrast(image.pixelColor(3,18)) >= 9);
+            QVERIFY(contrast(image.pixelColor(236,18)) >= 9);
+            QVERIFY(image.pixelColor(3,18).lightness() < ground.lightness());
+            QVERIFY(image.pixelColor(236,18).lightness() > ground.lightness());
+            QWidget panel;
+            set_own_style(&panel, QString("background: %1;").arg(ground.name()));
+            auto *layout = new QVBoxLayout(&panel);
+            layout->setContentsMargins(24,24,24,24);
+            layout->setSpacing(16);
+            auto *empty = new KeyChipLineEdit(&panel);
+            auto *filled = new KeyChipLineEdit(&panel);
+            filled->setText("ctrl+alt+a");
+            auto *input = new LineEdit(&panel);
+            input->setText("Input");
+            for (auto *field : QList<QWidget *>{empty,filled,input}) { field->setFixedWidth(240); field->setFocusPolicy(Qt::NoFocus); layout->addWidget(field); }
+            panel.show();
+            QApplication::processEvents();
+            const auto output = qEnvironmentVariable("JIETUMA_DIALOG_PREVIEW_DIR");
+            if (!output.isEmpty()) QVERIFY(panel.grab().save(output + "/inputs-" + mode + ".png"));
+        }
+    }
+
+    void standardDialogUsesThemedPrimaryButtonsInBothModes() {
+        const auto previous_font = QApplication::font();
+        const int font_id = QFontDatabase::addApplicationFont(qEnvironmentVariable("WINDIR") + "/Fonts/msyh.ttc");
+        const auto families = QFontDatabase::applicationFontFamilies(font_id);
+        if (!families.isEmpty()) QApplication::setFont(QFont(families.front(), 10));
+        const auto restore_font = qScopeGuard([&] {
+            QApplication::setFont(previous_font);
+            if (font_id >= 0) QFontDatabase::removeApplicationFont(font_id);
+        });
+        auto *theme = get_ui_theme();
+        const auto previous = theme->mode();
+        const auto restore = qScopeGuard([&] { theme->set_mode(ui_theme_mode_value(previous), false); });
+        StandardDialog dialog(nullptr, "安装插件", "插件可以访问截图、剪贴板内容和文件。请只安装信任的插件。");
+        auto *yes = dialog.add_button("是", QDialogButtonBox::YesRole);
+        auto *no = dialog.add_button("否", QDialogButtonBox::NoRole);
+        no->setDefault(true);
+        no->setFocus();
+        QVERIFY(qobject_cast<PrimaryPushButton *>(yes));
+        QVERIFY(!qobject_cast<PrimaryPushButton *>(no));
+        QVERIFY(qobject_cast<SecondaryPushButton *>(no));
+        for (const auto &mode : {QString("light"), QString("dark")}) {
+            theme->set_mode(mode, false);
+            dialog.show();
+            QApplication::processEvents();
+            QVERIFY(yes->property("_materialPrimary").toBool());
+            QVERIFY(!no->property("_materialPrimary").toBool());
+            QVERIFY(!yes->findChild<QWidget *>("_materialEdge"));
+            QVERIFY(!yes->findChild<QWidget *>("_materialShadow"));
+            QVERIFY(!no->findChild<QWidget *>("_materialEdge"));
+            QVERIFY(yes->styleSheet().contains(theme->tokens().accent_strong));
+            QVERIFY(dialog.styleSheet().contains(theme->tokens().window));
+            QVERIFY(dialog.rect().contains(dialog.button_box->geometry()));
+            QVERIFY(no->isDefault());
+            const auto image = dialog.grab();
+            QVERIFY(!image.isNull());
+            const auto output = qEnvironmentVariable("JIETUMA_DIALOG_PREVIEW_DIR");
+            if (!output.isEmpty()) QVERIFY(image.save(output + "/confirm-" + mode + ".png"));
+            const auto idle = yes->grab().toImage();
+            yes->setAttribute(Qt::WA_UnderMouse,true);
+            const auto hovered = yes->grab().toImage();
+            yes->setDown(true);
+            const auto pressed = yes->grab().toImage();
+            const QPoint sample(8,yes->height()/2);
+            QVERIFY(idle.pixelColor(sample)!=hovered.pixelColor(sample));
+            QVERIFY(hovered.pixelColor(sample)!=pressed.pixelColor(sample));
+            if (!output.isEmpty()) QVERIFY(dialog.grab().save(output + "/confirm-" + mode + "-pressed.png"));
+            yes->setDown(false);
+            yes->setAttribute(Qt::WA_UnderMouse,false);
+            const auto secondary = no->grab().toImage();
+            QVERIFY(secondary.pixelColor(8,no->height()/2)!=QColor(theme->tokens().window));
+        }
+    }
 
     void confirmDialogsAnswerByButtonAndTitleBarClose() {
         QWidget parent;
