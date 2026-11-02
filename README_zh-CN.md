@@ -186,7 +186,7 @@ ctest --test-dir build\msvc -C Release --output-on-failure -E "_desktop$|_window
 
 测试程序都在临时沙盒里运行，不会读写本机的设置、剪贴板历史和日志。另有分析构建（`scripts\check.ps1`：AddressSanitizer、代码分析、泄漏检测）和覆盖率（`scripts\coverage.ps1`）。
 
-[发布流水线](.github/workflows/build.yml) 仅由 `release-*` 标签触发。Rust 测试和许可检查、x64/ARM64 构建、安装／升级／卸载烟测集中在同一次运行中；普通提交和 PR 不触发 Actions。完整 C++ 回归、覆盖率及旧 Python／界面对齐测试仍可本地运行，不作为本次发布流水线的验证结果。Actions 历史保留最近 3 次。
+[发布流水线](.github/workflows/build.yml) 仅由 `release-*` 标签触发。Rust 测试和许可检查、x64/ARM64 构建、安装／升级／卸载烟测集中在同一次运行中；普通提交和 PR 不触发 Actions。完整 C++ 回归、覆盖率及旧 Python／界面对齐测试仍可本地运行，不作为本次发布流水线的验证结果。Actions 历史分别保留最近 3 次成功和 3 次失败的运行。
 
 发行由 [build.yml](.github/workflows/build.yml) 完成：标签必须是 `release-<VERSION 文件里的版本>`；[lite.yml](.github/workflows/lite.yml) 构建轻量版和完整版（x64 与 ARM64），再由发布流程按配置签名、打包，分别生成 `jietuma_lite-<tag>-<arch>.zip` 和 `jietuma_pp-<tag>-<arch>.zip`。
 

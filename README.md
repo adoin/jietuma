@@ -186,7 +186,7 @@ ctest --test-dir build\msvc -C Release --output-on-failure -E "_desktop$|_window
 
 The test programs run in a temporary sandbox and never read or write your own settings, clipboard history or logs. There are also analysis builds (`scripts\check.ps1`: AddressSanitizer, code analysis, leak detection) and coverage (`scripts\coverage.ps1`).
 
-The [tagged release pipeline](.github/workflows/build.yml) starts only for `release-*` tags. Rust tests and license checks, x64/ARM64 builds, and installation/upgrade/uninstall smoke tests run inside that single workflow. Full C++ regression and coverage tools remain available locally; the archived Python parity and UI diagnostics are not claimed as release checks. Only the latest three Actions runs are retained.
+The [tagged release pipeline](.github/workflows/build.yml) starts only for `release-*` tags. Rust tests and license checks, x64/ARM64 builds, and installation/upgrade/uninstall smoke tests run inside that single workflow. Full C++ regression and coverage tools remain available locally; the archived Python parity and UI diagnostics are not claimed as release checks. The latest three successful and three failed Actions runs are retained separately.
 
 Releases are made by [build.yml](.github/workflows/build.yml): the tag must be `release-<version in the VERSION file>`. [lite.yml](.github/workflows/lite.yml) builds Lite and Full for x64 and ARM64; the release workflow signs them when configured and packages them as `jietuma_lite-<tag>-<arch>.zip` and `jietuma_pp-<tag>-<arch>.zip`.
 

@@ -185,7 +185,7 @@ ctest --test-dir build\msvc -C Release --output-on-failure -E "_desktop$|_window
 
 테스트 프로그램은 모두 임시 샌드박스에서 실행되며 이 PC의 설정, 클립보드 히스토리, 로그를 읽거나 쓰지 않습니다. 분석 빌드(`scripts\check.ps1`: AddressSanitizer, 코드 분석, 누수 감지)와 커버리지(`scripts\coverage.ps1`)도 있습니다.
 
-[릴리스 워크플로](.github/workflows/build.yml)는 `release-*` 태그에서만 시작합니다. Rust 테스트와 라이선스 검사, x64/ARM64 빌드, 설치·업그레이드·제거 스모크 테스트를 하나의 실행에 모읍니다. 일반 커밋과 PR은 Actions를 시작하지 않습니다. 전체 C++ 회귀·커버리지 및 이전 Python/UI 비교는 로컬 진단으로 남겨 둡니다. 최근 실행 기록 3개를 보관합니다.
+[릴리스 워크플로](.github/workflows/build.yml)는 `release-*` 태그에서만 시작합니다. Rust 테스트와 라이선스 검사, x64/ARM64 빌드, 설치·업그레이드·제거 스모크 테스트를 하나의 실행에 모읍니다. 일반 커밋과 PR은 Actions를 시작하지 않습니다. 전체 C++ 회귀·커버리지 및 이전 Python/UI 비교는 로컬 진단으로 남겨 둡니다. 최근 성공 기록 3개와 실패 기록 3개를 각각 보관합니다.
 
 릴리스는 [build.yml](.github/workflows/build.yml)이 수행합니다. 태그는 반드시 `release-<VERSION 파일의 버전>`이어야 합니다. [lite.yml](.github/workflows/lite.yml)은 라이트 버전과 풀 버전(x64 및 ARM64)을 빌드하고, 릴리스 워크플로가 구성에 따라 서명하고 패키징하여 `jietuma_lite-<tag>-<arch>.zip`과 `jietuma_pp-<tag>-<arch>.zip`을 생성합니다.
 

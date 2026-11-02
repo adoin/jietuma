@@ -126,14 +126,13 @@ foreach(crate longstitch gifrecorder video_recorder hdrcapture ppocr_rust pyclip
     list(APPEND JIETUBA_NATIVE_INPUTS ${crate_inputs})
 endforeach()
 # PP-OCR is always built; ONNX Runtime is not linked but loaded from the PP-OCR pack at run time.
-add_custom_command(OUTPUT ${JIETUBA_NATIVE_LIB}
+add_custom_target(jietuba_native
     COMMAND ${CARGO_EXECUTABLE} build --release --locked ${JIETUBA_NATIVE_CARGO_TARGET}
         --manifest-path ${CMAKE_CURRENT_SOURCE_DIR}/native/Cargo.toml
         --target-dir ${JIETUBA_NATIVE_TARGET_DIR}
-    DEPENDS ${JIETUBA_NATIVE_INPUTS}
-    COMMENT "Building native Rust libraries"
+    BYPRODUCTS ${JIETUBA_NATIVE_LIB}
+    COMMENT "Checking native Rust libraries (Cargo incremental)"
     VERBATIM)
-add_custom_target(jietuba_native DEPENDS ${JIETUBA_NATIVE_LIB})
 # jietuba_lib is static and compiles without the Rust library, so only the executables linking it
 # wait for cargo (below); the C++ sources build alongside it.
 # The Rust standard library's system dependencies (cargo --print native-static-libs).
@@ -188,7 +187,9 @@ if(JIETUBA_FULL_EXE)
         message(FATAL_ERROR "JIETUBA_FULL_EXE needs JIETUBA_ORT_DLL: ${JIETUBA_ORT_DLL}")
     endif()
     set(JIETUBA_EXE_NAME ${JTM_NAME}_pp CACHE INTERNAL "" FORCE)
-    target_compile_definitions(jietuba_lib PUBLIC JIETUBA_FULL_VARIANT)
+    # Only this translation unit changes between editions. A target-wide define
+    # would rebuild every C++ object when reusing the same build tree.
+    set_source_files_properties(src/core/updater_process.cpp PROPERTIES COMPILE_DEFINITIONS JIETUBA_FULL_VARIANT)
     file(TO_CMAKE_PATH "${JIETUBA_ORT_DLL}" JIETUBA_ORT_DLL_PATH)
     set(JIETUBA_ORT_RC "ORT_RUNTIME RCDATA \"${JIETUBA_ORT_DLL_PATH}\"")
 elseif(JIETUBA_LITE_EXE)
@@ -243,6 +244,15 @@ endif()
 
 include(CTest)
 if(BUILD_TESTING)
+    qt_add_executable(jietuba_build_variant_tests tests/test_build_variant.cpp)
+    target_link_libraries(jietuba_build_variant_tests PRIVATE jietuba_lib Qt6::Test)
+    if(JIETUBA_FULL_EXE)
+        target_compile_definitions(jietuba_build_variant_tests PRIVATE EXPECTED_BUILD_VARIANT="full")
+    else()
+        target_compile_definitions(jietuba_build_variant_tests PRIVATE EXPECTED_BUILD_VARIANT="lite")
+    endif()
+    add_dependencies(jietuba_build_variant_tests jietuba_native)
+    add_test(NAME build_variant COMMAND jietuba_build_variant_tests)
     # QtTest output never reaches ctest's pipe; each test also writes its report here, read by
     # scripts/show_failed_tests.ps1, so a failure that does not recur on a rerun is still reported.
     set(JIETUBA_TEST_REPORTS ${CMAKE_BINARY_DIR}/test_reports)

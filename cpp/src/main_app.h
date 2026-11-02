@@ -1,5 +1,5 @@
 #pragma once
-#include "app_version.h"
+#include "core/app_version.h"
 #include "clipboard/core/models.h"
 #include "core/update_controller.h"
 #include <QApplication>
@@ -35,8 +35,6 @@ class SystemCursor;
 class ToolSettingsManager;
 class UIThemeManager;
 struct UIThemeTokens;
-
-inline const QString APP_VERSION = QStringLiteral(JIETUBA_APP_VERSION);
 
 // A placeholder tray icon so the tray stays visible and clickable when the icon resource
 // is missing. Uses no resource or theme manager: reaching it means resources already failed.

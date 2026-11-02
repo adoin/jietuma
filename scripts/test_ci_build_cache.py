@@ -6,6 +6,7 @@ import subprocess
 import tarfile
 import tempfile
 import unittest
+from unittest.mock import patch
 from ci_build_cache import key, pack, unpack, restore_source_times, tracked_sources, trusted_run
 
 
@@ -22,9 +23,39 @@ class CacheTests(unittest.TestCase):
     def sdk(self):
         source=self.root/'exported-sdk';source.mkdir()
         for name in ['lib/cmake/Qt6/Qt6Config.cmake','lib/Qt6Core.lib','lib/Qt6Svg.lib','bin/moc.exe',
-                     'sbom/qtbase-6.11.0.spdx','sbom/qtsvg-6.11.0.spdx','sbom/qtimageformats-6.11.0.spdx']:
+                     'sbom/qtbase-6.11.0.spdx','sbom/qtsvg-6.11.0.spdx','sbom/qtimageformats-6.11.0.spdx','mkspecs/qconfig.pri']:
             path=source/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(b'test fixture only')
+        (source/'mkspecs/qconfig.pri').write_text('QT_MSVC_MAJOR_VERSION = 19\nQT_MSVC_MINOR_VERSION = 51\nQT_MSVC_PATCH_VERSION = 36260\n')
         return source
+
+    def test_incompatible_sdk_compiler_is_rejected_without_installing(self):
+        source=self.sdk();bundle=self.root/'bundle'
+        pack(source,bundle,'qt','x64','key',self.root)
+        destination=self.root/'cpp/.sdk/restored'
+        with patch('ci_build_cache.installed_msvc_version',return_value=(19,42,34435)):
+            with self.assertRaisesRegex(ValueError,'newer MSVC'):
+                unpack(bundle,destination,'qt','x64','key',self.root,require_msvc=True)
+        self.assertFalse(destination.exists())
+        with patch('ci_build_cache.installed_msvc_version',return_value=(19,51,36260)):
+            unpack(bundle,destination,'qt','x64','key',self.root,require_msvc=True)
+
+    def test_incremental_trees_preserve_outputs_but_exclude_credentials(self):
+        for kind,required in [('build','CMakeCache.txt'),('rust','target/.rustc_info.json')]:
+            source=self.root/kind;source.mkdir()
+            path=source/required;path.parent.mkdir(parents=True,exist_ok=True);path.write_text('output')
+            (source/'credentials.toml').write_text('private fixture')
+            dependency=source/'_deps/library';dependency.mkdir(parents=True)
+            subprocess.run(['git','init','-q'],cwd=dependency,check=True)
+            subprocess.run(['git','remote','add','origin','https://github.com/example/library.git'],cwd=dependency,check=True)
+            subprocess.run(['git','config','http.extraheader','private fixture'],cwd=dependency,check=True)
+            bundle=self.root/(kind+'-bundle');pack(source,bundle,kind,'x64','key',self.root)
+            destination=self.root/'cpp/build'/kind
+            unpack(bundle,destination,kind,'x64','key',self.root)
+            self.assertEqual((destination/required).read_text(),'output')
+            self.assertFalse((destination/'credentials.toml').exists())
+            config=(destination/'_deps/library/.git/config').read_text()
+            self.assertIn('https://github.com/example/library.git',config)
+            self.assertNotIn('private fixture',config)
 
     def test_qt_round_trip_and_checksum_rejection(self):
         source=self.sdk();bundle=self.root/'bundle';cache_key=key('qt','x64',root=self.root)
@@ -58,7 +89,7 @@ class CacheTests(unittest.TestCase):
             info=tarfile.TarInfo('tree/../../escape');info.size=0;archive.addfile(info)
         metadata={'schema':1,'kind':'build','arch':'x64','key':'key','qt_version':'6.11.0',
                   'workspace':os.path.normcase(str(self.root.resolve())),
-                  'payload_sha256':hashlib.sha256(payload.read_bytes()).hexdigest()}
+                  'payload_sha256':hashlib.sha256(payload.read_bytes()).hexdigest(),'sources':{}}
         (bundle/'manifest.json').write_text(json.dumps(metadata))
         destination=self.root/'cpp/build/restore'
         with self.assertRaises(ValueError):unpack(bundle,destination,'build','x64','key',self.root)
@@ -71,11 +102,13 @@ class CacheTests(unittest.TestCase):
         self.assertNotEqual(key('build','x64','MSVC-a',self.root),key('build','x64','MSVC-b',self.root))
 
     def test_only_trusted_tag_or_owner_export_runs_are_accepted(self):
-        run={'head_repository':{'id':7},'status':'completed','path':'.github/workflows/build.yml',
+        run={'head_repository':{'id':7},'status':'completed','conclusion':'success','path':'.github/workflows/build.yml',
              'event':'push','head_branch':'release-2.3.0'}
         self.assertTrue(trusted_run(run,7))
         self.assertFalse(trusted_run(run|{'event':'pull_request'},7))
         self.assertFalse(trusted_run(run,8))
+        self.assertFalse(trusted_run(run|{'conclusion':'failure'},7))
+        self.assertFalse(trusted_run(run|{'conclusion':'cancelled'},7))
         run.update(path='.github/workflows/sdk-cache-export.yml',event='workflow_dispatch',
                    head_branch='feat/plugin-ecosystem',actor={'id':3},repository={'owner':{'id':3}})
         self.assertTrue(trusted_run(run,7))

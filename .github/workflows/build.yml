@@ -26,7 +26,9 @@ jobs:
           ref: ${{ github.ref }}
 
       - name: Test Actions retention policy
-        run: python3 -m unittest discover -s scripts -p test_actions_retention.py
+        run: |
+          python3 -m unittest discover -s scripts -p test_actions_retention.py
+          python3 -m unittest discover -s scripts -p test_ci_build_cache.py
 
       - id: brand
         env:
@@ -48,12 +50,18 @@ jobs:
 
   # 轻量版和完整版：cpp/ 的 C++ 静态单 exe，完整版另内嵌 ONNX Runtime 并带默认 PP-OCR 模型
   lite:
+    permissions:
+      contents: read
+      actions: read
     needs: check-version
     uses: ./.github/workflows/lite.yml
     with:
       release_ref: ${{ github.ref }}
 
   rust-checks:
+    permissions:
+      contents: read
+      actions: read
     needs: check-version
     uses: ./.github/workflows/rust.yml
 
@@ -289,7 +297,7 @@ jobs:
       actions: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - name: Keep the latest three Actions runs
+      - name: Keep three successful and three failed runs
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/actions_retention.py --keep 3

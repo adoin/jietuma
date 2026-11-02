@@ -185,7 +185,7 @@ ctest --test-dir build\msvc -C Release --output-on-failure -E "_desktop$|_window
 
 測試程式都在臨時沙盒裡執行，不會讀寫本機的設定、剪貼簿歷史和日誌。另有分析建置（`scripts\check.ps1`：AddressSanitizer、程式碼分析、洩漏偵測）和涵蓋率（`scripts\coverage.ps1`）。
 
-[發行流程](.github/workflows/build.yml) 僅由 `release-*` 標籤觸發。Rust 測試與授權檢查、x64/ARM64 建置、安裝／升級／解除安裝煙霧測試集中在同一次執行中；一般提交與 PR 不觸發 Actions。完整 C++ 回歸、涵蓋率與舊 Python／介面對齊測試仍可在本機執行，不列為本次發行驗證。Actions 歷史保留最近 3 次。
+[發行流程](.github/workflows/build.yml) 僅由 `release-*` 標籤觸發。Rust 測試與授權檢查、x64/ARM64 建置、安裝／升級／解除安裝煙霧測試集中在同一次執行中；一般提交與 PR 不觸發 Actions。完整 C++ 回歸、涵蓋率與舊 Python／介面對齊測試仍可在本機執行，不列為本次發行驗證。Actions 歷史分別保留最近 3 次成功與 3 次失敗的執行。
 
 發行由 [build.yml](.github/workflows/build.yml) 完成：標籤必須是 `release-<VERSION 檔案裡的版本>`；[lite.yml](.github/workflows/lite.yml) 建置輕量版和完整版（x64 與 ARM64），再由發行流程按組態簽章、封裝，分別產生 `jietuma_lite-<tag>-<arch>.zip` 和 `jietuma_pp-<tag>-<arch>.zip`。
 

@@ -16,7 +16,9 @@ param(
     # the model catalog (scripts\fetch_ort_runtime.ps1); -OrtDll uses a folder's onnxruntime.dll and
     # its onnxruntime-LICENSE.txt / onnxruntime-ThirdPartyNotices.txt instead.
     [switch]$Full,
-    [string]$OrtDll = ''
+    [string]$OrtDll = '',
+    # CI builds both editions sequentially in one architecture-specific tree.
+    [string]$BuildDirectory = ''
 )
 if ($Arch -eq 'arm64' -and -not $Static) { throw 'ARM64 is built only as the single file: add -Static.' }
 if ($Full -and -not $Static) { throw 'The full package is the single file: add -Static.' }
@@ -39,6 +41,17 @@ if ($Arch -eq 'arm64' -and -not (& $vswhere -latest -products '*' -requires Micr
 }
 Import-Module (Join-Path $vsRoot 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
 Enter-VsDevShell -VsInstallPath $vsRoot -SkipAutomaticLocation -DevCmdArguments "-arch=$Arch -host_arch=x64" | Out-Null
+if ($Static) {
+    $qtConfig=Get-Content -LiteralPath (Join-Path $QtRoot 'mkspecs/qconfig.pri') -Raw
+    $requiredParts=@('MAJOR','MINOR','PATCH') | ForEach-Object {
+        if ($qtConfig -notmatch "(?m)^QT_MSVC_$($_)_VERSION\s*=\s*(\d+)") { throw 'Static Qt compiler metadata is missing.' }
+        $Matches[1]
+    }
+    $requiredCompiler=[Version]($requiredParts -join '.')
+    $compilerInfo=[Diagnostics.FileVersionInfo]::GetVersionInfo((Get-Command cl.exe).Source)
+    $currentCompiler=[Version]::new($compilerInfo.FileMajorPart,$compilerInfo.FileMinorPart,$compilerInfo.FileBuildPart)
+    if ($currentCompiler -lt $requiredCompiler) { throw "Static Qt requires MSVC $requiredCompiler or newer; found $currentCompiler." }
+}
 $cmake = Join-Path $vsRoot 'Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe'
 $ctest = Join-Path (Split-Path $cmake -Parent) 'ctest.exe'
 $vsVersion = (& $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationVersion).Split('.')[0]
@@ -47,6 +60,9 @@ $generator = if ($vsVersion -eq '18') { 'Visual Studio 18 2026' } else { 'Visual
 # local Chinese-only compiler made Ninja's detected prefix unusable.
 $suffix = if ($Full) { '-full' } else { '' }
 $buildDir = Join-Path $projectRoot $(if ($Arch -eq 'arm64') { "build\static-arm64$suffix" } elseif ($Static) { "build\static$suffix" } else { 'build\msvc' })
+if ($BuildDirectory) {
+    $buildDir = [IO.Path]::GetFullPath($(if ([IO.Path]::IsPathRooted($BuildDirectory)) { $BuildDirectory } else { Join-Path $projectRoot $BuildDirectory }))
+}
 # Configuration, compilation and deployment share mutable files in this directory.
 New-Item -ItemType Directory -Path $buildDir -Force | Out-Null
 try {
@@ -73,7 +89,8 @@ if ($Static) {
 if ($Arch -eq 'arm64') { $configureArgs += "-DQT_HOST_PATH=$hostQt" }
 $ortPath = ''
 if ($Full) {
-    $ortPath = if ($OrtDll) { (Resolve-Path -LiteralPath $OrtDll).Path } else { & (Join-Path $PSScriptRoot 'fetch_ort_runtime.ps1') -Arch $Arch -OutDir (Join-Path $projectRoot "build\ort\$Arch") }
+    $ortDirectory = if ($BuildDirectory) { Join-Path $buildDir 'ort' } else { Join-Path $projectRoot "build\ort\$Arch" }
+    $ortPath = if ($OrtDll) { (Resolve-Path -LiteralPath $OrtDll).Path } else { & (Join-Path $PSScriptRoot 'fetch_ort_runtime.ps1') -Arch $Arch -OutDir $ortDirectory }
     foreach ($name in 'onnxruntime-LICENSE.txt', 'onnxruntime-ThirdPartyNotices.txt') {
         if (-not (Test-Path -LiteralPath (Join-Path (Split-Path $ortPath -Parent) $name))) { throw "$name must be beside $ortPath; the full package ships ONNX Runtime." }
     }
