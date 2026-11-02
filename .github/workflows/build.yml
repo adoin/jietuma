@@ -4,15 +4,13 @@ on:
   push:
     tags:
       - "release-*"
-  workflow_dispatch:
-    inputs:
-      release_tag:
-        description: "Retry packaging an existing release-<VERSION> tag"
-        required: true
-        type: string
 
 permissions:
   contents: read
+
+concurrency:
+  group: jietuma-tagged-release
+  cancel-in-progress: false
 
 jobs:
   # 标签必须等于 release-<VERSION 文件里的版本>；放在最前面，标签写错时不必等编完才发现
@@ -25,18 +23,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          ref: ${{ inputs.release_tag || github.ref }}
+          ref: ${{ github.ref }}
+
+      - name: Test Actions retention policy
+        run: python3 -m unittest discover -s scripts -p test_actions_retention.py
 
       - id: brand
         env:
-          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           echo "name=$(python3 -c 'import json; print(json.load(open("branding.json"))["name"])')" >> "$GITHUB_OUTPUT"
           echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Check tag matches VERSION
         env:
-          REF_NAME: ${{ inputs.release_tag || github.ref_name }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           expected="release-$(tr -d '[:space:]' < VERSION)"
           if [ "$REF_NAME" != "$expected" ]; then
@@ -50,10 +51,14 @@ jobs:
     needs: check-version
     uses: ./.github/workflows/lite.yml
     with:
-      release_ref: ${{ inputs.release_tag || github.ref }}
+      release_ref: ${{ github.ref }}
+
+  rust-checks:
+    needs: check-version
+    uses: ./.github/workflows/rust.yml
 
   package:
-    needs: [lite, check-version]
+    needs: [lite, check-version, rust-checks]
     env:
       PACKAGE_FULL: ${{ needs.check-version.outputs.brand }}_pp
       PACKAGE_LITE: ${{ needs.check-version.outputs.brand }}_lite
@@ -71,7 +76,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          ref: ${{ inputs.release_tag || github.ref }}
+          ref: ${{ github.ref }}
 
       # 更新器按品牌配置生成的包名匹配，models/ 留在原处。
       - name: Download full build
@@ -220,7 +225,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          ref: ${{ inputs.release_tag || github.ref }}
+          ref: ${{ github.ref }}
 
       - name: Download installer
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
@@ -237,7 +242,7 @@ jobs:
 
   release:
     needs: [package, check-version, smoke-installer]
-    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-')) || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/release-'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -245,7 +250,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
-          ref: ${{ inputs.release_tag || github.ref }}
+          ref: ${{ github.ref }}
 
       - name: Download release artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
@@ -274,3 +279,17 @@ jobs:
           tag_name: ${{ needs.check-version.outputs.tag }}
           generate_release_notes: true
           draft: false
+
+  cleanup:
+    needs: [check-version, lite, rust-checks, package, smoke-installer, release]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Keep the latest three Actions runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/actions_retention.py --keep 3

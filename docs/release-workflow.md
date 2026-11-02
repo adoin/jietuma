@@ -47,6 +47,10 @@ git push origin release-2.2.4
 
 安装包与程序共用 `branding.json` 和 `VERSION`。如果启用 SignPath 签名，还需配置 `SIGNPATH_INSTALLER_ARTIFACT_CONFIGURATION` 指向安装包对应的签名配置；不配置签名策略时生成的安装包未签名。
 
-不要覆盖、移动或强推已有标签。单独的 `lite.yml` 可手动构建测试制品，但不创建 Release。插件仓库使用 `v<版本>` 标签，详见插件仓库文档。
+不要覆盖、移动或强推已有标签。所有云端入口仅由版本标签触发，普通分支提交、PR、定时任务和手动分支构建不触发。`lite.yml` 与 `rust.yml` 仅供主发布工作流复用，不单独产生 runs；上游的独立 C++ 覆盖率工作流已移除，完整回归与旧 Python 对齐测试保留为本地诊断。
 
-若标签推送未触发 Actions，可从主分支手动重试已有标签：`gh workflow run build.yml --ref main -f release_tag=release-2.2.4`。入口会核对标签确实存在且等于其代码中的 `release-<VERSION>`；所有构建、打包和检查仍检出该标签，不把工作流分支的应用代码混入发布包。
+主项目标签为 `release-<VERSION>`；插件仓库支持批量 `v<批次版本>` 和独立插件 `<插件ID>/v<版本>`，详见插件仓库文档。失败后在原 tag run 上使用 GitHub 的 Re-run jobs，或 `gh run rerun <run-id> --failed`，不用创建分支构建。
+
+每个仓库总共保留最近 3 条 Actions 运行记录。清理是发布工作流中的收尾 job，即使构建失败也执行；不会删除当前运行、尚未结束的运行、Git 标签、Release 或其发布附件。运行中的保护可能短暂保留额外记录，后续完成时继续清理。
+
+后续吸收官方更新时，保留本分支仅标签触发的策略，不恢复上游的分支 push 或 PR 检查入口。`scripts/test_actions_retention.py` 同时检查运行保留规则与单一 tag 入口。

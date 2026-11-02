@@ -1,4 +1,5 @@
 #include "ocr/bundled_runtime.h"
+#include "core/brand_config.h"
 #include "ocr/ocr_manager.h"
 #include "ocr/ppocr_models.h"
 #include <QCoreApplication>
@@ -125,7 +126,7 @@ private slots:
 
     void theFallbackIsDefaultedUnderLocalAppData() {
         const QString fallback = QDir::fromNativeSeparators(ppocr_models::fallback_runtime_path());
-        QVERIFY(fallback.startsWith(QDir::fromNativeSeparators(qEnvironmentVariable("LOCALAPPDATA")) + "/Jietuba/runtime/"));
+        QVERIFY(fallback.startsWith(QDir::fromNativeSeparators(qEnvironmentVariable("LOCALAPPDATA")) + QStringLiteral("/" JTM_DISPLAY_NAME "/runtime/")));
         QVERIFY(fallback.endsWith("/onnxruntime.dll"));
     }
 

@@ -6,7 +6,7 @@
 
 **Windows 向けスクリーンショット・画面描画・OCR・ピン留め・翻訳・クリップボードツール**
 
-[![build](https://img.shields.io/github/actions/workflow/status/adoin/jietuma/cpp.yml?branch=main&label=build&style=flat-square)](https://github.com/adoin/jietuma/actions/workflows/cpp.yml) [![license](https://img.shields.io/github/license/adoin/jietuma?style=flat-square)](LICENSE) [![release](https://img.shields.io/github/v/release/adoin/jietuma?style=flat-square)](https://github.com/adoin/jietuma/releases/latest) ![platform](https://img.shields.io/badge/Windows-x64%20%7C%20ARM64-0078D4?style=flat-square)
+[![build](https://img.shields.io/github/actions/workflow/status/adoin/jietuma/build.yml?label=release&style=flat-square)](https://github.com/adoin/jietuma/actions/workflows/build.yml) [![license](https://img.shields.io/github/license/adoin/jietuma?style=flat-square)](LICENSE) [![release](https://img.shields.io/github/v/release/adoin/jietuma?style=flat-square)](https://github.com/adoin/jietuma/releases/latest) ![platform](https://img.shields.io/badge/Windows-x64%20%7C%20ARM64-0078D4?style=flat-square)
 
 [Windows 版をダウンロード](https://github.com/adoin/jietuma/releases/latest) · [ソースからビルド](#source-setup) · [開発とテスト](#development)
 
@@ -186,7 +186,7 @@ ctest --test-dir build\msvc -C Release --output-on-failure -E "_desktop$|_window
 
 テストプログラムは一時的なサンドボックスで動作し、お使いの設定、クリップボード履歴、ログを読み書きしません。ほかに分析ビルド（`scripts\check.ps1`：AddressSanitizer、コード分析、リーク検出）とカバレッジ（`scripts\coverage.ps1`）があります。
 
-[C++ CI](.github/workflows/cpp.yml) はドキュメントのみのプルリクエストではビルドを省略し、それ以外ではビルド、オフスクリーンテストと行カバレッジの確認を行います。デスクトップテストは別に実行し、その失敗はこのチェックをブロックしません。`rust_libs/` の変更時は [Rust CI](.github/workflows/rust.yml) が Rust の単体テストとサードパーティライセンスの再確認を行います。
+[リリースワークフロー](.github/workflows/build.yml) は `release-*` タグでのみ開始します。Rust テストとライセンス確認、x64/ARM64 ビルド、インストール・更新・アンインストールのスモークテストを一つの実行にまとめます。通常のコミットと PR では実行しません。完全な C++ 回帰・カバレッジと旧 Python/UI 比較はローカル診断として利用できます。履歴は最新 3 件を保持します。
 
 リリースは [build.yml](.github/workflows/build.yml) で行い、タグは `release-<VERSION ファイルのバージョン>` とします。[lite.yml](.github/workflows/lite.yml) が x64 と ARM64 の軽量版・完全版をビルドし、リリース処理が設定に応じて署名・パッケージ化して、`jietuma_lite-<tag>-<arch>.zip` と `jietuma_pp-<tag>-<arch>.zip` を作成します。
 

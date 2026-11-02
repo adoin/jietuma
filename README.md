@@ -6,7 +6,7 @@
 
 **Screenshot, Screen Drawing, OCR, Pin, Translation & Clipboard Tool for Windows**
 
-[![build](https://img.shields.io/github/actions/workflow/status/adoin/jietuma/cpp.yml?branch=main&label=build&style=flat-square)](https://github.com/adoin/jietuma/actions/workflows/cpp.yml) [![license](https://img.shields.io/github/license/adoin/jietuma?style=flat-square)](LICENSE) [![release](https://img.shields.io/github/v/release/adoin/jietuma?style=flat-square)](https://github.com/adoin/jietuma/releases/latest) ![platform](https://img.shields.io/badge/Windows-x64%20%7C%20ARM64-0078D4?style=flat-square)
+[![build](https://img.shields.io/github/actions/workflow/status/adoin/jietuma/build.yml?label=release&style=flat-square)](https://github.com/adoin/jietuma/actions/workflows/build.yml) [![license](https://img.shields.io/github/license/adoin/jietuma?style=flat-square)](LICENSE) [![release](https://img.shields.io/github/v/release/adoin/jietuma?style=flat-square)](https://github.com/adoin/jietuma/releases/latest) ![platform](https://img.shields.io/badge/Windows-x64%20%7C%20ARM64-0078D4?style=flat-square)
 
 [Download for Windows](https://github.com/adoin/jietuma/releases/latest) · [Build from Source](#source-setup) · [Development and Tests](#development)
 
@@ -186,7 +186,7 @@ ctest --test-dir build\msvc -C Release --output-on-failure -E "_desktop$|_window
 
 The test programs run in a temporary sandbox and never read or write your own settings, clipboard history or logs. There are also analysis builds (`scripts\check.ps1`: AddressSanitizer, code analysis, leak detection) and coverage (`scripts\coverage.ps1`).
 
-[C++ CI](.github/workflows/cpp.yml) skips compilation for documentation-only pull requests; otherwise it builds, runs offscreen tests and checks line coverage. Desktop tests run separately and their failures do not block that check. When `rust_libs/` changes, [Rust CI](.github/workflows/rust.yml) runs Rust unit tests and rechecks third-party notices.
+The [tagged release pipeline](.github/workflows/build.yml) starts only for `release-*` tags. Rust tests and license checks, x64/ARM64 builds, and installation/upgrade/uninstall smoke tests run inside that single workflow. Full C++ regression and coverage tools remain available locally; the archived Python parity and UI diagnostics are not claimed as release checks. Only the latest three Actions runs are retained.
 
 Releases are made by [build.yml](.github/workflows/build.yml): the tag must be `release-<version in the VERSION file>`. [lite.yml](.github/workflows/lite.yml) builds Lite and Full for x64 and ARM64; the release workflow signs them when configured and packages them as `jietuma_lite-<tag>-<arch>.zip` and `jietuma_pp-<tag>-<arch>.zip`.
 

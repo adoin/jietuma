@@ -1,4 +1,5 @@
 #include "core/constants.h"
+#include "core/brand_config.h"
 #include "core/logger.h"
 #include "settings/tool_settings.h"
 #include <QCoreApplication>
@@ -93,7 +94,7 @@ private slots:
         set_console_log_level(LogLevel::Error);
         log_debug("now visible");
         const auto text = read_all(log_path_);
-        QVERIFY(text.contains("Jietuba"));
+        QVERIFY(text.contains(QString::fromUtf8(JTM_DISPLAY_NAME)));
         QVERIFY(!text.contains("hidden 1"));
         QVERIFY2(text.contains("[INFO] [Test] shown 42 FF -1a 1.00"), qPrintable(text.right(800)));
         QVERIFY(text.contains("[WARNING] plain warning"));

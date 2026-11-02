@@ -6,7 +6,7 @@
 
 **Windows 스크린샷, 화면 그리기, OCR, 고정, 번역 및 클립보드 도구**
 
-[![build](https://img.shields.io/github/actions/workflow/status/adoin/jietuma/cpp.yml?branch=main&label=build&style=flat-square)](https://github.com/adoin/jietuma/actions/workflows/cpp.yml) [![license](https://img.shields.io/github/license/adoin/jietuma?style=flat-square)](LICENSE) [![release](https://img.shields.io/github/v/release/adoin/jietuma?style=flat-square)](https://github.com/adoin/jietuma/releases/latest) ![platform](https://img.shields.io/badge/Windows-x64%20%7C%20ARM64-0078D4?style=flat-square)
+[![build](https://img.shields.io/github/actions/workflow/status/adoin/jietuma/build.yml?label=release&style=flat-square)](https://github.com/adoin/jietuma/actions/workflows/build.yml) [![license](https://img.shields.io/github/license/adoin/jietuma?style=flat-square)](LICENSE) [![release](https://img.shields.io/github/v/release/adoin/jietuma?style=flat-square)](https://github.com/adoin/jietuma/releases/latest) ![platform](https://img.shields.io/badge/Windows-x64%20%7C%20ARM64-0078D4?style=flat-square)
 
 [Windows용 다운로드](https://github.com/adoin/jietuma/releases/latest) · [소스에서 빌드](#source-setup) · [개발 및 테스트](#development)
 
@@ -185,7 +185,7 @@ ctest --test-dir build\msvc -C Release --output-on-failure -E "_desktop$|_window
 
 테스트 프로그램은 모두 임시 샌드박스에서 실행되며 이 PC의 설정, 클립보드 히스토리, 로그를 읽거나 쓰지 않습니다. 분석 빌드(`scripts\check.ps1`: AddressSanitizer, 코드 분석, 누수 감지)와 커버리지(`scripts\coverage.ps1`)도 있습니다.
 
-[C++ CI](.github/workflows/cpp.yml)는 문서만 수정한 PR의 빌드를 건너뛰며 다른 PR에서 빌드하고 오프스크린 테스트를 실행하며 라인 커버리지를 확인합니다. 데스크톱 테스트는 별도로 실행되며 실패해도 이 검사를 막지 않습니다. `rust_libs/`를 수정하면 [Rust CI](.github/workflows/rust.yml)가 Rust 단위 테스트를 실행하고 서드파티 라이선스를 재확인합니다.
+[릴리스 워크플로](.github/workflows/build.yml)는 `release-*` 태그에서만 시작합니다. Rust 테스트와 라이선스 검사, x64/ARM64 빌드, 설치·업그레이드·제거 스모크 테스트를 하나의 실행에 모읍니다. 일반 커밋과 PR은 Actions를 시작하지 않습니다. 전체 C++ 회귀·커버리지 및 이전 Python/UI 비교는 로컬 진단으로 남겨 둡니다. 최근 실행 기록 3개를 보관합니다.
 
 릴리스는 [build.yml](.github/workflows/build.yml)이 수행합니다. 태그는 반드시 `release-<VERSION 파일의 버전>`이어야 합니다. [lite.yml](.github/workflows/lite.yml)은 라이트 버전과 풀 버전(x64 및 ARM64)을 빌드하고, 릴리스 워크플로가 구성에 따라 서명하고 패키징하여 `jietuma_lite-<tag>-<arch>.zip`과 `jietuma_pp-<tag>-<arch>.zip`을 생성합니다.
 

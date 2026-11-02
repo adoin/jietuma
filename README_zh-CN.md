@@ -6,7 +6,7 @@
 
 **Windows 截图、屏幕绘制、OCR、钉图、翻译与剪贴板工具**
 
-[![build](https://img.shields.io/github/actions/workflow/status/adoin/jietuma/cpp.yml?branch=main&label=build&style=flat-square)](https://github.com/adoin/jietuma/actions/workflows/cpp.yml) [![license](https://img.shields.io/github/license/adoin/jietuma?style=flat-square)](LICENSE) [![release](https://img.shields.io/github/v/release/adoin/jietuma?style=flat-square)](https://github.com/adoin/jietuma/releases/latest) ![platform](https://img.shields.io/badge/Windows-x64%20%7C%20ARM64-0078D4?style=flat-square)
+[![build](https://img.shields.io/github/actions/workflow/status/adoin/jietuma/build.yml?label=release&style=flat-square)](https://github.com/adoin/jietuma/actions/workflows/build.yml) [![license](https://img.shields.io/github/license/adoin/jietuma?style=flat-square)](LICENSE) [![release](https://img.shields.io/github/v/release/adoin/jietuma?style=flat-square)](https://github.com/adoin/jietuma/releases/latest) ![platform](https://img.shields.io/badge/Windows-x64%20%7C%20ARM64-0078D4?style=flat-square)
 
 [下载 Windows 版](https://github.com/adoin/jietuma/releases/latest) · [从源码构建](#source-setup) · [开发与测试](#development)
 
@@ -186,7 +186,7 @@ ctest --test-dir build\msvc -C Release --output-on-failure -E "_desktop$|_window
 
 测试程序都在临时沙盒里运行，不会读写本机的设置、剪贴板历史和日志。另有分析构建（`scripts\check.ps1`：AddressSanitizer、代码分析、泄漏检测）和覆盖率（`scripts\coverage.ps1`）。
 
-[C++ CI](.github/workflows/cpp.yml) 对仅修改文档的 PR 跳过编译；其他 PR 编译、运行离屏测试并检查行覆盖率；桌面测试另行运行，其失败不阻断该检查。改到 `rust_libs/` 时，[Rust CI](.github/workflows/rust.yml) 运行 Rust 单元测试并复查第三方许可。
+[发布流水线](.github/workflows/build.yml) 仅由 `release-*` 标签触发。Rust 测试和许可检查、x64/ARM64 构建、安装／升级／卸载烟测集中在同一次运行中；普通提交和 PR 不触发 Actions。完整 C++ 回归、覆盖率及旧 Python／界面对齐测试仍可本地运行，不作为本次发布流水线的验证结果。Actions 历史保留最近 3 次。
 
 发行由 [build.yml](.github/workflows/build.yml) 完成：标签必须是 `release-<VERSION 文件里的版本>`；[lite.yml](.github/workflows/lite.yml) 构建轻量版和完整版（x64 与 ARM64），再由发布流程按配置签名、打包，分别生成 `jietuma_lite-<tag>-<arch>.zip` 和 `jietuma_pp-<tag>-<arch>.zip`。
 
