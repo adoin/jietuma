@@ -274,6 +274,45 @@ pub fn set_clipboard_text(text: &str) -> Result<(), String> {
     }
 }
 
+/// A bounded, self-contained set of named formats supplied by an installed plugin.
+pub fn set_clipboard_formats(json: &str) -> Result<(), String> {
+    use base64::Engine;
+    if json.len()>8*1024*1024 {return Err("Clipboard payload too large".into());}
+    let value:serde_json::Value=serde_json::from_str(json).map_err(|e|e.to_string())?;
+    #[cfg(target_os="windows")]
+    {
+        let mut formats=Vec::new();let mut total=0usize;
+        if let Some(text)=value["text"].as_str() {
+            if text.contains('\0') {return Err("Invalid clipboard text".into());}
+            let bytes=win_clipboard::encode_unicode(text);total+=bytes.len();formats.push((win_clipboard::CF_UNICODETEXT,bytes));
+        }
+        if let Some(raw)=value["formats_base64"].as_object() {
+            if raw.len()>8 {return Err("Too many clipboard formats".into());}
+            for(name,encoded) in raw {
+                // No process-specific OLE/handle payloads or reserved numeric formats.
+                if name.len()>128 || name.starts_with("CF_") || !capture_extra_format(name) {return Err("Unsupported writable clipboard format".into());}
+                let bytes=base64::engine::general_purpose::STANDARD.decode(encoded.as_str().ok_or("Invalid base64")?).map_err(|e|e.to_string())?;
+                total+=bytes.len();formats.push((win_clipboard::register_format(name),bytes));
+            }
+        }
+        if formats.is_empty() || total>4*1024*1024 {return Err("Invalid clipboard payload size".into());}
+        if !win_clipboard::write(&formats) {return Err("Clipboard is busy".into());}
+        mark_own_clipboard_write();Ok(())
+    }
+    #[cfg(not(target_os="windows"))]
+    {let _=value;Err("Windows clipboard required".into())}
+}
+
+#[cfg(all(test,target_os="windows"))]
+mod plugin_format_tests {
+    #[test]
+    fn invalid_plugin_payloads_are_rejected_before_touching_the_clipboard() {
+        for input in [r#"{}"#,r#"{"text":"bad\u0000text"}"#,r#"{"formats_base64":{"Link Source":"AA=="}}"#,r#"{"formats_base64":{"XML Spreadsheet":"not base64"}}"#] {
+            assert!(super::set_clipboard_formats(input).is_err());
+        }
+    }
+}
+
 /// 获取剪贴板图片（返回 PNG 字节）
 pub fn get_clipboard_image() -> Result<Option<Vec<u8>>, String> {
     use clipboard_rs::{Clipboard, ClipboardContext, common::RustImage};

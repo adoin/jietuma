@@ -4,6 +4,7 @@
 #include "plugins/extension_host.h"
 #include "plugins/plugin_manager_dialog.h"
 #include "plugins/plugin_actions.h"
+#include "plugins/clipboard_extensions.h"
 #include "plugins/plugin_filters.h"
 #include "plugins/plugin_backup.h"
 #include "plugins/plugin_metadata.h"
@@ -28,7 +29,11 @@
 #include <QBuffer>
 #include <QDesktopServices>
 #include <QDialog>
+#include <QDialogButtonBox>
+#include <QCheckBox>
+#include <QSpinBox>
 #include <QFile>
+#include <QFontDatabase>
 #include <QListWidget>
 #include <QPainter>
 #include <QPlainTextEdit>
@@ -129,6 +134,9 @@ class ClipboardWidgetTests : public QObject {
 
 private slots:
     void initTestCase() {
+        // The offscreen platform does not discover Windows fonts automatically.
+        const int font=QFontDatabase::addApplicationFont(qEnvironmentVariable("WINDIR","C:/Windows")+"/Fonts/msyh.ttc");
+        if(font>=0 && !QFontDatabase::applicationFontFamilies(font).isEmpty()) QApplication::setFont(QFont(QFontDatabase::applicationFontFamilies(font).first()));
         QVERIFY(env_.init(this));
         QDesktopServices::setUrlHandler("file", &urls_, "open");
     }
@@ -682,7 +690,7 @@ private slots:
         preview->show_preview(make_item(3, "file", file_payload({"C:\\docs\\a.txt"})), QPoint(10, 10), 0);
         QTRY_COMPARE(preview->content_widget->toPlainText(), QString("a.txt\n\nC:\\docs\\a.txt"));
         // The window is as big as what it shows, not stretched to a window's usual 200 x 100.
-        QTRY_VERIFY(preview->width() < 200 && preview->height() < 100);
+        QTRY_VERIFY2(preview->width() < 200 && preview->height() < 100,qPrintable(QString("popup %1x%2; body %3x%4; scale %5").arg(preview->width()).arg(preview->height()).arg(preview->content_widget->width()).arg(preview->content_widget->height()).arg(get_ui_scale().percent())));
         QCOMPARE(preview->size(), preview->layout()->sizeHint());
         preview->show_preview(make_item(4, "file", file_payload({"C:\\docs\\a.txt", "C:\\docs\\b.txt"})), QPoint(10, 10), 0);
         QCOMPARE(preview->content_widget->toPlainText(), QString("a.txt\nb.txt\n\nC:\\docs"));
@@ -965,6 +973,56 @@ private slots:
         QVERIFY(!output);
         QVERIFY(jietuba::plugins::set_plugin_enabled("json-pretty", false, dir.path()));
         QVERIFY(jietuba::plugins::action_plugins(item, dir.path()).isEmpty());
+    }
+    void realCodePluginMarksAnAdditionalTypeWithoutChangingText() {
+        const auto package=qEnvironmentVariable("JIETUMA_TEST_CODE_PACKAGE");if(package.isEmpty()) QSKIP("No code plugin package supplied");
+        QTemporaryDir root;QVERIFY(root.isValid());const auto installed=jietuba::plugins::install_plugin_package(package,root.path());QVERIFY2(installed.ok,qPrintable(installed.error));
+        auto &manager=ClipboardManager::instance();const auto id=manager.add_item("def answer():\n    return 42\n");QVERIFY(id);
+        const auto item=manager.get_item(*id);QVERIFY(item);
+        const auto types=jietuba::plugins::clipboard_types(root.path());QCOMPARE(types.size(),1);QCOMPARE(types.first().key,QString("plugin:code-highlight:code"));
+        QMenu menu;int changed=0;jietuba::plugins::add_item_choices(&menu,*item,manager,[&]{++changed;},root.path());
+        QVERIFY(!menu.actions().isEmpty());auto *choices=menu.actions().first()->menu();QVERIFY(choices);
+        QAction *python=nullptr;for(auto *action:choices->actions()) if(action->text()=="Python") python=action;QVERIFY(python);python->trigger();QCOMPARE(changed,1);
+        const auto metadata=manager.plugin_metadata(*id,"code-highlight");QCOMPARE(metadata.value("language").toString(),QString("python"));QVERIFY(metadata.value("types").toArray().contains("code"));
+        QCOMPARE(manager.get_item(*id)->content_type,QString("text"));QCOMPARE(manager.get_item(*id)->content,item->content);
+        const auto preview=resolve_preview(*item,manager,root.path());QVERIFY(preview);QVERIFY(preview->kind==PreviewContent::Kind::Html);QVERIFY(preview->text.contains("color:#"));
+        if(const auto output=qEnvironmentVariable("JIETUMA_EXTENSION_VISUAL_DIR");!output.isEmpty()) {QDir().mkpath(output);TextEdit editor;editor.setHtml(preview->text);editor.resize(600,300);editor.show();QApplication::processEvents();QVERIFY(editor.grab().save(output+"/code-preview.png"));}
+        QVERIFY(jietuba::plugins::save_plugin_config("code-highlight",QJsonObject{{"line_numbers",false},{"theme","dark"}},root.path()));
+        const auto config=jietuba::plugins::read_plugin_config("code-highlight",root.path());QVERIFY(config.value("line_numbers").isBool());QCOMPARE(config.value("theme").toString(),QString("dark"));
+    }
+    void realSpreadsheetPluginProducesTypedPastePayloads() {
+        const auto package=qEnvironmentVariable("JIETUMA_TEST_SPREADSHEET_PACKAGE");if(package.isEmpty()) QSKIP("No spreadsheet plugin package supplied");
+        QTemporaryDir root;QVERIFY(root.isValid());const auto installed=jietuba::plugins::install_plugin_package(package,root.path());QVERIFY2(installed.ok,qPrintable(installed.error));
+        auto &manager=ClipboardManager::instance();const auto id=manager.add_item("name\tvalue\nitem\t42");QVERIFY(id);const auto item=manager.get_item(*id);QVERIFY(item);
+        const auto preview=resolve_preview(*item,manager,root.path());QVERIFY(preview);QVERIFY(preview->text.contains("<table"));
+        if(const auto output=qEnvironmentVariable("JIETUMA_EXTENSION_VISUAL_DIR");!output.isEmpty()) {QDir().mkpath(output);TextEdit editor;editor.setHtml(preview->text);editor.resize(600,300);editor.show();QApplication::processEvents();QVERIFY(editor.grab().save(output+"/spreadsheet-preview.png"));}
+        const auto actions=jietuba::plugins::action_plugins(*item,root.path());QCOMPARE(actions.size(),5);
+        QObject context;bool done=false;std::optional<QJsonObject> result;
+        QVERIFY(jietuba::plugins::run_action_payload("spreadsheet.values",*item,manager,&context,[&](std::optional<QJsonObject> value){result=value;done=true;},root.path()));
+        QTRY_VERIFY_WITH_TIMEOUT(done,7000);QVERIFY(result);QCOMPARE(result->value("kind").toString(),QString("clipboard"));
+        const auto raw=QByteArray::fromBase64(result->value("data").toObject().value("formats_base64").toObject().value("XML Spreadsheet").toString().toLatin1());
+        QVERIFY(raw.contains("<Table>"));QVERIFY(raw.contains("42"));QVERIFY(!raw.contains("ss:Formula="));
+    }
+    void realPluginSettingsUseTypedEditorsAndPersist() {
+        const auto package=qEnvironmentVariable("JIETUMA_TEST_CODE_PACKAGE");if(package.isEmpty()) QSKIP("No code plugin package supplied");
+        QTemporaryDir root;QVERIFY(root.isValid());const auto installed=jietuba::plugins::install_plugin_package(package,root.path());QVERIFY2(installed.ok,qPrintable(installed.error));
+        QWidget host;bool edited=false;
+        QTimer::singleShot(0,&host,[&] {
+            auto *manager=qobject_cast<QDialog *>(QApplication::activeModalWidget());if(!manager) return;
+            if(auto *list=manager->findChild<QListWidget *>("pluginList")) list->setCurrentRow(0);
+            auto *settings=manager->findChild<QPushButton *>("pluginSettings");if(!settings) {manager->reject();return;}
+            QTimer::singleShot(0,manager,[&] {
+                auto *dialog=qobject_cast<QDialog *>(QApplication::activeModalWidget());if(!dialog) return;
+                auto *theme=dialog->findChild<QComboBox *>("pluginSetting_theme");auto *lines=dialog->findChild<QCheckBox *>("pluginSetting_line_numbers");auto *limit=dialog->findChild<QSpinBox *>("pluginSetting_max_lines");
+                auto *buttons=dialog->findChild<QDialogButtonBox *>();
+                if(!theme || !lines || !limit || !buttons || theme->findData(QString("dark"))<0) {dialog->reject();return;}
+                theme->setCurrentIndex(theme->findData(QString("dark")));lines->setChecked(false);limit->setValue(17);edited=true;buttons->button(QDialogButtonBox::Save)->click();
+            });
+            settings->click();manager->accept();
+        });
+        jietuba::plugins::show_plugin_manager(&host,root.path());QVERIFY(edited);
+        const auto config=jietuba::plugins::read_plugin_config("code-highlight",root.path());
+        QCOMPARE(config.value("theme").toString(),QString("dark"));QVERIFY(config.value("line_numbers").isBool());QVERIFY(!config.value("line_numbers").toBool());QCOMPARE(config.value("max_lines").toInt(),17);
     }
 
     void realCaptureFilterRunsBeforeStorageFromWorkerThread() {
@@ -1297,6 +1355,26 @@ private slots:
         QVERIFY(!preview->color_label->isVisible());
         QCOMPARE(preview->content_widget->toPlainText(), QString("ordinary text"));
         preview->set_display_enabled(false);
+    }
+    void textHoverPreviewHasAnOpaqueThemedBackground_data() {
+        QTest::addColumn<QString>("theme");
+        QTest::newRow("light")<<QString("light");QTest::newRow("dark")<<QString("dark");
+    }
+    void textHoverPreviewHasAnOpaqueThemedBackground() {
+        QFETCH(QString,theme);
+        const auto old=get_theme_manager()->get_current_theme().name;
+        auto *preview=PreviewPopup::instance();preview->force_cleanup();
+        const auto restore=qScopeGuard([&]{preview->set_display_enabled(false);get_theme_manager()->set_theme(old);});
+        QVERIFY(get_theme_manager()->set_theme(theme));preview->set_display_enabled(true);
+        preview->show_preview(make_item(994,"text","Visible preview text\nA second line"),QPoint(100,100),0);
+        QApplication::processEvents();QVERIFY(preview->isVisible());
+        const auto pixels=preview->grab().toImage();QVERIFY(pixels.width()>20 && pixels.height()>20);
+        for(int y=10;y<pixels.height()-10;y+=4) for(int x=10;x<pixels.width()-10;x+=4) QCOMPARE(pixels.pixelColor(x,y).alpha(),255);
+        const QColor background=pixels.pixelColor(pixels.width()/2,pixels.height()-3);
+        QCOMPARE(background.alpha(),255);QCOMPARE(preview->windowOpacity(),1.0);
+        QVERIFY(theme=="dark"?background.lightness()<100:background.lightness()>200);
+        const auto output=qEnvironmentVariable("JIETUMA_PREVIEW_VISUAL_DIR");
+        if(!output.isEmpty()) {QDir().mkpath(output);QVERIFY(pixels.save(output+"/preview-"+theme+".png"));}
     }
 
     void sidePositionsAvoidTheWindowAndStayOnScreen() {

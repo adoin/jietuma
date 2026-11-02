@@ -55,6 +55,11 @@ pub struct FilterRule {
 const CONTENT_KINDS: [&str; 4] = ["text", "image", "file", "custom"];
 const TEXT_SUB_KINDS: [&str; 3] = [text_kind::URL, text_kind::COLOR, text_kind::PATH];
 const FILE_KIND_PREFIX: &str = "file:";
+fn plugin_kind(kind:&str)->Option<(&str,&str)> {
+    let (plugin,facet)=kind.strip_prefix("plugin:")?.split_once(':')?;
+    let valid=|s:&str| !s.is_empty() && s.len()<=64 && s.bytes().all(|b|b.is_ascii_lowercase() || b.is_ascii_digit() || b"._-".contains(&b));
+    (valid(plugin)&&valid(facet)).then_some((plugin,facet))
+}
 
 /// 规则里的 `file:<子类型>` 对应的文件子类型
 fn file_sub_kind(kind: &str) -> Option<&str> {
@@ -96,7 +101,7 @@ impl FilterRule {
 
     pub fn check(&self) -> Result<(), String> {
         if let Some(kind) = &self.kind {
-            if !CONTENT_KINDS.contains(&kind.as_str()) && !TEXT_SUB_KINDS.contains(&kind.as_str()) && file_sub_kind(kind).is_none() {
+            if !CONTENT_KINDS.contains(&kind.as_str()) && !TEXT_SUB_KINDS.contains(&kind.as_str()) && file_sub_kind(kind).is_none() && plugin_kind(kind).is_none() {
                 return Err(format!("未知的内容类型: {kind}"));
             }
         }
@@ -111,7 +116,10 @@ impl FilterRule {
         let mut conditions = Vec::new();
         let mut params = Vec::new();
         if let Some(kind) = &self.kind {
-            if TEXT_SUB_KINDS.contains(&kind.as_str()) {
+            if let Some((plugin,facet))=plugin_kind(kind) {
+                conditions.push("EXISTS(SELECT 1 FROM clipboard_metadata m, json_each(CASE WHEN json_valid(m.data) THEN m.data ELSE '{}' END, '$.types') t WHERE m.item_id=clipboard.id AND m.plugin_id=? AND t.value=?)");
+                params.push(Value::from(plugin.to_string()));params.push(Value::from(facet.to_string()));
+            } else if TEXT_SUB_KINDS.contains(&kind.as_str()) {
                 conditions.push("content_type = 'text' AND sub_kind = ?");
                 params.push(Value::from(kind.clone()));
             } else if let Some(sub_kind) = file_sub_kind(kind) {

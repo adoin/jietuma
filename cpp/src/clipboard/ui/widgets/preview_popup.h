@@ -53,6 +53,9 @@ public:
     QLabel *image_label = nullptr;
     QLabel *color_label = nullptr;
 
+protected:
+    void paintEvent(QPaintEvent *event) override;
+
 private:
     PreviewPopup();
     void setup_ui();
@@ -75,6 +78,7 @@ private:
     // A parentless top-level: late key or hover events can still arrive after the
     // clipboard window hides, so showing is gated instead of relying on one hide().
     bool display_enabled_ = false;
+    quint64 plugin_preview_serial_=0;
     QTimer show_timer_;
     PreviewImageLoader loader_;
     // The load for pending_item_ (0: none) and, once it has arrived, its picture, null when the item has none to show.

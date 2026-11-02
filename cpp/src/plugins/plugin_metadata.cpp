@@ -1,5 +1,7 @@
 #include "plugins/plugin_metadata.h"
 #include "plugins/plugin_package.h"
+#include "plugins/clipboard_extensions.h"
+#include <QComboBox>
 #include "clipboard/core/manager.h"
 #include "core/i18n.h"
 #include "core/ui_scale.h"
@@ -73,13 +75,17 @@ bool edit_item_metadata(const QString &id, const clipboard::ClipboardItem &item,
         const auto field = value.toObject();
         const QString key = field.value("key").toString();
         const QString type = field.value("type").toString();
-        if (!valid_key.match(key).hasMatch() || editors.contains(key) || !QStringList{"line", "multiline"}.contains(type)) continue;
+        if (!valid_key.match(key).hasMatch() || editors.contains(key) || !QStringList{"line", "multiline", "choice"}.contains(type)) continue;
         const QString label = field.value("label_i18n").toObject().value(I18nManager::get_current_language()).toString(field.value("label").toString(key));
         auto *caption = new QLabel(label, fields);
         caption->setTextFormat(Qt::PlainText);
         caption->setWordWrap(true);
         fields_layout->addWidget(caption);
-        if (type == "line") {
+        if(type=="choice") {
+            auto *editor=new QComboBox(fields);
+            for(const auto &entry:field.value("choices").toArray()) {const auto choice=entry.toObject();editor->addItem(choice.value("name_i18n").toObject().value(I18nManager::get_current_language()).toString(choice.value("name").toString()),choice.value("value").toString());}
+            editor->setCurrentIndex(qMax(0,editor->findData(existing.value(key).toString())));editor->setObjectName("metadata_"+key);fields_layout->addWidget(editor);editors.insert(key,editor);
+        } else if (type == "line") {
             auto *editor = new QLineEdit(existing.value(key).toString(), fields);
             editor->setObjectName("metadata_" + key);
             editor->setMaxLength(4096);
@@ -104,11 +110,12 @@ bool edit_item_metadata(const QString &id, const clipboard::ClipboardItem &item,
         for (auto it = editors.cbegin(); it != editors.cend(); ++it) {
             const auto *line = qobject_cast<QLineEdit *>(it.value());
             const auto *multiline = qobject_cast<QPlainTextEdit *>(it.value());
-            const QString text = line ? line->text() : multiline ? multiline->toPlainText() : QString();
+            const auto *choice=qobject_cast<QComboBox *>(it.value());
+            const QString text = choice?choice->currentData().toString():line ? line->text() : multiline ? multiline->toPlainText() : QString();
             if (text.trimmed().isEmpty()) data.remove(it.key());
             else data.insert(it.key(), text);
         }
-        if (!manager.set_plugin_metadata(item.id, id, data)) { show_warning_dialog(&dialog, found->name, tr("Could not save plugin data.")); return; }
+        if (!manager.set_plugin_metadata(item.id, id, metadata_with_types(id,data,root))) { show_warning_dialog(&dialog, found->name, tr("Could not save plugin data.")); return; }
         saved = true;
         dialog.accept();
     });

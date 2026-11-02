@@ -246,6 +246,14 @@ pub unsafe extern "C" fn jb_clipboard_set_text(text: *const c_char, error: *mut 
     })
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn jb_clipboard_set_formats(json: *const c_char, error: *mut c_char, error_len: usize) -> bool {
+    guard_error(false,error,error_len,|| {
+        let Some(json)=str_arg(json) else {return false;};
+        finish(manager::set_clipboard_formats(json),error,error_len,|_|{})
+    })
+}
+
 /// The database path; free with jb_clipboard_text_free.
 #[no_mangle]
 pub unsafe extern "C" fn jb_clipboard_db_path(ptr: *const JbClipboard) -> *mut c_char {

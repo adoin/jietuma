@@ -4,6 +4,7 @@
 #include "core/ui_scale.h"
 #include "core/ui_theme.h"
 #include "ui/dialogs.h"
+#include "ui/fluent_lite/fluent_lite.h"
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
@@ -15,6 +16,9 @@
 #include <QRegularExpression>
 #include <QScrollArea>
 #include <QVBoxLayout>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QSpinBox>
 
 namespace jietuba::plugins {
 namespace {
@@ -53,22 +57,24 @@ void edit_settings(QWidget *parent, const QString &id, const QJsonArray &setting
     scroll->setWidget(fields);
     layout->addWidget(scroll, 1);
     const auto current = read_plugin_config(id, root);
-    QMap<QString, QPlainTextEdit *> editors;
+    QMap<QString, QWidget *> editors;
     const QRegularExpression valid_key("^[a-z][a-z0-9_]{0,63}$");
     for (const auto &value : settings) {
         const auto spec = value.toObject();
         const QString key = spec.value("key").toString();
-        if (!valid_key.match(key).hasMatch() || spec.value("type").toString() != "multiline" || editors.contains(key)) continue;
+        if (!valid_key.match(key).hasMatch() || !QStringList{"multiline","boolean","choice","number"}.contains(spec.value("type").toString()) || editors.contains(key)) continue;
         const QString label = spec.value("label_i18n").toObject().value(I18nManager::get_current_language()).toString(spec.value("label").toString(key));
         auto *caption = new QLabel(label, &dialog);
         caption->setTextFormat(Qt::PlainText);
-        auto *editor = new QPlainTextEdit(&dialog);
-        editor->setObjectName("pluginSetting_" + key);
-        editor->setPlainText(current.value(key).toString(spec.value("default").toString()));
-        caption->setWordWrap(true);
-        fields_layout->addWidget(caption);
-        fields_layout->addWidget(editor, 1);
-        editors.insert(key, editor);
+        QWidget *editor=nullptr;
+        const auto setting_value=current.value(key).isUndefined()?spec.value("default"):current.value(key);
+        const auto type=spec.value("type").toString();
+        if(type=="boolean") {auto *field=new CheckBox(QString(),fields);field->setChecked(setting_value.toBool());editor=field;}
+        else if(type=="number") {auto *field=new QSpinBox(fields);field->setRange(spec.value("minimum").toInt(0),spec.value("maximum").toInt(1000000));field->setValue(setting_value.toInt());editor=field;}
+        else if(type=="choice") {auto *field=new QComboBox(fields);for(const auto &entry:spec.value("choices").toArray()) {const auto choice=entry.toObject();field->addItem(choice.value("name_i18n").toObject().value(I18nManager::get_current_language()).toString(choice.value("name").toString()),choice.value("value").toString());}field->setCurrentIndex(qMax(0,field->findData(setting_value.toString())));editor=field;}
+        else {auto *field=new QPlainTextEdit(fields);field->setPlainText(setting_value.toString());editor=field;}
+        editor->setObjectName("pluginSetting_"+key);
+        caption->setWordWrap(true);fields_layout->addWidget(caption);fields_layout->addWidget(editor,type=="multiline"?1:0);editors.insert(key,editor);
     }
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, &dialog);
     buttons->button(QDialogButtonBox::Save)->setText(tr("Save Changes"));
@@ -77,7 +83,12 @@ void edit_settings(QWidget *parent, const QString &id, const QJsonArray &setting
     QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
     QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, [&] {
         QJsonObject config = current;
-        for (auto it = editors.cbegin(); it != editors.cend(); ++it) config.insert(it.key(), it.value()->toPlainText());
+        for(auto it=editors.cbegin();it!=editors.cend();++it) {
+            if(auto *text_editor=qobject_cast<QPlainTextEdit *>(it.value())) config.insert(it.key(),text_editor->toPlainText());
+            else if(auto *check_editor=qobject_cast<QCheckBox *>(it.value())) config.insert(it.key(),check_editor->isChecked());
+            else if(auto *number_editor=qobject_cast<QSpinBox *>(it.value())) config.insert(it.key(),number_editor->value());
+            else if(auto *choice_editor=qobject_cast<QComboBox *>(it.value())) config.insert(it.key(),QJsonValue::fromVariant(choice_editor->currentData()));
+        }
         if (!save_plugin_config(id, config, root)) { show_warning_dialog(&dialog, tr("Plugin Settings"), tr("Could not save plugin settings.")); return; }
         dialog.accept();
     });

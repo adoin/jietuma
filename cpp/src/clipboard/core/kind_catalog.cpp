@@ -1,6 +1,7 @@
 #include "clipboard/core/kind_catalog.h"
 #include "clipboard/core/models.h"
 #include "core/native.h"
+#include "plugins/clipboard_extensions.h"
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QCoreApplication>
@@ -9,6 +10,7 @@ namespace jietuba::clipboard {
 QStringList type_tab_labels() {
     QStringList labels{QCoreApplication::translate("ClipboardWindow", "All")};
     for (const auto *kind : offered_kinds()) labels.append(QCoreApplication::translate("ClipboardWindow", kind->label));
+    for(const auto &type:plugins::clipboard_types()) labels.append(type.label);
     return labels;
 }
 

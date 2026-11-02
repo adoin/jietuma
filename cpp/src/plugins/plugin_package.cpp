@@ -17,6 +17,16 @@
 namespace jietuba::plugins {
 namespace {
 PluginInstallResult fail(const QString &message) { return {false, {}, message}; }
+bool valid_choices(const QJsonValue &value) {
+    if(!value.isArray() || value.toArray().isEmpty() || value.toArray().size()>64) return false;
+    QSet<QString> values;
+    for(const auto &entry:value.toArray()) {
+        const auto choice=entry.toObject();const auto key=choice.value("value").toString();
+        if(!entry.isObject() || !choice.value("value").isString() || key.size()>64 || values.contains(key) || !choice.value("name").isString() || choice.value("name").toString().isEmpty() || choice.value("name").toString().size()>160) return false;
+        values.insert(key);
+    }
+    return true;
+}
 
 bool safe_path(const QString &path) {
     if (path.isEmpty() || path.size() > 180 || path.startsWith('/') || path.contains('\\') || path.contains(':')) return false;
@@ -85,9 +95,11 @@ PluginInstallResult install_plugin_package(const QString &package_path, const QS
         for (const auto &value : object.value("settings").toArray()) {
             const auto setting = value.toObject();
             const QString key = setting.value("key").toString();
-            if (!value.isObject() || setting.value("type").toString() != "multiline" || !valid_key.match(key).hasMatch() || keys.contains(key) ||
+            if (!value.isObject() || !QStringList{"multiline","boolean","choice","number"}.contains(setting.value("type").toString()) || !valid_key.match(key).hasMatch() || keys.contains(key) ||
                 !setting.value("label").isString() || setting.value("label").toString().size() > 160) return fail("Unsupported plugin manifest");
             keys.insert(key);
+            if(setting.value("type")=="choice" && !valid_choices(setting.value("choices"))) return fail("Unsupported plugin manifest");
+            if(setting.value("type")=="number" && (setting.value("minimum").toInt()<0 || setting.value("maximum").toInt()>1000000 || setting.value("minimum").toInt()>setting.value("maximum").toInt())) return fail("Unsupported plugin manifest");
         }
     }
     {
@@ -130,6 +142,14 @@ PluginInstallResult install_plugin_package(const QString &package_path, const QS
             if (hook.value("event").toString() == "clipboard.before_capture" && !valid_types(hook.value("content_types"))) return fail("Unsupported plugin manifest");
         }
         for (auto it = clipboard.begin(); it != clipboard.end(); ++it) {
+            if(it.key()=="types") {
+                if(!it.value().isArray() || it.value().toArray().size()>8) return fail("Unsupported plugin manifest");
+                for(const auto &entry:it.value().toArray()) {
+                    const auto type=entry.toObject();
+                    if(!valid_command_id.match(type.value("id").toString()).hasMatch() || !type.value("name").isString() || type.value("name").toString().size()>160 || !valid_command_id.match(type.value("metadata_field").toString()).hasMatch()) return fail("Unsupported plugin manifest");
+                }
+                continue;
+            }
             if (!QStringList{"preview", "action", "metadata", "backup"}.contains(it.key()) || !it.value().isObject()) return fail("Unsupported plugin manifest");
             const auto capability = it.value().toObject();
             if (it.key() != "backup" && !valid_types(capability.value("content_types"))) return fail("Unsupported plugin manifest");
@@ -144,6 +164,13 @@ PluginInstallResult install_plugin_package(const QString &package_path, const QS
                 for (const auto &mode : capability.value("modes").toArray())
                     if (!mode.isString() || !QStringList{"preview", "formats"}.contains(mode.toString())) return fail("Unsupported plugin manifest");
             }
+            if(it.key()=="action" && capability.contains("entries")) {
+                if(!capability.value("entries").isArray() || capability.value("entries").toArray().isEmpty() || capability.value("entries").toArray().size()>32) return fail("Unsupported plugin manifest");
+                QSet<QString> ids;
+                for(const auto &entry:capability.value("entries").toArray()) {const auto action=entry.toObject();const QString id=action.value("id").toString();
+                    if(!valid_command_id.match(id).hasMatch() || ids.contains(id) || !command_ids.contains(action.value("command").toString()) || !action.value("name").isString() || action.value("name").toString().size()>160) return fail("Unsupported plugin manifest");ids.insert(id);
+                }
+            }
             if (it.key() == "metadata") {
                 const auto fields = capability.value("fields").toArray();
                 if (!capability.value("fields").isArray() || fields.isEmpty() || fields.size() > 8) return fail("Unsupported plugin manifest");
@@ -152,10 +179,11 @@ PluginInstallResult install_plugin_package(const QString &package_path, const QS
                 for (const auto &value : fields) {
                     const auto field = value.toObject();
                     const QString key = field.value("key").toString();
-                    if (!value.isObject() || !QStringList{"line", "multiline"}.contains(field.value("type").toString()) ||
+                    if (!value.isObject() || !QStringList{"line", "multiline","choice"}.contains(field.value("type").toString()) ||
                         !valid_key.match(key).hasMatch() || keys.contains(key) || !field.value("label").isString() || field.value("label").toString().size() > 160)
                         return fail("Unsupported plugin manifest");
                     keys.insert(key);
+                    if(field.value("type")=="choice" && !valid_choices(field.value("choices"))) return fail("Unsupported plugin manifest");
                 }
             }
         }

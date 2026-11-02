@@ -170,7 +170,7 @@ ClipboardItemDelegate::Columns ClipboardItemDelegate::columns(const ClipboardIte
     Columns c;
     const int inline_gap = scaled(INLINE_GAP);
     int left = scaled(ROW_MARGIN) + scaled(ROW_PADDING_LEFT);
-    const int full_right = row_width - scaled(ROW_MARGIN) - scaled(ROW_PADDING_RIGHT);
+    const int full_right = row_width - scaled(ROW_MARGIN) - scaled(ROW_PADDING_RIGHT) - (item.content_type=="text"?parent()->property("_clipboardAssignmentSpace").toInt():0);
     int right = full_right;
     // Left to right: the pick key, or while rows are marked the circle, then the icon, then the text.
     // Rows past the pick keys give the key's room to the text.

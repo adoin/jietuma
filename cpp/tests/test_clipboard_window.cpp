@@ -1128,6 +1128,27 @@ private slots:
         window->group_bar->group_buttons.last()->click();
         QCOMPARE(window->controller->current_group_id, std::optional<qint64>(window->group_bar->group_buttons.last()->property("group_id").toLongLong()));
     }
+    void shiftWheelOverTabsScrollsHorizontallyWithoutChangingSelection() {
+        for(int i=0;i<20;++i) QVERIFY(manager().create_group(QString("Wheel group %1").arg(i)));
+        auto *window=open_window();
+        QTRY_COMPARE(window->group_bar->group_buttons.size(),20);
+        auto *scroll=window->findChild<QScrollArea *>("typeFilterScroll");QVERIFY(scroll);
+        auto *bar=scroll->horizontalScrollBar();QTRY_VERIFY(bar->maximum()>0);
+        const QPoint add_position=window->group_bar->add_group_btn->mapTo(window,QPoint());
+        const auto send=[&](QWidget *target,QPoint pixels,QPoint angle,Qt::KeyboardModifiers modifiers) {
+            const QPoint at=target->rect().center();
+            QWheelEvent wheel(at,target->mapToGlobal(at),pixels,angle,Qt::NoButton,modifiers,Qt::NoScrollPhase,false);
+            QApplication::sendEvent(target,&wheel);QApplication::processEvents();
+        };
+        auto *tab=window->findChild<QToolButton *>("typeFilterTab0");QVERIFY(tab);
+        bar->setValue(0);send(tab,{},QPoint(0,-120),Qt::ShiftModifier);QVERIFY(bar->value()>0);
+        bar->setValue(0);send(scroll->widget(),{},QPoint(0,-120),Qt::ShiftModifier);QVERIFY(bar->value()>0);
+        bar->setValue(0);send(scroll->viewport(),{},QPoint(-120,0),Qt::NoModifier);QVERIFY(bar->value()>0);
+        bar->setValue(0);send(scroll->viewport(),QPoint(0,-17),{},Qt::ShiftModifier);QCOMPARE(bar->value(),17);
+        bar->setValue(0);send(window->group_bar->group_buttons.first(),{},QPoint(0,-120),Qt::ShiftModifier);QVERIFY(bar->value()>0);
+        QVERIFY(!window->controller->current_group_id);
+        QCOMPARE(window->group_bar->add_group_btn->mapTo(window,QPoint()),add_position);
+    }
 
     void losingFocusHidesOnlyWhenClosingAfterPaste() {
         add_texts({"a"});

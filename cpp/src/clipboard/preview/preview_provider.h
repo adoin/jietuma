@@ -2,6 +2,7 @@
 #include "clipboard/core/models.h"
 #include <QByteArray>
 #include <QString>
+#include <QJsonObject>
 
 namespace jietuba::clipboard {
 class ClipboardManager;
@@ -18,5 +19,5 @@ struct PreviewContent {
 // External preview plugins under plugin_root. None means the host should use its
 // existing preview. An empty root uses the user's plugin directory.
 std::optional<PreviewContent> resolve_preview(const ClipboardItem &item, ClipboardManager &manager, const QString &plugin_root = {}, const QString &mode = "preview",
-                                              const QString &selected_format = {});
+                                              const QString &selected_format = {},const QJsonObject &presentation={});
 }

@@ -94,6 +94,8 @@ public:
     QStringList type_filter_labels;
     int type_filter_index = 0;
     QWidget *type_filter_bar = nullptr;
+    QToolButton *plugin_choice_btn_=nullptr;
+    void refresh_type_tabs();
     QList<QToolButton *> type_filter_tabs;
     QToolButton *clear_time_filter_btn = nullptr;
     QWidget *bottom_bar = nullptr;

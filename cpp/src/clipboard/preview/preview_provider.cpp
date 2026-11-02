@@ -2,6 +2,7 @@
 #include "clipboard/core/manager.h"
 #include "core/i18n.h"
 #include "plugins/plugin_package.h"
+#include "clipboard/ui/theme/themes.h"
 #include <QBuffer>
 #include <QDir>
 #include <QElapsedTimer>
@@ -25,7 +26,7 @@ constexpr qsizetype MAX_MESSAGE = 8 * 1024 * 1024;
 constexpr int PLUGIN_TIMEOUT_MS = 1500;
 
 std::optional<PreviewContent> external_preview(const ClipboardItem &item, ClipboardManager &manager, const QString &root, const QString &mode,
-                                               const QString &selected_format) {
+                                               const QString &selected_format,const QJsonObject &presentation) {
     const QDir plugins(root);
     const auto dirs = plugins.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks, QDir::Name);
     struct Candidate { QString id, dir, program; QJsonObject spec; int priority; };
@@ -60,7 +61,10 @@ std::optional<PreviewContent> external_preview(const ClipboardItem &item, Clipbo
         if (attempted >= 8 || budget.elapsed() >= PLUGIN_TIMEOUT_MS) break;
         const auto &spec = candidate.spec;
         ++attempted;
-        QJsonObject request{{"mode", mode}, {"language", I18nManager::get_current_language()}, {"content_type", item.content_type}, {"sub_kind", item.sub_kind}, {"content", item.content}};
+        const QString language=presentation.contains("language")?presentation.value("language").toString():I18nManager::get_current_language();
+        QJsonObject request{{"mode", mode}, {"language", language}, {"content_type", item.content_type}, {"sub_kind", item.sub_kind}, {"content", item.content}};
+        request.insert("metadata",manager.plugin_metadata(item.id,candidate.id));
+        request.insert("appearance",presentation.contains("appearance")?presentation.value("appearance").toString():QColor(get_theme_manager()->get_current_theme().colors.bg_primary).lightnessF()<0.5?"dark":"light");
         if (!selected_format.isEmpty()) request.insert("selected_format", selected_format);
         if (item.html_content) request.insert("html", *item.html_content);
         // Only formats explicitly requested in the installed manifest are supplied.
@@ -170,7 +174,7 @@ std::optional<PreviewContent> external_preview(const ClipboardItem &item, Clipbo
 }
 
 std::optional<PreviewContent> resolve_preview(const ClipboardItem &item, ClipboardManager &manager, const QString &plugin_root, const QString &mode,
-                                              const QString &selected_format) {
-    return external_preview(item, manager, plugin_root.isEmpty() ? plugins::plugin_directory() : plugin_root, mode, selected_format);
+                                              const QString &selected_format,const QJsonObject &presentation) {
+    return external_preview(item, manager, plugin_root.isEmpty() ? plugins::plugin_directory() : plugin_root, mode, selected_format,presentation);
 }
 }

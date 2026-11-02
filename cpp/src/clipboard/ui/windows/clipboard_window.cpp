@@ -1,6 +1,8 @@
 #include "clipboard/ui/windows/clipboard_window.h"
 #include "clipboard/core/kind_catalog.h"
 #include "plugins/plugin_package.h"
+#include "plugins/clipboard_extensions.h"
+#include <QMenu>
 #include "plugins/plugin_manager_dialog.h"
 #include "plugins/plugin_actions.h"
 #include "plugins/plugin_backup.h"
@@ -57,6 +59,37 @@
 
 namespace jietuba::clipboard {
 namespace {
+// Scope wheel interception to this scroll area's descendants: tab buttons can
+// consume wheel events before QScrollArea::wheelEvent sees them.
+class TypeTabsWheelFilter : public QObject {
+    QScrollArea *area_;
+    qreal wheel_remainder_=0;
+public:
+    explicit TypeTabsWheelFilter(QScrollArea *area) : QObject(area),area_(area) {qApp->installEventFilter(this);}
+    ~TypeTabsWheelFilter() override {if(qApp) qApp->removeEventFilter(this);}
+protected:
+    bool eventFilter(QObject *object,QEvent *event) override {
+        if(event->type()!=QEvent::Wheel) return false;
+        auto *widget=qobject_cast<QWidget *>(object);
+        if(!widget || (widget!=area_ && widget!=area_->viewport() && !area_->viewport()->isAncestorOf(widget))) return false;
+        auto *wheel=static_cast<QWheelEvent *>(event);
+        const bool shifted=wheel->modifiers().testFlag(Qt::ShiftModifier);
+        const auto pixels=wheel->pixelDelta(), angles=wheel->angleDelta();
+        if(!shifted && pixels.x()==0 && angles.x()==0) return false;
+        if(wheel->phase()==Qt::ScrollBegin) wheel_remainder_=0;
+        const int pixel_delta=pixels.x()!=0?pixels.x():(shifted?pixels.y():0);
+        const int angle_delta=angles.x()!=0?angles.x():(shifted?angles.y():0);
+        auto *bar=area_->horizontalScrollBar();
+        const qreal delta=pixel_delta!=0?pixel_delta:angle_delta/120.0*bar->singleStep()*QApplication::wheelScrollLines();
+        const qreal movement=delta+wheel_remainder_;
+        const int whole=qRound(movement);wheel_remainder_=movement-whole;
+        bar->setValue(bar->value()-whole);wheel->accept();return true;
+    }
+};
+class TypeTabsScrollArea : public QScrollArea {
+public:
+    TypeTabsScrollArea() {new TypeTabsWheelFilter(this);}
+};
 // Direct picks take bare keys only: this app's simulated Ctrl+V comes back here while the window stays open, and as "paste item N" it would loop.
 constexpr Qt::KeyboardModifiers DIRECT_PICK_BLOCKERS = Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier;
 
@@ -142,11 +175,9 @@ bool ClipboardShortcutHandler::handle_key(QInputEvent *event) {
 namespace {
 // Entries of the type filter menu: the kind it selects (see FilterRule::kind), empty for every type.
 const QStringList &type_filter_kinds() {
-    static const QStringList kinds = [] {
-        QStringList keys{QString()};
-        for (const auto *kind : offered_kinds()) keys.append(kind->key);
-        return keys;
-    }();
+    static QStringList kinds;kinds={QString()};
+    for(const auto *kind:offered_kinds()) kinds.append(kind->key);
+    for(const auto &type:plugins::clipboard_types()) kinds.append(type.key);
     return kinds;
 }
 
@@ -385,6 +416,7 @@ void ClipboardWindow::retranslate_ui() {
     time_filter_toggle_btn->setToolTip(tr_text(time_filter_toggle_btn->isChecked() ? "Close filters" : "Open filters"));
     selection_bar->retranslate();
 
+    if(type_filter_bar) refresh_type_tabs();
     type_filter_labels = type_filter_label_texts();
     for (int index = 0; index < type_filter_tabs.size(); ++index) type_filter_tabs[index]->setText(type_filter_labels[index]);
     update_type_filter_button(type_filter_index);
@@ -480,6 +512,12 @@ void ClipboardWindow::setup_ui() {
     list_widget->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(list_widget, &QWidget::customContextMenuRequested, this, [this](const QPoint &pos) { show_context_menu(pos); });
 
+    plugin_choice_btn_=new QToolButton(list_widget->viewport());plugin_choice_btn_->setText("</>");plugin_choice_btn_->setAutoRaise(true);plugin_choice_btn_->setObjectName("clipboardItemLanguage");plugin_choice_btn_->hide();
+    connect(plugin_choice_btn_,&QToolButton::clicked,this,[this] {
+        const auto item=get_item_data(plugin_choice_btn_->property("item_id").toLongLong());if(!item) return;
+        QMenu menu(this);apply_style_sheet(&menu,menu_style());plugins::add_item_choices(&menu,*item,manager,[this]{PreviewPopup::instance()->force_cleanup();request_data_refresh("Plugin type assignment");});
+        menu.exec(plugin_choice_btn_->mapToGlobal(QPoint(0,plugin_choice_btn_->height())));
+    });
     item_delegate = new ClipboardItemDelegate(list_widget, current_theme, font_size, config->get_clipboard_show_metadata(),
                                               static_cast<int>(config->get_clipboard_line_height_padding()), true, config->get_clipboard_image_size(), config->get_clipboard_display_lines());
     list_widget->setItemDelegate(item_delegate);
@@ -499,27 +537,15 @@ void ClipboardWindow::setup_ui() {
     mouse_controller = new ClipboardMouseController(this);
 
     QScrollBar *scrollbar = list_widget->verticalScrollBar();
-    connect(scrollbar, &QScrollBar::valueChanged, this, [this](int value) { on_scroll(value); });
+    connect(scrollbar, &QScrollBar::valueChanged, this, [this](int value) {if(plugin_choice_btn_) plugin_choice_btn_->hide();on_scroll(value);});
     connect(scrollbar, &QScrollBar::rangeChanged, this, [this] { list_widget->viewport()->update(); });
     type_filter_bar = new QWidget;
     type_filter_bar->setObjectName("typeFilterBar");
     auto *tabs_layout = new QHBoxLayout(type_filter_bar);
     tabs_layout->setContentsMargins(scaled(6), scaled(4), scaled(6), scaled(4));
     tabs_layout->setSpacing(scaled(2));
-    type_filter_labels = type_filter_label_texts();
-    for (int idx = 0; idx < type_filter_labels.size(); ++idx) {
-        auto *tab = new QToolButton;
-        tab->setObjectName(QString("typeFilterTab%1").arg(idx));
-        tab->setText(type_filter_labels[idx]);
-        tab->setCheckable(true);
-        tab->setCursor(Qt::PointingHandCursor);
-        tab->setFocusPolicy(Qt::StrongFocus);
-        tab->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-        connect(tab, &QToolButton::clicked, this, [this, idx] { set_type_filter(idx); });
-        type_filter_tabs.append(tab);
-        tabs_layout->addWidget(tab);
-    }
-    auto *tabs_scroll = new QScrollArea;
+    refresh_type_tabs();
+    auto *tabs_scroll = new TypeTabsScrollArea;
     tabs_scroll->setObjectName("typeFilterScroll");
     tabs_scroll->setFrameShape(QFrame::NoFrame);
     tabs_scroll->setWidgetResizable(true);
@@ -802,6 +828,7 @@ void ClipboardWindow::on_opacity_changed(int percent) {
 }
 
 void ClipboardWindow::refresh_list() {
+    if(plugin_choice_btn_) plugin_choice_btn_->hide();
     PreviewPopup::instance()->hide_preview();
     selection_manager->reset();
 
@@ -871,6 +898,7 @@ void ClipboardWindow::point_at(const QPoint &viewport_pos, const QPoint &global_
     pointer_pos_ = global_pos;
     QListWidgetItem *list_item = list_widget->itemAt(viewport_pos);
     if (!list_item) {
+        plugin_choice_btn_->hide();
         pointer_row_ = -1;
         PreviewPopup::instance()->hide_preview();
         return;
@@ -970,6 +998,30 @@ void ClipboardWindow::clear_search() {
 void ClipboardWindow::update_type_filter_button(int index) {
     type_filter_index = index;
     refresh_type_filter_button();
+}
+
+void ClipboardWindow::refresh_type_tabs() {
+    const auto labels=type_filter_label_texts();
+    if(labels==type_filter_labels && labels.size()==type_filter_tabs.size()) return;
+    auto *tabs_layout=qobject_cast<QHBoxLayout *>(type_filter_bar->layout());
+    const bool existed=!type_filter_tabs.isEmpty();
+    for(auto *tab:type_filter_tabs) {tabs_layout->removeWidget(tab);delete tab;}
+    type_filter_tabs.clear();
+    type_filter_labels = type_filter_label_texts();
+    for (int idx = 0; idx < type_filter_labels.size(); ++idx) {
+        auto *tab = new QToolButton;
+        tab->setObjectName(QString("typeFilterTab%1").arg(idx));
+        tab->setText(type_filter_labels[idx]);
+        tab->setCheckable(true);
+        tab->setCursor(Qt::PointingHandCursor);
+        tab->setFocusPolicy(Qt::StrongFocus);
+        tab->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        connect(tab, &QToolButton::clicked, this, [this, idx] { set_type_filter(idx); });
+        type_filter_tabs.append(tab);
+        tabs_layout->insertWidget(idx,tab);
+    }
+    type_filter_index=0;
+    if(existed) controller->set_content_type_filter(std::nullopt);
 }
 
 void ClipboardWindow::refresh_type_filter_button() {
@@ -1245,12 +1297,11 @@ std::function<void()> ClipboardWindow::resolve_item_context_menu_handler(qint64 
     if (action_key.startsWith(action_prefix)) return [this, item_id, id = action_key.mid(action_prefix.size())] {
         const auto item = get_item_data(item_id);
         if (!item) return;
-        const bool started = plugins::run_action(id, *item, manager, this, [this](const std::optional<QString> &result) {
-            if (!result || !ClipboardManager::set_clipboard_text(*result)) {
-                show_warning_dialog(this, tr_text("Plugins"), tr_text("Plugin action failed."));
-                return;
-            }
-            show_toast(tr_text("Copied to clipboard"));
+        const bool started=plugins::run_action_payload(id,*item,manager,this,[this,item_id,id](const std::optional<QJsonObject> &result) {
+            if(result && result->value("kind")=="error") {show_warning_dialog(this,tr_text("Plugins"),result->value("data").toString());return;}
+            if(!result || !plugins::apply_action_payload(*result,item_id,id.section('.',0,0),manager)) {show_warning_dialog(this,tr_text("Plugins"),tr_text("Plugin action failed."));return;}
+            if(result->value("kind")=="clipboard" || result->value("kind")=="original") {close();controller->paste_prepared_clipboard();}
+            else show_toast(tr_text("Copied to clipboard"));
         });
         if (!started) show_warning_dialog(this, tr_text("Plugins"), tr_text("Plugin action failed."));
     };
@@ -1577,6 +1628,9 @@ void ClipboardWindow::showEvent(QShowEvent *event) {
         QWidget::showEvent(event);
         return;
     }
+    refresh_type_tabs();apply_time_filter_styles();
+    ClipboardItem assignment_item;assignment_item.content_type="text";
+    list_widget->setProperty("_clipboardAssignmentSpace",plugins::has_item_choices(assignment_item)?scaled(32):0);
     PreviewPopup::instance()->set_display_enabled(true);
     setWindowOpacity(0);
 
@@ -1716,6 +1770,12 @@ bool ClipboardWindow::eventFilter(QObject *obj, QEvent *event) {
     if (on_viewport && event_type == QEvent::MouseMove) {
         const auto *mouse = static_cast<QMouseEvent *>(event);
         on_pointer_moved(mouse->position().toPoint(), mouse->globalPosition().toPoint());
+        const auto index=list_widget->indexAt(mouse->position().toPoint());
+        const auto item=index.isValid()?get_item_data(index.data(ROLE_ITEM_ID).toLongLong()):std::nullopt;
+        if(item && item->content_type=="text" && list_widget->property("_clipboardAssignmentSpace").toInt()>0) {
+            const auto row=list_widget->visualRect(index);plugin_choice_btn_->setProperty("item_id",item->id);
+            plugin_choice_btn_->setGeometry(row.right()-scaled(32),row.top()+scaled(3),scaled(26),qMin(scaled(26),row.height()-scaled(6)));plugin_choice_btn_->show();plugin_choice_btn_->raise();
+        } else plugin_choice_btn_->hide();
     }
     // Leaving keeps the cursor where it was, like a menu.
     if (on_viewport && event_type == QEvent::Leave) {
@@ -1724,6 +1784,7 @@ bool ClipboardWindow::eventFilter(QObject *obj, QEvent *event) {
     }
     // Scrolling with the wheel is the mouse at work: the row it brings under the still mouse is pointed at.
     if (event_type == QEvent::Wheel && list_widget && obj == list_widget->viewport()) {
+        plugin_choice_btn_->hide();
         const auto *wheel = static_cast<QWheelEvent *>(event);
         const QPoint viewport_pos = wheel->position().toPoint();
         const QPoint global_pos = wheel->globalPosition().toPoint();

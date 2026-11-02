@@ -7,6 +7,11 @@
 #include "core/text_utils.h"
 #include "core/ui_scale.h"
 #include "core/ui_theme.h"
+#include "core/material_style.h"
+#include "core/background_tasks.h"
+#include "plugins/plugin_package.h"
+#include <QPointer>
+#include <QtMath>
 #include "ui/fluent_lite/inputs.h"
 #include <QApplication>
 #include <QCoreApplication>
@@ -242,7 +247,9 @@ PreviewPopup::PreviewPopup() : QWidget(nullptr) {
     setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground, true);
     setAttribute(Qt::WA_ShowWithoutActivating, true);
+    setProperty("_materialNative",true);
     setup_ui();
+    connect(get_theme_manager(),&ThemeManager::theme_changed,this,[this]{apply_scale();update();});
     show_timer_.setSingleShot(true);
     connect(&show_timer_, &QTimer::timeout, this, [this] {
         delay_elapsed_ = true;
@@ -263,10 +270,6 @@ void PreviewPopup::setup_ui() {
     title_label->hide();
     layout_->addWidget(title_label);
     title_line_ = new QWidget;
-    title_line_->setAutoFillBackground(true);
-    QPalette line_palette = title_line_->palette();
-    line_palette.setColor(QPalette::Window, QColor("#E0E0E0"));
-    title_line_->setPalette(line_palette);
     title_line_->hide();
     layout_->addWidget(title_line_);
 
@@ -275,6 +278,7 @@ void PreviewPopup::setup_ui() {
     layout_->addWidget(color_label);
 
     content_widget = new TextEdit;
+    content_widget->setDocument(new PreviewDocument(content_widget));
     content_widget->setReadOnly(true);
     content_widget->setLineWrapMode(QTextEdit::WidgetWidth);
     content_widget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -291,24 +295,21 @@ void PreviewPopup::setup_ui() {
 void PreviewPopup::apply_scale() {
     // Cached pictures are scaled to the old size.
     loader_.clear_cache();
-    // The type selector names the C++ class (namespaces become "--").
-    apply_style_sheet(this, QString(R"(
-            jietuba--clipboard--PreviewPopup {
-                background: #FAFAFA;
-                border: 1px solid #D0D0D0;
-                border-radius: %1px;
-            }
-        )")
-                      .arg(scaled(8)));
+    const auto &theme=get_theme_manager()->get_current_theme();
+    setProperty("_materialDark",QColor(theme.colors.bg_primary).lightnessF()<0.5);
+    const auto &tokens=material_tokens(this);
+    set_own_style(this,"background: transparent; border: none;");
     const int margin = scaled(7);
     layout_->setContentsMargins(margin, margin, margin, margin);
-    // The content has no frame of its own; a line under the title marks where it starts. The title lines up with the text below it.
+    // Align title and body without giving the text editor another surface.
     title_line_->setFixedHeight(1);
-    apply_style_sheet(title_label, QString("font-size: %1px; color: #666; font-weight: bold; padding: %2px %3px %4px %3px;")
+    set_own_style(title_line_,"background: transparent; border: none;");
+    title_line_->setAutoFillBackground(false);
+    apply_style_sheet(title_label, QString("font-size: %1px; color: %5; font-weight: bold; padding: %2px %3px %4px %3px;")
                                    .arg(scaled(12))
                                    .arg(scaled(4))
                                    .arg(scaled(10))
-                                   .arg(scaled(6)));
+                                   .arg(scaled(6)).arg(tokens.text_muted));
     apply_style_sheet(content_widget, QString(R"(
             QTextEdit {
                 background: transparent;
@@ -316,17 +317,28 @@ void PreviewPopup::apply_scale() {
                 border-radius: 6px;
                 padding: %1px %2px;
                 font-size: %3px;
-                color: #333;
+                color: %4;
             }
         )")
                                       .arg(scaled(4))
                                       .arg(scaled(8))
-                                      .arg(scaled(13)));
+                                      .arg(scaled(13)).arg(tokens.text));
     content_widget->document()->setDocumentMargin(scaled(2));
     content_widget->viewport()->setAutoFillBackground(false);
     // Only a maximum size, so the content sizes itself.
     content_widget->setMaximumSize(scaled(500), scaled(400));
     set_own_style(image_label, QString("background: #F0F0F0; border: 1px solid #E0E0E0; border-radius: %1px;").arg(scaled(4)));
+}
+
+void PreviewPopup::paintEvent(QPaintEvent *) {
+    QColor background(get_theme_manager()->get_current_theme().colors.bg_primary);
+    background.setAlpha(255);
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setCompositionMode(QPainter::CompositionMode_Source);
+    painter.fillRect(rect(),Qt::transparent);
+    painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    paint_material_surface(painter,QRectF(rect()).adjusted(0.5,0.5,-0.5,-0.5),scaled(8),background,MaterialDepth::Raised);
 }
 
 void PreviewPopup::set_display_enabled(bool enabled) {
@@ -407,9 +419,39 @@ void PreviewPopup::do_show() {
     layout_->activate();
     move(side_position(size(), pending_pos_, pending_avoid_rect_, pending_prefer_side_.isEmpty() ? QString("auto") : pending_prefer_side_));
     show();
+    const quint64 serial=++plugin_preview_serial_;
+    if(manager_ && (item.content_type=="text" || item.content_type=="file")) {
+        const QPointer<PreviewPopup> guard(this);auto *manager=manager_;
+        const auto root=plugins::plugin_directory();
+        const QJsonObject presentation{{"language",I18nManager::get_current_language()},{"appearance",property("_materialDark").toBool()?"dark":"light"}};
+        QTimer::singleShot(100,this,[guard,manager,item,serial,root,presentation] {
+        if(!guard || !guard->isVisible() || guard->plugin_preview_serial_!=serial) return;
+        try {background_tasks::start_thread([guard,manager,item,serial,root,presentation] {
+            const auto rendered=resolve_preview(item,*manager,root,"preview",{},presentation);
+            if(!guard || !rendered) return;
+            QMetaObject::invokeMethod(guard,[guard,rendered,serial] {
+                if(!guard || !guard->isVisible() || guard->plugin_preview_serial_!=serial) return;
+                if(rendered->kind==PreviewContent::Kind::Image) {
+                    if(guard->show_image_preview(QImage::fromData(rendered->image))) {guard->layout_->activate();guard->move(side_position(guard->size(),guard->pending_pos_,guard->pending_avoid_rect_,guard->pending_prefer_side_));}return;
+                }
+                if(rendered->kind==PreviewContent::Kind::Html) guard->content_widget->setHtml(rendered->text);
+                else if(rendered->kind==PreviewContent::Kind::Markdown) guard->content_widget->document()->setMarkdown(rendered->text);
+                else if(rendered->kind==PreviewContent::Kind::Text) guard->content_widget->setPlainText(rendered->text);
+                else return;
+                guard->content_widget->show();guard->image_label->hide();
+                auto *editor=guard->content_widget;editor->setMaximumSize(scaled(500),scaled(400));
+                editor->document()->setTextWidth(scaled(470));
+                editor->setFixedSize(scaled(500),qBound(scaled(80),qCeil(editor->document()->size().height())+scaled(16),scaled(400)));
+                editor->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);editor->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);guard->layout_->activate();
+                guard->move(side_position(guard->size(),guard->pending_pos_,guard->pending_avoid_rect_,guard->pending_prefer_side_));
+            },Qt::QueuedConnection);
+        },"Clipboard plugin preview" );} catch(const std::exception &) {}
+        });
+    }
 }
 
 void PreviewPopup::show_text_preview(const ClipboardItem &item) {
+    content_widget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);content_widget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     // The time and source above, the full content below; the list rows leave the source out.
     QString title = item.created_at.isValid() ? item.created_at.toString("yyyy-MM-dd HH:mm:ss") : tr_preview("📝 文本");
     if (const QString source = row_source_text(item.source_app.value_or(QString())); !source.isEmpty()) title += QString::fromUtf8(" · ") + source;

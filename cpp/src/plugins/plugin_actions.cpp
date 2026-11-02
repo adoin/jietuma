@@ -31,6 +31,12 @@ QList<ActionSpec> actions(const clipboard::ClipboardItem &item, const QString &r
         const auto object = QJsonDocument::fromJson(file.readAll()).object();
         const auto capability = object.value("contributes").toObject().value("clipboard").toObject().value("action").toObject();
         const QString id = object.value("id").toString();
+        if(capability.contains("when_formats_any") || capability.contains("when_text_contains")) {
+            bool matches=!capability.value("when_text_contains").toString().isEmpty() && item.content.contains(capability.value("when_text_contains").toString());
+            const auto names=clipboard::ClipboardManager::instance().format_names(item.id);
+            for(const auto &format:capability.value("when_formats_any").toArray()) matches=matches||names.contains(format.toString(),Qt::CaseInsensitive);
+            if(!matches) continue;
+        }
         if (object.value("api_version").toInt() != 2 || object.value("type").toString() != "extension" || id != dir.fileName() ||
             !capability.value("content_types").toArray().contains(item.content_type) ||
             !object.value("contributes").toObject().value("commands").toArray().contains(capability.value("command"))) continue;
@@ -41,7 +47,15 @@ QList<ActionSpec> actions(const clipboard::ClipboardItem &item, const QString &r
         if (executable.isEmpty() || !executable.startsWith(folder + '/', Qt::CaseInsensitive) || !QFileInfo(executable).isFile()) continue;
         const auto translations = object.value("name_i18n").toObject();
         const QString name = translations.value(I18nManager::get_current_language()).toString(object.value("name").toString(id));
-        result.append({id, name, folder, executable, capability});
+        const auto entries=capability.value("entries").toArray();
+        if(entries.isEmpty()) result.append({id,name,folder,executable,capability});
+        else for(const auto &entry_value:entries) {
+            const auto entry=entry_value.toObject();auto action=capability;
+            if(!object.value("contributes").toObject().value("commands").toArray().contains(entry.value("command"))) continue;
+            action.insert("command",entry.value("command"));
+            const QString title=entry.value("name_i18n").toObject().value(I18nManager::get_current_language()).toString(entry.value("name").toString());
+            result.append({id+"."+entry.value("id").toString(),title,folder,executable,action});
+        }
     }
     return result;
 }
@@ -53,8 +67,8 @@ QList<ActionPlugin> action_plugins(const clipboard::ClipboardItem &item, const Q
     return result;
 }
 
-bool run_action(const QString &id, const clipboard::ClipboardItem &item, clipboard::ClipboardManager &manager,
-                QObject *context, std::function<void(std::optional<QString>)> callback, const QString &root) {
+bool run_action_payload(const QString &id, const clipboard::ClipboardItem &item, clipboard::ClipboardManager &manager,
+                QObject *context, std::function<void(std::optional<QJsonObject>)> callback, const QString &root) {
     if (!context || !callback) return false;
     const auto specs = actions(item, root.isEmpty() ? plugin_directory() : root);
     auto found = std::find_if(specs.begin(), specs.end(), [&id](const auto &spec) { return spec.id == id; });
@@ -62,10 +76,12 @@ bool run_action(const QString &id, const clipboard::ClipboardItem &item, clipboa
     QJsonObject input{{"language", I18nManager::get_current_language()},
                       {"content_type", item.content_type}, {"sub_kind", item.sub_kind}, {"content", item.content}};
     if (item.html_content) input.insert("html", *item.html_content);
+    input.insert("metadata",manager.plugin_metadata(item.id,QFileInfo(found->folder).fileName()));
     if (item.source_app) input.insert("source_app", *item.source_app);
     QJsonArray paths;
     for (const auto &path : clipboard::item_paths(item)) paths.append(path);
     input.insert("paths", paths);
+    QJsonArray available_formats;for(const auto &name:manager.format_names(item.id)) available_formats.append(name);input.insert("format_names",available_formats);
     QJsonObject formats;
     const auto requested = found->manifest.value("formats").toArray();
     qsizetype total = 0;
@@ -94,11 +110,11 @@ bool run_action(const QString &id, const clipboard::ClipboardItem &item, clipboa
     process->setProgram(found->executable);
     process->setWorkingDirectory(found->folder);
     auto environment = QProcessEnvironment::systemEnvironment();
-    environment.insert("JIETUBA_PLUGIN_CONFIG", plugin_config_path(found->id, root));
+    environment.insert("JIETUBA_PLUGIN_CONFIG", plugin_config_path(QFileInfo(found->folder).fileName(), root));
     process->setProcessEnvironment(environment);
     auto output = std::make_shared<QByteArray>();
     auto done = std::make_shared<bool>(false);
-    auto finish = [process, callback, done](std::optional<QString> value) {
+    auto finish = [process, callback, done](std::optional<QJsonObject> value) {
         if (std::exchange(*done, true)) return;
         process->deleteLater();
         callback(std::move(value));
@@ -119,16 +135,24 @@ bool run_action(const QString &id, const clipboard::ClipboardItem &item, clipboa
         if (status != QProcess::NormalExit || code != 0 || output->size() > 8 * 1024 * 1024) { finish(std::nullopt); return; }
         const auto result = QJsonDocument::fromJson(*output).object();
         const auto payload = result.value("payload").toObject();
-        if (result.value("api_version").toInt() != 2 || !result.value("ok").toBool() || payload.value("kind").toString() != "text" || !payload.value("data").isString()) {
-            finish(std::nullopt); return;
+        const QString kind=payload.value("kind").toString();
+        if(result.value("api_version").toInt()!=2 || !result.value("ok").toBool() ||
+           !QStringList{"text","clipboard","original","error"}.contains(kind) ||
+           (kind=="text" && (!payload.value("data").isString() || payload.value("data").toString().contains(QChar(u'\0'))))) {
+            finish(std::nullopt);return;
         }
-        const QString text = payload.value("data").toString();
-        // The clipboard C ABI accepts NUL-terminated UTF-8; never silently truncate.
-        if (text.contains(QChar(u'\0'))) { finish(std::nullopt); return; }
-        finish(text);
+        finish(payload);
     });
     timer->start(5000);
     process->start();
     return true;
 }
+bool run_action(const QString &id,const clipboard::ClipboardItem &item,clipboard::ClipboardManager &manager,
+                QObject *context,std::function<void(std::optional<QString>)> callback,const QString &root) {
+    return run_action_payload(id,item,manager,context,[callback](std::optional<QJsonObject> result) {
+        if(!result || result->value("kind")!="text") callback(std::nullopt);
+        else callback(result->value("data").toString());
+    },root);
+}
+
 }

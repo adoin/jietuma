@@ -55,3 +55,22 @@ ZIP 根目录包含 `plugin.json`，其中 `id` 由小写字母、数字、点�
 ## 原始格式
 
 截图吧保存常见文本、HTML、RTF、图片、文件及额外注册格式，格式视图可按名称逐项查看。额外格式最多采集 16 项、单项 4 MiB、合计 16 MiB。虚拟文件、OLE 句柄、隐私标记和可能触发昂贵延迟渲染的表格格式不作为通用格式采集；已有普通文本、图片及文件行为保持不变。来源应用要求不记录的内容仍会跳过。插件只能读取已经保存且自己在清单中声明的格式。
+
+
+## 可叠加类型、选择字段和多格式动作
+
+`contributes.clipboard.types` 是数组，每项包含 `id`、`name`、`name_i18n`、`metadata_field`、`exclude_values`。宿主依据本插件的条目元数据字段计算保存在 `types` 数组中的类型，并以 `plugin:<插件 id>:<类型 id>` 查询历史。原始 `content_type` 保持不变，因此同一条目可以同时显示在文本和插件类型中。`types` 是该能力的保留元数据字段。
+
+`clipboard.metadata.fields` 支持 `choice`，通过 `choices: [{value, name, name_i18n}]` 声明下拉选项。文本行右侧 `</>` 按钮提供这些选项；元数据编辑窗口也使用同一选项。插件的全局 `settings` 还支持 `boolean`、`number`（整数，`minimum`、`maximum`）、`choice`，原有 `multiline` 保持不变。设置保存在独立的 `.data/<id>.json` 中。
+
+`clipboard.action.entries` 可声明多个 `{id, command, name, name_i18n}` 动作；所有 command 必须同时列在 `contributes.commands`。可选的 `when_formats_any` 和 `when_text_contains` 以 OR 关系控制适用范围。
+
+动作仍可返回 `payload.kind=text` 表示复制文本，也可返回 `original` 表示使用该历史条目的原格式粘贴，或返回 `clipboard`：
+
+```json
+{"api_version":2,"ok":true,"payload":{"kind":"clipboard","data":{"text":"A\tB","formats_base64":{"XML Spreadsheet":"BASE64_BYTES"}}}}
+```
+
+多格式动作由宿主写入剪贴板后粘贴到打开面板前的目标应用。最多 8 个格式、解码后总计 4 MiB；仅接收自包含的注册格式字节，拒绝已知的 OLE/虚拟文件句柄、BIFF 和保留的 CF_ 格式。普通文本通过 `text` 字段提供。`original` 不经插件转码，避免大型原始格式在协议中往返。插件不会直接模拟系统键鼠。
+
+预览请求新增本插件的 `metadata` 及 `appearance`（light/dark）。悬停预览异步执行，展示 HTML/Markdown 时由宿主阻止本地文件及网络资源加载。

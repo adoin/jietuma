@@ -1145,6 +1145,18 @@ mod update_item_tests {
         db.delete_item(id).unwrap();
         assert_eq!(db.plugin_metadata(id, "notes-tags").unwrap(), None);
     }
+    #[test]
+    fn plugin_types_are_additive_and_do_not_replace_text() {
+        let (db,id)=db_with_captured_text("let value = 42;");
+        db.set_plugin_metadata(id,"code-highlight",r#"{"language":"rust","types":["code"]}"#).unwrap();
+        for kind in ["text","plugin:code-highlight:code"] {
+            let rule=crate::group_kind::FilterRule::kind(kind);rule.check().unwrap();
+            let rows=db.query_items(0,10,None,&rule,None,None).unwrap();assert_eq!(rows.len(),1);assert_eq!(rows[0].id,id);assert_eq!(rows[0].content_type,"text");
+        }
+        db.set_plugin_metadata(id,"code-highlight",r#"{"language":"plain","types":[]}"#).unwrap();
+        assert!(db.query_items(0,10,None,&crate::group_kind::FilterRule::kind("plugin:code-highlight:code"),None,None).unwrap().is_empty());
+        assert_eq!(db.get_item_by_id(id).unwrap().unwrap().content,"let value = 42;");
+    }
 
     #[test]
     fn group_filter_searches_unicode_and_metadata_before_paging() {

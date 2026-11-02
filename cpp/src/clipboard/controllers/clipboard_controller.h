@@ -22,6 +22,7 @@ int calc_topbar_capacity(int bar_width);
 class ClipboardController : public QObject {
     Q_OBJECT
 public:
+    void paste_prepared_clipboard() {send_paste_keystroke(true);}
     using CloseCallback = std::function<void()>;
 
     explicit ClipboardController(ClipboardManager &manager, QObject *parent = nullptr);
