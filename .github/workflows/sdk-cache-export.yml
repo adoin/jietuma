@@ -3,7 +3,7 @@ name: Qt SDK cache export
 # Only callable here. A one-time export on the old cache branch needs explicit
 # authorization before that branch is given a temporary workflow_dispatch entry.
 on:
-  workflow_call:
+  workflow_dispatch:
 
 permissions:
   contents: read
