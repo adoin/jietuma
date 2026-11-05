@@ -2,6 +2,9 @@
 #include "core/app_version.h"
 #include "core/brand_config.h"
 #include "core/installer_exit.h"
+#include "core/windows_clipboard_shortcut.h"
+#include <QSettings>
+#include <QTemporaryDir>
 #include <app_version.h>
 #include <QTest>
 #include <windows.h>
@@ -9,6 +12,32 @@ using namespace jietuba;
 class BuildVariantTests:public QObject {
     Q_OBJECT
 private slots:
+    void winVRequiresEnabledClipboardAndAnExactShortcut() {
+        using namespace windows_clipboard_shortcut;
+        QVERIFY(uses_win_v(true, {"ctrl+2", "WIN + V"}));
+        QVERIFY(!uses_win_v(false, {"win+v"}));
+        QVERIFY(!uses_win_v(true, {"ctrl+win+v", "v", "invalid"}));
+    }
+    void winVRegistryChangePreservesExistingShortcutsAndIsIdempotent() {
+        QTemporaryDir directory;
+        QVERIFY(directory.isValid());
+        QSettings registry(directory.filePath("registry.ini"), QSettings::IniFormat);
+        registry.setValue("DisabledHotkeys", "RE");
+        registry.setValue("Other", 42);
+        QString error;
+        QVERIFY(windows_clipboard_shortcut::block(registry, &error));
+        QCOMPARE(registry.value("DisabledHotkeys").toString(), QString("REV"));
+        QCOMPARE(registry.value("Other").toInt(), 42);
+        QVERIFY(windows_clipboard_shortcut::block(registry, &error));
+        QCOMPARE(registry.value("DisabledHotkeys").toString(), QString("REV"));
+        registry.setValue("DisabledHotkeys", 123);
+        QVERIFY(!windows_clipboard_shortcut::block(registry, &error));
+        QCOMPARE(registry.value("DisabledHotkeys").toInt(), 123);
+        QCOMPARE(error, QString("type"));
+        registry.remove("DisabledHotkeys");
+        QVERIFY(windows_clipboard_shortcut::block(registry, &error));
+        QCOMPARE(registry.value("DisabledHotkeys").toString(), QString("V"));
+    }
     void editionAndVersionMatchTheConfiguredBuild() {
         QCOMPARE(app_variant(),QStringLiteral(EXPECTED_BUILD_VARIANT));
         QCOMPARE(APP_VERSION,QStringLiteral(JIETUBA_APP_VERSION));

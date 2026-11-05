@@ -21,6 +21,8 @@
 #include "capture/system_cursor.h"
 #include "core/background_tasks.h"
 #include "core/bootstrap.h"
+#include "core/constants.h"
+#include "core/windows_clipboard_shortcut.h"
 #include "core/installer_exit.h"
 #include "core/clipboard_utils.h"
 #include "core/i18n.h"
@@ -270,7 +272,44 @@ void MainApp::update_tray_menu() {
     if (old_menu) old_menu->deleteLater();
 }
 
+void MainApp::maybe_offer_system_win_v() {
+    namespace win_v = windows_clipboard_shortcut;
+    if (!test_sandbox_dir().isEmpty()) return;
+    const bool active = win_v::uses_win_v(config_manager->get_clipboard_enabled() &&
+        !config_manager->get_global_hotkeys_disabled(), config_manager->get_global_hotkeys("clipboard"));
+    if (!active) { system_win_v_prompt_seen_ = false; return; }
+    if (system_win_v_prompt_pending_ || system_win_v_prompt_seen_) return;
+    system_win_v_prompt_pending_ = true;
+    QTimer::singleShot(0, this, [this] {
+        system_win_v_prompt_pending_ = false;
+        if (!win_v::uses_win_v(config_manager->get_clipboard_enabled() &&
+            !config_manager->get_global_hotkeys_disabled(), config_manager->get_global_hotkeys("clipboard"))) return;
+        QSettings registry(QString::fromLatin1(win_v::registry_path), QSettings::NativeFormat);
+        if (win_v::is_blocked(registry)) return;
+        system_win_v_prompt_seen_ = true;
+        auto *owner = settings_window && settings_window->isVisible() ? settings_window.data() : nullptr;
+        const auto choice = show_custom_confirm_dialog(owner, tr_text("Use Win+V for Clipboard"),
+            tr_text("Win+V is assigned to the clipboard manager. Block the Windows Win+V shortcut for this user?\n\n"
+                    "This adds V to the DisabledHotkeys registry value and preserves other disabled shortcuts. "
+                    "Sign out of Windows and sign in again for the change to take effect. "
+                    "To restore the Windows shortcut later, remove V from that value."),
+            {{false, tr_text("Not Now"), QDialogButtonBox::RejectRole, true},
+             {true, tr_text("Block Windows Win+V"), QDialogButtonBox::AcceptRole, false}});
+        if (!choice.toBool()) return;
+        QString error;
+        if (!win_v::block(registry, &error)) {
+            log_warning(LogMsg("Could not update DisabledHotkeys: " + error), "Hotkey");
+            show_warning_dialog(settings_window, tr_text("Use Win+V for Clipboard"),
+                tr_text("Unable to update the Windows shortcut registry setting. Check your account permissions and the DisabledHotkeys value type."));
+            return;
+        }
+        show_info_dialog(settings_window, tr_text("Use Win+V for Clipboard"),
+            tr_text("The registry setting has been saved. Sign out of Windows and sign in again to apply it."));
+    });
+}
+
 void MainApp::update_hotkey(bool show_error) {
+    maybe_offer_system_win_v();
     hotkey_system->unregister_all();
     hotkey_system->set_suppressed(config_manager->get_global_hotkeys_disabled());
     std::vector<std::tuple<QString, QString, std::function<void()>>> functions = {
@@ -570,6 +609,7 @@ void MainApp::on_clipboard_item_received(const clipboard::ClipboardItem &item) {
 }
 
 bool MainApp::set_clipboard_monitoring_enabled(bool enabled) {
+    maybe_offer_system_win_v();
     auto *manager = clipboard_manager;
     if (!enabled) {
         if (!manager) {

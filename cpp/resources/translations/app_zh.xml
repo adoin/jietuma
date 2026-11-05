@@ -2439,6 +2439,34 @@ Replace it?</source>
         <source>Nothing on the clipboard to pin</source>
         <translation>剪贴板里没有可钉的内容</translation>
     </message>
+    <message>
+        <source>Use Win+V for Clipboard</source>
+        <translation>使用 Win+V 打开剪贴板</translation>
+    </message>
+    <message>
+        <source>Not Now</source>
+        <translation>暂不修改</translation>
+    </message>
+    <message>
+        <source>Block Windows Win+V</source>
+        <translation>禁用系统 Win+V</translation>
+    </message>
+    <message>
+        <source>Win+V is assigned to the clipboard manager. Block the Windows Win+V shortcut for this user?
+
+This adds V to the DisabledHotkeys registry value and preserves other disabled shortcuts. Sign out of Windows and sign in again for the change to take effect. To restore the Windows shortcut later, remove V from that value.</source>
+        <translation>剪贴板快捷键包含 Win+V。是否禁用当前用户的 Windows 系统 Win+V，让它用于本程序的剪贴板？
+
+这会在注册表 DisabledHotkeys 中添加 V，并保留其他已禁用的快捷键。重新登录 Windows 后生效。以后如需恢复系统快捷键，可从该值中移除 V。</translation>
+    </message>
+    <message>
+        <source>Unable to update the Windows shortcut registry setting. Check your account permissions and the DisabledHotkeys value type.</source>
+        <translation>无法修改系统快捷键的注册表设置，请检查账户权限及 DisabledHotkeys 的值类型。</translation>
+    </message>
+    <message>
+        <source>The registry setting has been saved. Sign out of Windows and sign in again to apply it.</source>
+        <translation>注册表设置已保存，重新登录 Windows 后生效。</translation>
+    </message>
 </context>
 
 <!-- ========== Translation Dialog ========== -->

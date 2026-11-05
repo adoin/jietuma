@@ -124,6 +124,7 @@ void PinCanvasView::wheelEvent(QWheelEvent *event) {
 }
 
 void PinCanvasView::keyPressEvent(QKeyEvent *event) {
+    if (pin_window->handle_arrow_move(event)) return;
     if (!pin_canvas->is_editing() && text_selection && text_selection->key_press(event)) return;
     if (auto *files = pin_window->file_selection(); files && files->key_press(event)) return;
     if (event->key() == Qt::Key_Escape && pin_canvas->is_editing()) {

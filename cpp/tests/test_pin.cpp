@@ -422,6 +422,36 @@ private slots:
         flush_deletes();
     }
 
+    void arrowKeysMoveTheClickedPin() {
+        auto *pin = make_pin();
+        QTest::mouseClick(pin->view->viewport(), Qt::LeftButton, Qt::NoModifier, QPoint(80, 60));
+        const QPoint start = pin->pos();
+        QTest::keyClick(pin->view, Qt::Key_Right);
+        QCOMPARE(pin->pos(), start + QPoint(1, 0));
+        QTest::keyClick(pin->view, Qt::Key_Down, Qt::ShiftModifier);
+        QCOMPARE(pin->pos(), start + QPoint(1, 10));
+        QTest::keyClick(pin->view, Qt::Key_Left);
+        QTest::keyClick(pin->view, Qt::Key_Up);
+        QCOMPARE(pin->pos(), start + QPoint(0, 9));
+        QTest::keyClick(pin->view, Qt::Key_Right, Qt::ControlModifier);
+        QCOMPARE(pin->pos(), start + QPoint(0, 9));
+    }
+
+    void arrowKeysRespectPinLockAndEditing() {
+        auto *pin = make_pin({{"pin_lock_block_move", true}});
+        const QPoint start = pin->pos();
+        pin->set_locked(true);
+        QTest::keyClick(pin->view, Qt::Key_Left);
+        QCOMPARE(pin->pos(), start);
+        pin->set_locked(false);
+        QVERIFY(pin->canvas->activate_tool("pen"));
+        QTest::keyClick(pin->view, Qt::Key_Right);
+        QCOMPARE(pin->pos(), start);
+        pin->canvas->deactivate_tool();
+        QTest::keyClick(pin->view, Qt::Key_Right);
+        QCOMPARE(pin->pos(), start + QPoint(1, 0));
+    }
+
     // ---- PinImageTransform: rotation and flip state ----
 
     void rotationStateCyclesAndResets() {

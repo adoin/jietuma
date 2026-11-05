@@ -1,5 +1,6 @@
 #include "core/ui_theme.h"
 #include "pin/pin_window.h"
+#include <QKeyEvent>
 #include "canvas/scene.h"
 #include "canvas/items/background_item.h"
 #include "canvas/selection_model.h"
@@ -870,12 +871,35 @@ void PinWindow::leaveEvent(QEvent *event) {
 }
 
 void PinWindow::keyPressEvent(QKeyEvent *event) {
+    if (handle_arrow_move(event)) return;
     // Pin shortcuts go through the ShortcutManager; this is only a fallback.
     QWidget::keyPressEvent(event);
 }
 
+bool PinWindow::handle_arrow_move(QKeyEvent *event) {
+    if (is_closed_ || click_through_ || (canvas && canvas->is_editing()) || (view && view->is_text_editing())) return false;
+    const auto modifiers = event->modifiers() & ~Qt::KeypadModifier;
+    if (modifiers != Qt::NoModifier && modifiers != Qt::ShiftModifier) return false;
+    QPoint delta;
+    switch (event->key()) {
+    case Qt::Key_Left: delta.setX(-1); break;
+    case Qt::Key_Right: delta.setX(1); break;
+    case Qt::Key_Up: delta.setY(-1); break;
+    case Qt::Key_Down: delta.setY(1); break;
+    default: return false;
+    }
+    if (lock_blocks("move")) show_locked_hint();
+    else move(pos() + delta * (modifiers == Qt::ShiftModifier ? 10 : 1));
+    event->accept();
+    return true;
+}
+
 bool PinWindow::eventFilter(QObject *watched, QEvent *event) {
     if (view && watched == view->viewport()) {
+        if (event->type() == QEvent::MouseButtonPress &&
+            static_cast<QMouseEvent *>(event)->button() == Qt::LeftButton && !click_through_) {
+            view->setFocus(Qt::MouseFocusReason);
+        }
         if (handle_border_resize(watched, event)) return true;
         const auto type = event->type();
         if (type == QEvent::MouseButtonPress || type == QEvent::MouseButtonDblClick || type == QEvent::MouseMove || type == QEvent::MouseButtonRelease)

@@ -154,6 +154,7 @@ public:
     void set_locked(bool locked);
     // Whether locking blocks this kind: move (with zoom and resize), click_close, key_close.
     bool lock_blocks(const QString &kind) const;
+    bool handle_arrow_move(QKeyEvent *event);
     void show_locked_hint();
     // Shortcuts, mouse gestures and the hover close button; the context menu's Close is
     // an explicit action and closes even when locked.

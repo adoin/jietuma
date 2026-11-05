@@ -94,6 +94,9 @@ public:
     // After settings are applied: hotkeys and pin appearance follow; a new language or window
     // scale rebuilds the cached settings window.
     void on_settings_accepted(SettingsDialog *accepted_window);
+    void maybe_offer_system_win_v();
+    bool system_win_v_prompt_pending_ = false;
+    bool system_win_v_prompt_seen_ = false;
 
     std::unique_ptr<QApplication> app;
     ToolSettingsManager *config_manager;
