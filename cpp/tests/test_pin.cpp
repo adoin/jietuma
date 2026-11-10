@@ -1743,7 +1743,8 @@ private slots:
         QVERIFY(same_pixels(background->image(), content->render(pin->orig_size())));
         wheel(pin, -120, Qt::NoModifier, false, 3);
         QVERIFY(pin->scale_factor < 1.0);
-        QTRY_COMPARE(background->pixmap().deviceIndependentSize(), QSizeF(pin->size()));
+        // Redrawn on a low-priority worker, which a fully loaded runner starves for seconds.
+        QTRY_COMPARE_WITH_TIMEOUT(background->pixmap().deviceIndependentSize(), QSizeF(pin->size()), 15000);
         QVERIFY(same_pixels(pin->get_current_image(), content->render(pin->orig_size(), pin->devicePixelRatioF())));
     }
 
@@ -2320,6 +2321,37 @@ private slots:
         OcrTextLayout row(ocr_result({{box(0, 0, 50, 20), "hello", 1}, {box(60, 0, 50, 20), "world", 1}}));
         row.select_between(QPointF(1, 10), QPointF(109, 10));
         QCOMPARE(row.selected_text(), QString("hello world"));
+        // Cells of a table row between the two ends are taken whole.
+        OcrTextLayout cells(ocr_result({{box(0, 0, 30, 20), "abc", 1}, {box(100, 0, 20, 20), "60", 1}, {box(200, 0, 20, 20), "72", 1},
+                                        {box(300, 0, 20, 20), "90", 1}, {box(100, 40, 20, 20), "45", 1}}));
+        cells.select_between(QPointF(1, 10), QPointF(319, 10));
+        QCOMPARE(cells.selected_text(), QString("abc 60 72 90"));
+        // A cell box tilted by a pixel, as the engine gives them, still lies on a long drag along its row.
+        OcrTextLayout tilted(ocr_result({{{QPointF(71, 248), QPointF(137, 247), QPointF(137, 271), QPointF(71, 270)}, "abc", 1},
+                                         {{QPointF(241, 248), QPointF(268, 248), QPointF(267, 268), QPointF(241, 268)}, "60", 1},
+                                         {{QPointF(389, 246), QPointF(420, 247), QPointF(419, 270), QPointF(388, 269)}, "72", 1},
+                                         {{QPointF(540, 247), QPointF(568, 247), QPointF(568, 269), QPointF(539, 268)}, "90", 1},
+                                         {{QPointF(390, 294), QPointF(419, 295), QPointF(418, 317), QPointF(389, 317)}, "50", 1}}));
+        tilted.select_between(QPointF(80, 260), QPointF(568, 260));
+        QCOMPARE(tilted.selected_text(), QString("abc 60 72 90"));
+        // The cells holding the ends are taken towards the other end, whichever way the drag runs
+        // and whichever way their boxes lean.
+        OcrTextLayout rows(ocr_result({{{QPointF(82, 151), QPointF(127, 152), QPointF(126, 175), QPointF(81, 175)}, "ab", 1},
+                                       {{QPointF(236, 152), QPointF(274, 152), QPointF(273, 172), QPointF(237, 172)}, "120", 1},
+                                       {{QPointF(387, 151), QPointF(424, 152), QPointF(424, 173), QPointF(387, 173)}, "135", 1},
+                                       {{QPointF(537, 152), QPointF(574, 152), QPointF(573, 172), QPointF(537, 172)}, "150", 1},
+                                       {{QPointF(82, 297), QPointF(125, 296), QPointF(124, 319), QPointF(81, 318)}, "cd", 1},
+                                       {{QPointF(241, 296), QPointF(267, 296), QPointF(266, 316), QPointF(241, 316)}, "45", 1},
+                                       {{QPointF(390, 294), QPointF(419, 295), QPointF(418, 317), QPointF(389, 317)}, "50", 1},
+                                       {{QPointF(539, 295), QPointF(569, 296), QPointF(568, 317), QPointF(539, 317)}, "66", 1}}));
+        rows.select_between(QPointF(574, 163), QPointF(82, 163));
+        QCOMPARE(rows.selected_text(), QString("ab 120 135 150"));
+        rows.select_between(QPointF(83, 307), QPointF(568, 307));
+        QCOMPARE(rows.selected_text(), QString("cd 45 50 66"));
+        // A drag down from a cell does not reach the cell before it in the row.
+        tilted.select_between(QPointF(390, 258), QPointF(400, 306));
+        QVERIFY(tilted.selected_text().startsWith("72"));
+        QVERIFY(!tilted.selected_text().contains("60"));
     }
 
     void closeLinesGiveEachPointOneLine() {

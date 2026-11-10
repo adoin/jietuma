@@ -41,6 +41,7 @@ const ToolEntry TOOLS[] = {
     {"screenshot_translate", "svg/翻译.svg", "工具_截图翻译", "工具描述_截图翻译"},
     {"pin", "svg/钉图.svg", "工具_钉图", "工具描述_钉图"},
     {"save", "svg/下载.svg", "工具_保存", "工具描述_保存"},
+    {"quick_save", "svg/快速保存.svg", "Quick Save", "Save directly to the screenshot folder."},
     {"confirm", "svg/确定.svg", "工具_完成截图", "工具描述_完成截图"},
 };
 constexpr int TOOL_COUNT = static_cast<int>(std::size(TOOLS));

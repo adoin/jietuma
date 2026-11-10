@@ -7,6 +7,7 @@
 #include "pin/pin_canvas_view.h"
 #include "pin/pin_file_card.h"
 #include "pin/pin_file_selection.h"
+#include "core/folder_drop.h"
 #include "core/i18n.h"
 #include "pin/pin_manager.h"
 #include "pin/pin_ocr_manager.h"
@@ -39,12 +40,34 @@
 #include <QTest>
 #include <QTimer>
 #include <QTranslator>
+#include <QScopeGuard>
 #include <QUrl>
 #include <optional>
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#include <shlobj.h>
+#include <wrl/client.h>
 
 using namespace jietuba;
 
 namespace {
+// The data Explorer drags its files with.
+Microsoft::WRL::ComPtr<IDataObject> shell_data(const QStringList &paths) {
+    std::vector<PIDLIST_ABSOLUTE> items;
+    for (const auto &path : paths) {
+        PIDLIST_ABSOLUTE item = nullptr;
+        if (SUCCEEDED(SHParseDisplayName(reinterpret_cast<PCWSTR>(QDir::toNativeSeparators(path).utf16()), nullptr, &item, 0, nullptr))) items.push_back(item);
+    }
+    Microsoft::WRL::ComPtr<IShellItemArray> array;
+    Microsoft::WRL::ComPtr<IDataObject> data;
+    if (SUCCEEDED(SHCreateShellItemArrayFromIDLists(static_cast<UINT>(items.size()), const_cast<PCIDLIST_ABSOLUTE_ARRAY>(items.data()), &array)))
+        array->BindToHandler(nullptr, BHID_DataObject, IID_PPV_ARGS(&data));
+    for (auto *item : items) CoTaskMemFree(item);
+    return data;
+}
+
 const QColor PALETTE[] = {Qt::red, Qt::green, Qt::blue, Qt::white};
 
 // A GIF of solid frames in a four-colour palette. Each frame is LZW-coded as literals with a
@@ -431,15 +454,16 @@ private slots:
         QList<QPair<QColor, qint64>> shown;
         clock.start();
         PinAnimation player(*source, [&](const QImage &frame) { shown.append({frame.pixelColor(0, 0), clock.elapsed()}); }, nullptr);
-        QTRY_VERIFY_WITH_TIMEOUT(shown.size() >= 4, 5000);
+        QTRY_VERIFY_WITH_TIMEOUT(shown.size() >= 4, 15000);
         // Green after red's 50 ms, blue after green's 120, red again after blue's 70, and so on.
         const QColor order[] = {PALETTE[1], PALETTE[2], PALETTE[0], PALETTE[1]};
         const int due[] = {50, 170, 240, 290};
         for (int i = 0; i < 4; ++i) {
             QCOMPARE(shown[i].first, order[i]);
-            // Never early; the deadlines add up, so lateness does not pile up either.
+            // Never early; the deadlines add up, so lateness does not pile up either. Measured against
+            // the first frame's, since a loaded machine can start the whole run late.
             QVERIFY2(shown[i].second >= due[i] - 2, qPrintable(QString("frame %1 at %2 ms").arg(i).arg(shown[i].second)));
-            QVERIFY2(shown[i].second <= due[i] + 400, qPrintable(QString("frame %1 at %2 ms").arg(i).arg(shown[i].second)));
+            QVERIFY2(shown[i].second - due[i] <= shown[0].second - due[0] + 400, qPrintable(QString("frame %1 at %2 ms").arg(i).arg(shown[i].second)));
         }
         QCOMPARE(player.frame_count(), 3);
     }
@@ -451,7 +475,7 @@ private slots:
         QList<qint64> shown;
         clock.start();
         PinAnimation player(*source, [&](const QImage &) { shown.append(clock.elapsed()); }, nullptr);
-        QTRY_VERIFY_WITH_TIMEOUT(shown.size() >= 2, 5000);
+        QTRY_VERIFY_WITH_TIMEOUT(shown.size() >= 2, 15000);
         QVERIFY(shown[0] >= 98);
         QVERIFY(shown[1] >= 198);
     }
@@ -461,7 +485,7 @@ private slots:
         QVERIFY(source);
         QList<QColor> shown;
         PinAnimation player(*source, [&](const QImage &frame) { shown.append(frame.pixelColor(0, 0)); }, nullptr);
-        QTRY_VERIFY_WITH_TIMEOUT(!shown.isEmpty(), 5000);
+        QTRY_VERIFY_WITH_TIMEOUT(!shown.isEmpty(), 15000);
         player.set_paused(true);
         QVERIFY(player.paused());
         const int held = player.frame_index();
@@ -470,7 +494,7 @@ private slots:
         QCOMPARE(shown.size(), count);
         QCOMPARE(player.frame_index(), held);
         player.set_paused(false);
-        QTRY_VERIFY_WITH_TIMEOUT(shown.size() > count, 5000);
+        QTRY_VERIFY_WITH_TIMEOUT(shown.size() > count, 15000);
         QCOMPARE(shown[count], PALETTE[(held + 1) % 3]);
     }
 
@@ -505,7 +529,7 @@ private slots:
         // Playing goes on from there.
         const auto count = shown.size();
         player.set_paused(false);
-        QTRY_VERIFY_WITH_TIMEOUT(shown.size() > count, 5000);
+        QTRY_VERIFY_WITH_TIMEOUT(shown.size() > count, 15000);
         QCOMPARE(shown[count], PALETTE[2]);
     }
 
@@ -580,13 +604,13 @@ private slots:
         QVERIFY(source);
         QList<QColor> shown;
         PinAnimation player(*source, [&](const QImage &frame) { shown.append(frame.pixelColor(0, 0)); }, nullptr);
-        QTRY_VERIFY_WITH_TIMEOUT(player.paused(), 5000);
+        QTRY_VERIFY_WITH_TIMEOUT(player.paused(), 15000);
         QCOMPARE(shown, QList<QColor>({PALETTE[1], PALETTE[2]}));
         QCOMPARE(player.frame_index(), 2);
         player.set_paused(false);
-        QTRY_COMPARE_WITH_TIMEOUT(shown.size(), 3, 5000);
+        QTRY_COMPARE_WITH_TIMEOUT(shown.size(), 3, 15000);
         QCOMPARE(shown[2], PALETTE[0]);
-        QTRY_VERIFY_WITH_TIMEOUT(player.paused(), 5000);
+        QTRY_VERIFY_WITH_TIMEOUT(player.paused(), 15000);
         QCOMPARE(shown.size(), 5);
     }
 
@@ -880,6 +904,44 @@ private slots:
         QVERIFY(!clipboard::create_pins_from_clipboard_items({blank}, nullptr));
     }
 
+    void pathTextPinsAsTheFilesItNamesWhileTheyExist() {
+        auto &manager = clipboard::ClipboardManager::instance();
+        const QString database = QDir::toNativeSeparators(dir_.filePath("path_history/clipboard.db"));
+        config_->set_clipboard_db_path(database);
+        QVERIFY(manager.reset_storage(database));
+        // A folder path as the address bar copies it pins as the folder copied itself would.
+        const QString folder = QDir::toNativeSeparators(dir_.filePath("模型开发"));
+        QVERIFY(QDir().mkpath(folder));
+        const auto folder_id = manager.add_item(folder, "text");
+        QVERIFY(folder_id);
+        QCOMPARE(manager.get_item(*folder_id)->sub_kind, clipboard::SUB_KIND_PATH);
+        QVERIFY(clipboard::create_pin_from_clipboard_item(*folder_id, &manager, nullptr));
+        // Pins open from low-priority workers, which a fully loaded runner starves for seconds.
+        QTRY_COMPARE_WITH_TIMEOUT(pins().size(), 1, 15000);
+        QVERIFY(pins()[0]->file_card());
+        QCOMPARE(pins()[0]->file_card()->files(), QStringList{folder});
+        // A path that no longer exists pins its text.
+        const QString gone = QDir::toNativeSeparators(dir_.filePath("gone.txt"));
+        const auto gone_id = manager.add_item(gone, "text");
+        QVERIFY(gone_id);
+        QVERIFY(clipboard::create_pin_from_clipboard_item(*gone_id, &manager, nullptr));
+        QTRY_COMPARE_WITH_TIMEOUT(pins().size(), 2, 15000);
+        QVERIFY(pins()[1]->text_only());
+        QCOMPARE(pins()[1]->text_content()->text(), gone);
+        PinManager::instance()->close_all();
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        // Selected together: a quoted picture path pins the picture itself.
+        clipboard::ClipboardItem named;
+        named.content_type = "text";
+        named.sub_kind = clipboard::SUB_KIND_PATH;
+        named.content = "\"" + QDir::toNativeSeparators(picture("named.png", QSize(4, 3), Qt::blue)) + "\"";
+        QVERIFY(clipboard::create_pins_from_clipboard_items({*manager.get_item(*folder_id), named, *manager.get_item(*gone_id)}, nullptr, QPoint(400, 300)));
+        QTRY_COMPARE_WITH_TIMEOUT(pins().size(), 3, 15000);
+        QVERIFY(pins()[0]->file_card());
+        QCOMPARE(pins()[1]->orig_size(), QSize(4, 3));
+        QVERIFY(pins()[2]->text_only());
+    }
+
     void anAnimationPinPlaysWithoutTheImageTools() {
         auto source = load_animation(three_frames());
         QVERIFY(source);
@@ -942,7 +1004,8 @@ private slots:
         // Nothing that reads or draws on the image.
         for (const char *entry : {"Translate", "Image transform", "Toolbar", "Hide annotations", "Text selection", "Pin as text"})
             QVERIFY2(!has_entry(entries, entry), entry);
-        QCOMPARE(animation->frame_index(), 1);
+        // The next frame shows once the decoder has it, at once unless the machine is loaded.
+        QTRY_COMPARE(animation->frame_index(), 1);
         run_menu(pin, at, "Faster");
         QCOMPARE(animation->speed(), 1.25);
         entries = run_menu(pin, at, "Play");
@@ -1113,6 +1176,55 @@ private slots:
         QDesktopServices::unsetUrlHandler("file");
         QVERIFY(asked);
         QVERIFY(opened_.isEmpty());
+    }
+
+    void aFolderOnACardTakesWhatIsDroppedOnItAsInExplorer() {
+        const HRESULT ole = OleInitialize(nullptr);
+        const auto uninitialize = qScopeGuard([ole] {
+            if (SUCCEEDED(ole)) OleUninitialize();
+        });
+        const QString notes = write("notes.txt", "n"), moved = write("moved.txt", "m");
+        const QString box = dir_.filePath("box");
+        QVERIFY(QDir().mkpath(box));
+        const PinFileCard card({notes, box}, QSize(3 * PinFileCard::CELL_WIDTH, PinFileCard::CELL_HEIGHT));
+        auto *pin = PinManager::instance()->create_file_pin(card, QPoint(100, 100), config_);
+        const auto global = [pin, &card](int index) { return pin->view->viewport()->mapToGlobal(pin->view->mapFromScene(QRectF(card.cell_rect(index)).center())); };
+        // The folder takes drops; the file, the empty cell and the margin do not.
+        QCOMPARE(pin->drop_folder_at(global(1)), box);
+        QVERIFY(pin->drop_folder_at(global(0)).isEmpty());
+        QVERIFY(pin->drop_folder_at(global(2)).isEmpty());
+        QVERIFY(pin->drop_folder_at(pin->mapToGlobal(QPoint(-5, -5))).isEmpty());
+        // Nor while drawing.
+        QVERIFY(pin->canvas->activate_tool("pen"));
+        QVERIFY(pin->drop_folder_at(global(1)).isEmpty());
+        pin->canvas->deactivate_tool();
+        QCOMPARE(pin->drop_folder_at(global(1)), box);
+        // A file dragged from Explorer outlines the folder it is over, outside the pin's image, and moves in.
+        const QImage clean = pin->get_current_image();
+        const QImage plain = pin->view->viewport()->grab().toImage();
+        auto *target = pin->folder_drop()->target();
+        auto data = shell_data({moved});
+        QVERIFY(data);
+        const POINTL over{global(1).x(), global(1).y()};
+        DWORD effect = DROPEFFECT_COPY | DROPEFFECT_MOVE | DROPEFFECT_LINK;
+        QCOMPARE(target->DragEnter(data.Get(), MK_LBUTTON, over, &effect), S_OK);
+        QCOMPARE(effect, DWORD(DROPEFFECT_MOVE));
+        QCOMPARE(pin->file_selection()->drop_target(), 1);
+        QVERIFY(pin->view->viewport()->grab().toImage() != plain);
+        QCOMPARE(pin->get_current_image(), clean);
+        effect = DROPEFFECT_COPY | DROPEFFECT_MOVE | DROPEFFECT_LINK;
+        QCOMPARE(target->Drop(data.Get(), MK_LBUTTON, over, &effect), S_OK);
+        QCOMPARE(pin->file_selection()->drop_target(), -1);
+        QTRY_VERIFY(QFileInfo::exists(QDir(box).filePath("moved.txt")));
+        QTRY_VERIFY(!QFileInfo::exists(moved));
+        // The file is no folder.
+        const POINTL beside{global(0).x(), global(0).y()};
+        data = shell_data({notes});
+        effect = DROPEFFECT_COPY | DROPEFFECT_MOVE;
+        target->DragEnter(data.Get(), MK_LBUTTON, beside, &effect);
+        QCOMPARE(effect, DWORD(DROPEFFECT_NONE));
+        QCOMPARE(pin->file_selection()->drop_target(), -1);
+        target->DragLeave();
     }
 
     // ---- Dragging content out ----

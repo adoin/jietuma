@@ -62,8 +62,13 @@ public:
     void start_screenshot();
     void start_delayed_screenshot();
     void open_settings();
+    // Opens the settings window on one page (SettingsDialog::on_nav_changed's index and route).
+    void open_settings_page(int stack_index, const QString &route_key);
     void open_translator();
     void open_clipboard_window();
+    // Creates the clipboard window once, wired to the app; start-up preloading and the hotkey both
+    // go through here.
+    clipboard::ClipboardWindow *ensure_clipboard_window();
     // The tray switch: saves the setting and starts or stops the watcher. The hotkey and the recorded
     // history stay available.
     void set_clipboard_enabled(bool enabled);

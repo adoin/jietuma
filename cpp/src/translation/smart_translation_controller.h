@@ -16,7 +16,7 @@ public:
     static constexpr int COPY_DELAY_MS = 55;
     static constexpr int FALLBACK_READ_DELAY_MS = 120;
     static constexpr int PROBE_TIMEOUT_MS = 500;
-    explicit SmartTranslationController(QObject *parent = nullptr);
+    explicit SmartTranslationController(QObject *parent = nullptr, std::function<void()> copy_sender = {});
     bool probe_active() const { return probe_active_; }
     // Begins one non-blocking selection probe.
     void trigger();
@@ -43,6 +43,7 @@ private:
     void open_compact_input(int token, const QString &reason);
 
     ToolSettingsManager *config_;
+    std::function<void()> copy_sender_;
     bool probe_active_ = false;
     bool copy_dispatched_ = false;
     int probe_token_ = 0;

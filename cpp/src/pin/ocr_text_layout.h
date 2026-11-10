@@ -26,6 +26,8 @@ struct OcrLayoutLine {
     QRectF reading_bounds;
     // Positions estimated from character widths: the engine gave none.
     bool estimated = false;
+    // The line's index in the recognition result.
+    int source = -1;
     int length() const { return static_cast<int>(chars.size()); }
     // Characters [first, last).
     QString slice(int first, int last) const;
@@ -50,7 +52,8 @@ public:
     // both ends gives the run between them; a line holding one end, the run from it towards the
     // other; a line lying wholly between the ends counts in full when it overlaps the end lines
     // or the drag along its direction, so short lines inside a paragraph are kept and another
-    // column is not. A character counts when its centre falls inside the run.
+    // column is not; any other line the drag passes through, as a table cell between the ends of a
+    // row, gives the part inside it. A character counts when its centre falls inside the run.
     void select_between(const QPointF &from, const QPointF &to, double slack = 0);
     void select_line(int index);
     // The character of a line at point along it, or the nearest one; -1 for a line without any.
@@ -73,6 +76,8 @@ public:
     QString all_text(const QString &separator = "\n") const;
     // A line's selected run in image pixels; empty without a selection there.
     QPolygonF selection_outline(int index) const;
+    // Characters [first, last) of a line in image pixels; empty for an empty run.
+    QPolygonF run_outline(int index, int first, int last) const;
     // What the selection covers in image pixels.
     QRectF selection_bounds() const;
     // What the text covers in image pixels.

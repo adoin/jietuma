@@ -245,7 +245,7 @@ bool jb_clipboard_pause_for_update(const JbClipboard *clipboard);
 void jb_clipboard_resume_after_update(const JbClipboard *clipboard);
 size_t jb_clipboard_pending_writes(const JbClipboard *clipboard);
 bool jb_clipboard_get_history(const JbClipboard *clipboard, int64_t offset, int64_t limit, const char *search, const char *kind, const char *app,
-                              const int64_t *start_time, const int64_t *end_time, char **out_json, char *error, size_t error_len);
+                              const int64_t *start_time, const int64_t *end_time, bool ungrouped_only, char **out_json, char *error, size_t error_len);
 bool jb_clipboard_source_apps(const JbClipboard *clipboard, char **out_json, char *error, size_t error_len);
 bool jb_clipboard_get_count(const JbClipboard *clipboard, int64_t *out, char *error, size_t error_len);
 bool jb_clipboard_get_item(const JbClipboard *clipboard, int64_t id, char **out_json, char *error, size_t error_len);
@@ -272,6 +272,8 @@ bool jb_clipboard_get_by_group(const JbClipboard *clipboard, const int64_t *grou
                                size_t error_len);
 bool jb_clipboard_get_group_filtered(const JbClipboard *clipboard, int64_t group_id, int64_t offset, int64_t limit, const char *search, const char *kind,
                                      const int64_t *start, const int64_t *end, char **out_json, char *error, size_t error_len);
+bool jb_clipboard_get_group_items(const JbClipboard *clipboard, int64_t group_id, int64_t offset, int64_t limit, const char *search, const char *kind,
+                                  const char *app, const int64_t *start_time, const int64_t *end_time, char **out_json, char *error, size_t error_len);
 bool jb_clipboard_paste_item(const JbClipboard *clipboard, int64_t id, bool with_html, bool move_to_top, bool *out_ok, char *error, size_t error_len);
 bool jb_clipboard_record_plugin_paste(const JbClipboard *clipboard, int64_t id, bool move_to_top, char *error, size_t error_len);
 bool jb_clipboard_paste_as_files(const JbClipboard *clipboard, int64_t id, bool *out_ok, char *error, size_t error_len);

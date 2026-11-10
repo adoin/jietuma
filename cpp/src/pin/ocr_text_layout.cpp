@@ -73,9 +73,10 @@ QString OcrLayoutLine::slice(int first, int last) const {
 
 OcrTextLayout::OcrTextLayout(const OcrResult &result, const QTransform &to_image) {
     if (result.code != 100) return;
-    for (const auto &source : result.data) {
-        auto line = make_line(source, to_image);
+    for (int i = 0; i < result.data.size(); ++i) {
+        auto line = make_line(result.data[i], to_image);
         if (!line) continue;
+        line->source = i;
         bounds_ = bounds_.isNull() ? line->bounds : bounds_.united(line->bounds);
         lines_.push_back(std::move(*line));
     }
@@ -130,16 +131,31 @@ void OcrTextLayout::select_between(const QPointF &from, const QPointF &to, doubl
     }
     // Each end belongs to one line at most, also past that line's ends.
     const auto from_line = nearest_line(from, slack, false), to_line = nearest_line(to, slack, false);
+    // Whether a point lies level with a line. A near-upright line is judged by its box's extent on
+    // screen: across a short box a pixel of lean is a few degrees, enough to put a far point of
+    // the same row outside the line's own frame.
+    const auto level = [](const OcrLayoutLine &line, const QPointF &point) {
+        constexpr double NEAR_UPRIGHT = 0.087;  // sin 5°
+        if (std::abs(line.frame.along.y()) < NEAR_UPRIGHT) return point.y() >= line.bounds.top() && point.y() <= line.bounds.bottom();
+        if (std::abs(line.frame.along.x()) < NEAR_UPRIGHT) return point.x() >= line.bounds.left() && point.x() <= line.bounds.right();
+        const double y = line.to_line.map(point).y();
+        return y >= 0 && y <= line.frame.thickness;
+    };
+    // An end stands for the row by the middle of its line, so a close line of the same paragraph
+    // whose box overlaps a little is not taken for the same row.
+    const QPointF from_row = from_line ? lines_[*from_line].bounds.center() : from, to_row = to_line ? lines_[*to_line].bounds.center() : to;
     for (int index = 0; index < static_cast<int>(lines_.size()); ++index) {
         const auto &line = lines_[index];
         const double length = line.frame.length, thickness = line.frame.thickness;
         struct End { QPointF at; bool beside; };
         End a{line.to_line.map(from), from_line == index}, b{line.to_line.map(to), to_line == index};
+        // One end here and the other along the same row: the run towards it, in either direction.
+        const bool row = a.beside != b.beside && level(line, a.beside ? to_row : from_row);
         // a comes before b across the line: above it for horizontal text.
         if (b.at.y() < a.at.y()) std::swap(a, b);
         const auto on = [&](const End &end) { return end.beside && end.at.x() >= -slack && end.at.x() <= length + slack; };
         double low = 0, high = 0;
-        if (a.beside && b.beside) {
+        if ((a.beside && b.beside) || row) {
             low = std::min(a.at.x(), b.at.x());
             high = std::max(a.at.x(), b.at.x());
         } else if (on(a)) {
@@ -159,7 +175,22 @@ void OcrTextLayout::select_between(const QPointF &from, const QPointF &to, doubl
             low = -infinity;
             high = infinity;
         } else {
-            continue;
+            // A drag along a table row passes through the cells between its ends: the part of the
+            // drag inside the line. Clipped in the line's frame, since a slightly tilted box puts a
+            // far end outside the line even when the drag runs through it. Without slack, so a close
+            // line of the same paragraph is not caught.
+            const double rise = b.at.y() - a.at.y();
+            double enter = 0, leave = 1;
+            if (rise > 0) {
+                enter = std::max(0.0, -a.at.y() / rise);
+                leave = std::min(1.0, (thickness - a.at.y()) / rise);
+            } else if (a.at.y() < 0 || a.at.y() > thickness) {
+                continue;
+            }
+            if (enter > leave) continue;
+            const double first = a.at.x() + (b.at.x() - a.at.x()) * enter, last = a.at.x() + (b.at.x() - a.at.x()) * leave;
+            low = std::min(first, last);
+            high = std::max(first, last);
         }
         // Centres run in reading order, so the run is one slice.
         const auto begin = std::upper_bound(line.centers.begin(), line.centers.end(), low);
@@ -276,9 +307,16 @@ QString OcrTextLayout::all_text(const QString &separator) const {
 
 QPolygonF OcrTextLayout::selection_outline(int index) const {
     const auto range = selection(index);
-    if (!range) return {};
+    return range ? run_outline(index, range->first, range->second) : QPolygonF();
+}
+
+QPolygonF OcrTextLayout::run_outline(int index, int first, int last) const {
+    if (index < 0 || index >= static_cast<int>(lines_.size())) return {};
     const auto &line = lines_[index];
-    const double start = line.starts[range->first], end = line.ends[range->second - 1];
+    first = std::max(first, 0);
+    last = std::min(last, line.length());
+    if (first >= last) return {};
+    const double start = line.starts[first], end = line.ends[last - 1];
     const auto to_source = line.frame.to_source();
     return QPolygonF({to_source.map(QPointF(start, 0)), to_source.map(QPointF(end, 0)), to_source.map(QPointF(end, line.frame.thickness)),
                       to_source.map(QPointF(start, line.frame.thickness))});

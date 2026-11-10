@@ -199,23 +199,20 @@ private slots:
         QEnterEvent enter(QPointF(12,12),QPointF(12,12),QPointF(12,12));QApplication::sendEvent(item,&enter);QTest::qWait(340);
         snapshot(host,"navigation-hover");
     }
-    void buttonShadowAnimatesWithoutMovingItsLayout() {
-        QWidget host;host.resize(300,100);auto *button=new PrimaryPushButton("Save",&host);button->setGeometry(40,30,160,40);
+    void primaryButtonPressedFillDoesNotMoveItsLayout() {
+        QWidget host; host.resize(300,100);
+        auto *button=new PrimaryPushButton("Save",&host);button->setGeometry(40,30,160,40);
         host.show();QApplication::processEvents();const auto geometry=button->geometry();
-        QEvent leave(QEvent::Leave);QApplication::sendEvent(button,&leave);QTest::qWait(340);
-        snapshot(host,"button-idle",false);
-        QEnterEvent enter(QPointF(10,10),QPointF(50,40),QPointF(50,40));QApplication::sendEvent(button,&enter);QTest::qWait(100);
-        const auto progress=button->property("_materialHover").toReal();
-        snapshot(host,"button-hover-middle",false);
-        QVERIFY(progress>0);QTest::qWait(250);QVERIFY(button->property("_materialHover").toReal()>0.99);
-        snapshot(host,"button-hover-end",false);
+        QEvent leave(QEvent::Leave);QApplication::sendEvent(button,&leave);
+        const QImage idle=button->grab().toImage();
+        QTest::mousePress(button,Qt::LeftButton);QVERIFY(button->isDown());
+        const QImage pressed=button->grab().toImage();
+        QVERIFY(idle!=pressed);QCOMPARE(button->geometry(),geometry);
+        snapshot(host,"button-pressed",false);
+        QTest::mouseRelease(button,Qt::LeftButton);QVERIFY(!button->isDown());
         QCOMPARE(button->geometry(),geometry);
-        QApplication::sendEvent(button,&leave);QTest::qWait(340);QVERIFY(button->property("_materialHover").toReal()<0.01);
-        qApp->setProperty("_materialReducedMotion",true);
-        const auto restore=qScopeGuard([]{qApp->setProperty("_materialReducedMotion",false);});
-        QApplication::sendEvent(button,&enter);QCOMPARE(button->property("_materialHover").toReal(),1.0);
     }
-    void onlyPrimaryButtonsGetDepthAnimation() {
+    void onlyPrimaryButtonsHaveTheProminentPressedTreatment() {
         QWidget host;auto *layout=new QVBoxLayout(&host);
         auto *normal=new PushButton("Reset");auto *primary=new PrimaryPushButton("Save");
         auto *nav=new NavigationInterface;auto *item=nav->addItem("capture",FluentIcon::Camera,"Capture",{});
@@ -226,7 +223,12 @@ private slots:
             QVERIFY(!button->findChild<QWidget *>("_materialEdge",Qt::FindDirectChildrenOnly));
             QVERIFY(!button->property("_materialHover").isValid());
         }
-        QVERIFY(primary->findChild<QWidget *>("_materialEdge",Qt::FindDirectChildrenOnly));
+        const auto geometry=primary->geometry();
+        const auto idle=primary->grab().toImage();
+        QTest::mousePress(primary,Qt::LeftButton);QVERIFY(primary->isDown());
+        QVERIFY(primary->grab().toImage()!=idle);
+        QCOMPARE(primary->geometry(),geometry);
+        QTest::mouseRelease(primary,Qt::LeftButton);
         QVERIFY(item->isChecked());
     }
     void selectedAccentUpdatesOpenControls_data() { normalizationKeepsSemanticFillsAndRemovesDecorativeStrokes_data(); }
@@ -236,7 +238,11 @@ private slots:
                 const auto colors=material_palette(accent,dark);
                 for(const QColor shade : {colors.surface,colors.shadow,colors.highlight}) {
                     if(accent.hslSaturationF()>0) QVERIFY(qAbs(shade.hslHueF()-accent.hslHueF())<0.001);
-                    QVERIFY(shade.hslSaturationF()<=accent.hslSaturationF());
+                    QVERIFY(shade.hslSaturationF()<=0.25);
+                    const QColor varied=QColor::fromHslF(std::max(0.0f,accent.hslHueF()),0.8f,0.3f);
+                    const auto alternative=material_palette(varied,dark);
+                    QCOMPARE(colors.surface.hslSaturationF(),alternative.surface.hslSaturationF());
+                    QCOMPARE(colors.surface.lightnessF(),alternative.surface.lightnessF());
                 }
                 QVERIFY(colors.shadow.lightnessF()<colors.surface.lightnessF());
                 QVERIFY(colors.highlight.lightnessF()>colors.surface.lightnessF());

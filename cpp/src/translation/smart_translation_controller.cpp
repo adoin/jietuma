@@ -16,7 +16,8 @@ namespace {
 int char_count(const QString &text) { return static_cast<int>(text.toUcs4().size()); }
 }
 
-SmartTranslationController::SmartTranslationController(QObject *parent) : QObject(parent), config_(get_tool_settings_manager()) {}
+SmartTranslationController::SmartTranslationController(QObject *parent, std::function<void()> copy_sender)
+    : QObject(parent), config_(get_tool_settings_manager()), copy_sender_(std::move(copy_sender)) {}
 
 void SmartTranslationController::trigger() {
     probe_token_ += 1;
@@ -43,7 +44,8 @@ void SmartTranslationController::translate_selection(const QString &raw_text) {
 void SmartTranslationController::dispatch_copy(int token) {
     if (!is_current(token)) return;
     copy_dispatched_ = true;
-    send_copy_shortcut();
+    if (copy_sender_) copy_sender_();
+    else send_copy_shortcut();
     if (!(clipboard_monitor_available && clipboard_monitor_available()))
         QTimer::singleShot(FALLBACK_READ_DELAY_MS, this, [this, token] { read_clipboard_fallback(token); });
 }

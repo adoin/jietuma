@@ -19,6 +19,7 @@
 #include "translation/translation_manager.h"
 #include "ui/dialogs.h"
 #include "ui/save_image_dialog.h"
+#include "ui/toast.h"
 #include "ui/wait_bar.h"
 #include <QApplication>
 #include <QDateTime>
@@ -112,6 +113,30 @@ void ActionTools::handle_save(bool close_after) {
     else finish();
 }
 
+void ActionTools::handle_quick_save() {
+    temporarily_exit_editing();
+    const auto rect = scene->selection_model->rect();
+    remember_last_region(rect);
+    finish_when_ready(rect, [this, rect] {
+        const auto image = export_service.export_image(rect);
+        process_output(image, rect, "quick_save", [this, rect](QImage processed) {
+            const auto [success, path] = save_service->save_qimage(processed, config_manager->get_screenshot_save_path(), "", "", config_manager->get_screenshot_format());
+            if (success) {
+                save_original_beside(rect, path.value_or(QString()));
+                cleanup_and_close();
+                // Nothing else shows that the file was written.
+                show_toast(action_tr("Saved: %1").replace("%1", QFileInfo(path.value_or(QString())).fileName()));
+            } else if (parent_window && parent_window->isVisible()) {
+                show_warning_dialog(parent_window, action_tr("Save Failed"), path.value_or(QString()));
+            } else {
+                // Handed over: the capture cannot come back, so it ends before the warning.
+                cleanup_and_close();
+                show_warning_dialog(nullptr, action_tr("Save Failed"), path.value_or(QString()));
+            }
+        });
+    });
+}
+
 void ActionTools::save_image_interactively(QWidget *parent, const QImage &image, const QString &base_name, ToolSettingsManager *config,
                                            const std::shared_ptr<SaveService> &service) {
     if (use_modern_save_dialog(config)) {
@@ -172,25 +197,7 @@ bool ActionTools::handle_capture_action(const QString &action) {
     } else if (action == "save") {
         handle_save();
     } else if (action == "quick_save") {
-        temporarily_exit_editing();
-        const auto rect = scene->selection_model->rect();
-        remember_last_region(rect);
-        finish_when_ready(rect, [this, rect] {
-            const auto image = export_service.export_image(rect);
-            process_output(image, rect, "quick_save", [this, rect](QImage processed) {
-                const auto [success, path] = save_service->save_qimage(processed, config_manager->get_screenshot_save_path(), "", config_manager->get_screenshot_format());
-                if (success) {
-                    save_original_beside(rect, path.value_or(QString()));
-                    cleanup_and_close();
-                } else if (parent_window && parent_window->isVisible()) {
-                    show_warning_dialog(parent_window, action_tr("Save Failed"), path.value_or(QString()));
-                } else {
-                    // Handed over: the capture cannot come back, so it ends before the warning.
-                    cleanup_and_close();
-                    show_warning_dialog(nullptr, action_tr("Save Failed"), path.value_or(QString()));
-                }
-            });
-        });
+        handle_quick_save();
     } else {
         return false;
     }

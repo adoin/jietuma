@@ -535,9 +535,12 @@ void MainApp::on_settings_accepted(SettingsDialog *accepted_window) {
     if (saved.contains("clipboard_enabled_toggle")) set_clipboard_monitoring_enabled(config_manager->get_clipboard_enabled());
     if (accepted_window->hotkeys_saved()) update_hotkey(true);
     if (saved.contains("capture_engine_combo")) apply_capture_engine(config_manager->get_capture_engine());
+    if (saved.contains("translation_target_combo") && TranslationManager::has_instance())
+        TranslationManager::instance()->apply_target_lang(config_manager->get_translation_target_lang());
     if (clipboard_window) {
         clipboard_window->load_settings();
         clipboard_window->controller->load_settings();
+        clipboard_window->apply_saved_settings(saved);
         if (clipboard_manager) clipboard_manager->apply_history_limit();
     }
     PinManager::instance()->refresh_all_appearance();
@@ -597,6 +600,13 @@ void MainApp::open_settings() {
     settings_window->show();
     settings_window->raise();
     settings_window->activateWindow();
+}
+
+void MainApp::open_settings_page(int stack_index, const QString &route_key) {
+    if (update_preparing) return;
+    if (!settings_window) preload_settings();
+    settings_window->restore_view_state({stack_index, route_key});
+    open_settings();
 }
 
 void MainApp::open_translator() {
@@ -668,6 +678,14 @@ void MainApp::release_clipboard_from_capture() {
     set_window_owner(static_cast<quintptr>(clipboard_window->winId()), 0);
 }
 
+clipboard::ClipboardWindow *MainApp::ensure_clipboard_window() {
+    if (!clipboard_window) {
+        clipboard_window = new clipboard::ClipboardWindow;
+        connect(clipboard_window, &clipboard::ClipboardWindow::settings_requested, this, [this] { open_settings_page(2, "clipboard"); });
+    }
+    return clipboard_window;
+}
+
 void MainApp::open_clipboard_window() {
     if (update_preparing) return;
     try {
@@ -676,7 +694,7 @@ void MainApp::open_clipboard_window() {
             clipboard_window->close();
             return;
         }
-        if (!clipboard_window) clipboard_window = new clipboard::ClipboardWindow;
+        ensure_clipboard_window();
         if (screenshot_window && screenshot_window->session_active()) {
             attach_clipboard_to_capture();
             // The text being typed stays in view while picking what goes into it.
