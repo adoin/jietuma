@@ -51,7 +51,7 @@ public:
     QImage export_selection_for_plugin();
     void export_selection_for_plugin(std::function<void(QImage)> done);
     // The save window, or the system Save As dialog when the setting asks for it.
-    static void save_image_interactively(QWidget *parent, const QImage &image, const QString &base_name, ToolSettingsManager *config,
+    static bool save_image_interactively(QWidget *parent, const QImage &image, const QString &base_name, ToolSettingsManager *config,
                                          const std::shared_ptr<SaveService> &service);
     CanvasScene *scene;
     ToolSettingsManager *config_manager;

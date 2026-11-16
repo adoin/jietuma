@@ -155,7 +155,7 @@
         <source>Open Wizard</source>
         <translation>ウィザードを開く</translation>
     </message>
-    
+
     <!-- Startup Preload -->
     <message>
         <source>Startup Preload</source>
@@ -261,7 +261,7 @@
         <source>Latest Log</source>
         <translation>最新ログ</translation>
     </message>
-    
+
     <!-- Hotkey Page -->
     <message>
         <source>Global Hotkeys</source>
@@ -436,7 +436,7 @@ Replace it?</source>
         <source>💡 Hint: You can use modifier keys like Ctrl, Shift, Alt.</source>
         <translation>💡 ヒント: Ctrl・Shift・Alt などの修飾キーを組み合わせて使えます。</translation>
     </message>
-    
+
     <!-- Long Screenshot Page -->
     <message>
         <source>Stitching Engine</source>
@@ -500,7 +500,7 @@ Replace it?</source>
         <source>Start new text annotations at about 30 characters wide and keep them inside the selection.</source>
         <translation>新しいテキスト注釈は約30文字幅で開始し、選択範囲内に収めます。</translation>
     </message>
-    
+
     <!-- Smart Selection Page -->
     <message>
         <source>Detection Precision</source>
@@ -546,7 +546,7 @@ Replace it?</source>
         <source>3. Click to select that area</source>
         <translation>3. クリックしてその範囲を選択</translation>
     </message>
-    
+
     <!-- Save Page -->
     <message>
         <source>Write File Path to Clipboard</source>
@@ -616,7 +616,7 @@ Replace it?</source>
         <source>Select Screenshot Save Folder</source>
         <translation>スクショ保存フォルダを選択</translation>
     </message>
-    
+
     <!-- OCR Page -->
     <message>
         <source>No OCR Version / OCR module not found</source>
@@ -710,7 +710,7 @@ Replace it?</source>
         <source>💡 Supports 100+ languages: Chinese, English, Japanese, Korean, Arabic, etc.</source>
         <translation>💡 100以上の言語に対応：中国語、英語、日本語、韓国語、アラビア語など</translation>
     </message>
-    
+
     <!-- Log Page -->
     <message>
         <source>Save Logs</source>
@@ -776,7 +776,7 @@ Replace it?</source>
         <source>*Changes will fully take effect after restart.</source>
         <translation>※変更は次回起動時に完全に反映されます。</translation>
     </message>
-    
+
     <!-- Misc Page -->
     <message>
         <source>Launch on Startup</source>
@@ -878,7 +878,7 @@ Replace it?</source>
         <source>Settings imported.</source>
         <translation>設定をインポートしました。</translation>
     </message>
-    
+
     <!-- Translation Settings Page -->
     <message>
         <source>Translation Engine</source>
@@ -1735,6 +1735,7 @@ Replace it?</source>
         <source>Saved: %1</source>
         <translation>保存しました：%1</translation>
     </message>
+
 </context>
 
 <context>
@@ -1747,6 +1748,7 @@ Replace it?</source>
         <source>Please configure DeepL API key in Settings.</source>
         <translation>設定で DeepL API キーを設定してください。</translation>
     </message>
+
 </context>
 
 <!-- ========== Toolbar ========== -->
@@ -1784,7 +1786,7 @@ Replace it?</source>
         <source>Quick save: straight to the save folder, no dialog</source>
         <translation>クイック保存：ダイアログなしで保存フォルダに保存</translation>
     </message>
-    
+
 
     <message>
         <source>Copy image</source>
@@ -2235,6 +2237,7 @@ Replace it?</source>
         <source>This pin is only %1 × %2 pixels. Pin it anyway?</source>
         <translation>この画像は %1 × %2 ピクセルしかありません。それでもピン留めしますか？</translation>
     </message>
+
 </context>
 
 <!-- ========== Pin Click-Through Bar ========== -->
@@ -2252,6 +2255,7 @@ Replace it?</source>
         <source>Exit click-through</source>
         <translation>マウス透過を終了</translation>
     </message>
+
 </context>
 
 <!-- ========== Scroll Screenshot (Long Screenshot) ========== -->
@@ -2353,6 +2357,7 @@ Replace it?</source>
         <source>Cancel</source>
         <translation>キャンセル</translation>
     </message>
+
 </context>
 
 <!-- ========== System Tray ========== -->
@@ -2412,6 +2417,10 @@ Replace it?</source>
     <message>
         <source>Screen Annotation</source>
         <translation>画面注釈</translation>
+    </message>
+<message>
+        <source>Screen Recording</source>
+        <translation>画面録画</translation>
     </message>
 </context>
 
@@ -2502,6 +2511,7 @@ Replace it?</source>
         <source>Nothing on the clipboard to pin</source>
         <translation>ピン留めできる内容がクリップボードにありません</translation>
     </message>
+
 </context>
 
 <!-- ========== Translation Dialog ========== -->
@@ -2710,6 +2720,7 @@ Replace it?</source>
         <source>Dutch</source>
         <translation>オランダ語</translation>
     </message>
+
 </context>
 
 <!-- ========== Translation Settings ========== -->
@@ -4048,6 +4059,7 @@ Items in the group will be moved back to clipboard history.</source>
         <source>Choose a content type or a source app</source>
         <translation>内容の種類かコピー元アプリを選んでください</translation>
     </message>
+
 </context>
 
 <!-- ========== 設定ダイアログ - クリップボード設定 ========== -->
@@ -4431,6 +4443,7 @@ This action cannot be undone.</source>
         <source>Strength: Maximum</source>
         <translation>強度：最強</translation>
     </message>
+
 </context>
 
 <context>
@@ -4527,12 +4540,14 @@ This action cannot be undone.</source>
         <source>Outline: Extra Thick</source>
         <translation>縁取り：極太</translation>
     </message>
+
 </context>
 
 <context>
     <name>MagnifierOverlay</name>
     <message><source>Shift: Switch color format</source><translation>Shift: カラー形式を切り替え</translation></message>
     <message><source>C: Copy color value</source><translation>C: カラー値をコピー</translation></message>
+
 </context>
 
 <context>
@@ -5198,6 +5213,7 @@ This action cannot be undone.</source>
         <source>Save directly to the screenshot folder.</source>
         <translation>スクリーンショットの保存先に直接保存します。</translation>
     </message>
+
 </context>
 
 <!-- ========== GIF Record Toolbar ========== -->
@@ -5311,6 +5327,7 @@ This action cannot be undone.</source>
         <source>已复制</source>
         <translation>コピーしました</translation>
     </message>
+
 </context>
 
 <!-- ========== GIF Playback Toolbar ========== -->
@@ -5323,6 +5340,7 @@ This action cannot be undone.</source>
     <message><source>另存为</source><translation>名前を付けて保存</translation></message>
     <message><source>关闭</source><translation>閉じる</translation></message>
     <message><source>显示鼠标光标</source><translation>マウスカーソルを表示</translation></message>
+
 </context>
 
 <!-- ========== Selection Info Panel ========== -->
@@ -5332,6 +5350,7 @@ This action cannot be undone.</source>
     <message><source>Rounded Corners</source><translation>角丸</translation></message>
     <message><source>Lock Aspect Ratio</source><translation>縦横比を固定</translation></message>
     <message><source>Refresh Background</source><translation>背景を更新</translation></message>
+
 </context>
 
 <!-- ========== Border Shadow Popup ========== -->
@@ -5343,6 +5362,7 @@ This action cannot be undone.</source>
     <message><source>Border</source><translation>枠線</translation></message>
     <message><source>Size</source><translation>サイズ</translation></message>
     <message><source>Keep enabled for every screenshot</source><translation>毎回有効にする</translation></message>
+
 </context>
 
 <!-- ========== Appearance Settings ========== -->
@@ -5490,6 +5510,7 @@ Items in the group will be moved back to clipboard history.</source>
         <translation>このグループを削除してもよろしいですか？
 グループ内のアイテムはクリップボード履歴に戻ります。</translation>
     </message>
+
 </context>
 
 <context>
@@ -5506,6 +5527,7 @@ Items in the group will be moved back to clipboard history.</source>
         <source>OK</source>
         <translation>OK</translation>
     </message>
+
 </context>
 
 <!-- ========== Clipboard Preview ========== -->
@@ -5523,6 +5545,7 @@ Items in the group will be moved back to clipboard history.</source>
         <source>无文件信息</source>
         <translation>ファイル情報がありません</translation>
     </message>
+
 </context>
 
 <context>
@@ -5658,6 +5681,7 @@ Replace: move the current data there; the data already in that folder will be de
     <message><source>Paste</source><translation>貼り付け</translation></message>
     <message><source>Delete</source><translation>削除</translation></message>
     <message><source>Select All</source><translation>すべて選択</translation></message>
+
 </context>
 
 
@@ -5671,6 +5695,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Change Number Style</source>
         <translation>番号スタイルを変更</translation>
     </message>
+
 </context>
 <context>
     <name>HotkeyEdit</name>
@@ -5966,6 +5991,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Middle</source>
         <translation>中ボタン</translation>
     </message>
+
 </context>
 <context>
     <name>ColorFormatDialog</name>
@@ -5974,6 +6000,7 @@ Replace: move the current data there; the data already in that folder will be de
     <message><source>Restore defaults</source><translation>既定に戻す</translation></message>
     <message><source>OK</source><translation>OK</translation></message>
     <message><source>Cancel</source><translation>キャンセル</translation></message>
+
 </context>
 <context>
     <name>KeyChip</name>
@@ -5993,6 +6020,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Press keys…</source>
         <translation>キーを押してください…</translation>
     </message>
+
 </context>
 <context>
     <name>HotkeyEdit</name>
@@ -6024,6 +6052,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>This key can't be used as a global hotkey.</source>
         <translation>このキーはグローバルホットキーに使えません。</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -6205,6 +6234,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Copied table (%1 rows × %2 columns)</source>
         <translation>表をコピーしました（%1 行 × %2 列）</translation>
     </message>
+
 </context>
 <context>
     <name>BarcodeResultWindow</name>
@@ -6216,6 +6246,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Copied: %1</source>
         <translation>コピーしました：%1</translation>
     </message>
+
 </context>
 <context>
     <name>ClipboardQuickEdit</name>
@@ -6231,6 +6262,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Formatting will be removed</source>
         <translation>保存するとプレーンテキストになります</translation>
     </message>
+
 </context>
 
 <context>
@@ -6259,6 +6291,35 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Long screenshot - window position corrected</source>
         <translation>スクロールキャプチャ - ウィンドウ位置を補正しました</translation>
     </message>
+<message><source>Couldn't extend. Keep the page still.</source><translation>継ぎ足しできませんでした。ページを動かさずに再試行してください。</translation></message>
+<message>
+        <source>Previous long screenshot</source>
+        <translation>前のスクロールショット</translation>
+    </message>
+<message>
+        <source>Save the previous long screenshot before starting a new one?</source>
+        <translation>新しい撮影を始める前に、前の結果を保存しますか？</translation>
+    </message>
+<message>
+        <source>Save and continue</source>
+        <translation>保存して続行</translation>
+    </message>
+<message>
+        <source>Discard and continue</source>
+        <translation>破棄して続行</translation>
+    </message>
+<message>
+        <source>Finish extending or saving the previous capture before starting a new one.</source>
+        <translation>前の撮影の延長または保存が完了してから、新しい撮影を始めてください。</translation>
+    </message>
+<message>
+        <source>The previous result could not be exported. It has been kept open.</source>
+        <translation>前の結果を出力できませんでした。元の撮影は開いたままです。</translation>
+    </message>
+<message>
+        <source>Cancel</source>
+        <translation>キャンセル</translation>
+    </message>
 </context>
 <context>
     <name>ScreenshotWindow</name>
@@ -6270,6 +6331,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Please select a valid capture area first.</source>
         <translation>先に有効なキャプチャ範囲を選択してください。</translation>
     </message>
+
 </context>
 <context>
     <name>GifRecorder</name>
@@ -6301,6 +6363,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>GIF animation (*.gif)</source>
         <translation>GIF アニメーション (*.gif)</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -6347,6 +6410,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>Cancel</source>
         <translation>キャンセル</translation>
     </message>
+
 </context>
 <context>
     <name>GifDrawingToolbar</name>
@@ -6362,6 +6426,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>退出绘制</source>
         <translation>描画を終了</translation>
     </message>
+
 </context>
 <context>
     <name>UpdateDialog</name>
@@ -6385,6 +6450,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>Cancel</source>
         <translation>キャンセル</translation>
     </message>
+
 </context>
 <context>
     <name>UpdateController</name>
@@ -6463,6 +6529,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>The updater stopped with an error (%1).</source>
         <translation>更新プログラムがエラーで停止しました（%1）。</translation>
     </message>
+
 </context>
 <context>
     <name>GifRecordWindow</name>
@@ -6522,6 +6589,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>无法打开，请检查默认播放器或文件管理器。</source>
         <translation>開けませんでした。既定のプレーヤーまたはファイルマネージャーを確認してください。</translation>
     </message>
+
 </context>
 <context>
     <name>VideoRecorder</name>
@@ -6625,6 +6693,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>暂停或恢复录制超时，录制已停止，视频未确认保存成功。</source>
         <translation>一時停止または再開がタイムアウトしました。録画を停止し、動画の保存成功を確認できませんでした。</translation>
     </message>
+
 </context>
 <context>
     <name>SpecialPasteDialog</name>
@@ -6716,6 +6785,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>Paste full file paths.</source>
         <translation>ファイルのフルパスを貼り付けます。</translation>
     </message>
+
 </context>
 <context>
     <name>Toolbar</name>
@@ -6723,6 +6793,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>Watermark</source>
         <translation>透かし</translation>
     </message>
+
 </context>
 <context>
     <name>ToolbarLayoutDialog</name>
@@ -6730,6 +6801,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>Watermark</source>
         <translation>透かし</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -6876,6 +6948,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>Grid lines apply to diamond watermarks</source>
         <translation>グリッド線はひし形のときだけ有効です</translation>
     </message>
+
 </context>
 <context>
     <name>WatermarkInputDialog</name>
@@ -6951,6 +7024,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>Compact, for file names</source>
         <translation>コンパクト形式（ファイル名向け）</translation>
     </message>
+
 </context>
 <context>
     <name>TranslationLoadingDialog</name>
@@ -6958,6 +7032,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>Recognizing...</source>
         <translation>認識中...</translation>
     </message>
+
 </context>
 <context>
     <name>PpocrModelDialog</name>
@@ -7171,6 +7246,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>The ONNX Runtime download stopped with an error (%1).</source>
         <translation>ONNX Runtime のダウンロードがエラーで停止しました（%1）。</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7200,6 +7276,7 @@ gifrecorder が正しくインストールされているか確認してくだ�
         <source>Downloading...</source>
         <translation>ダウンロード中...</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7447,6 +7524,14 @@ Replace it?</source>
         <source>The name &quot;%1&quot; is already used by path &quot;%2&quot;. Do you want to set a new name for the current path?</source>
         <translation>名前「%1」はパス「%2」で使われています。現在のパスに新しい名前を付けますか？</translation>
     </message>
+<message>
+        <source>Default size limit</source>
+        <translation>最大サイズロック</translation>
+    </message>
+<message>
+        <source>Even the lowest quality is larger than this. Make the image smaller to fit.</source>
+        <translation>最低画質でもこのサイズを超えます。上でサイズを小さくしてください。</translation>
+    </message>
 </context>
 <context>
     <name>ClipboardWindow</name>
@@ -7462,6 +7547,7 @@ Replace it?</source>
         <source>Last Position</source>
         <translation>前回の位置</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7534,9 +7620,135 @@ Replace it?</source>
     <name>SettingsDialog</name>
     <message><source>Automatic Updates</source><translation>自動更新</translation></message>
     <message><source>Check GitHub Releases automatically. Download, install and restart when no application windows or pinned images are open.</source><translation>GitHub の正式リリースを自動確認します。アプリのウィンドウとピン留め画像を閉じた後、ダウンロード、インストール、再起動します。</translation></message>
-  </context>
+  <message>
+        <source>When a screenshot with annotations (including mosaic) or a watermark is saved to the save folder, a copy without them is saved too.</source>
+        <translation>注釈（モザイクを含む）や透かしを加えたスクリーンショットを保存フォルダーに保存すると、それらのない元画像も保存します。</translation>
+    </message>
+<message>
+        <source>Unassigned buttons and the wheel pass through. A double-click binding also captures single clicks of that button.</source>
+        <translation>未割り当てのボタンとホイールは背後に届きます。ダブルクリックを割り当てると、そのボタンのシングルクリックも取り込みます。</translation>
+    </message>
+<message>
+        <source>Long Screenshot Shortcuts</source>
+        <translation>スクロール撮影操作</translation>
+    </message>
+<message>
+        <source>File Name Settings</source>
+        <translation>ファイル名の設定</translation>
+    </message>
+<message>
+        <source>Set file names for screenshots, long screenshots, GIFs and videos.</source>
+        <translation>スクリーンショット、長いスクリーンショット、GIF、動画の保存名を設定します。</translation>
+    </message>
+<message>
+        <source>Configure</source>
+        <translation>設定</translation>
+    </message>
+<message>
+        <source>Record Content Marked Private</source>
+        <translation>プライベート指定の内容も記録</translation>
+    </message>
+<message>
+        <source>Copies from private browser windows and password managers are skipped by default. When on, they are recorded too, passwords included, in plain text.</source>
+        <translation>ブラウザーのプライベートウィンドウやパスワード管理ソフトでコピーした内容は、既定では記録しません。オンにすると記録し、パスワードも平文のまま履歴に保存されます。</translation>
+    </message>
+<message><source>Show Selection</source><translation>選択範囲を表示</translation></message>
+<message><source>Dim what lies outside the selection and draw its edge in the magnified view, to line the edge up pixel by pixel.</source><translation>拡大表示で選択範囲の外側を暗くし、枠線を描きます。端をピクセル単位で合わせやすくなります。</translation></message>
+<message>
+        <source>Only in the corresponding window</source>
+        <translation>対応するウィンドウ内でのみ有効</translation>
+    </message>
+</context>
   <context>
     <name>UpdateController</name>
     <message><source>The update will install when application windows and pinned images are closed.</source><translation>アプリのウィンドウとピン留め画像を閉じると更新をインストールします。</translation></message>
-  </context>
+
+</context>
+<context>
+<name>ShortcutTabs</name>
+<message><source>Screenshot</source><translation>スクショ</translation></message>
+<message><source>Long Screenshot</source><translation>長いスクショ</translation></message>
+<message><source>Pin</source><translation>ピン留め</translation></message>
+<message><source>Clipboard</source><translation>クリップボード</translation></message>
+<message><source>Annotation Tools</source><translation>注釈ツール</translation></message>
+</context>
+<context>
+<name>FileNameDialog</name>
+<message>
+        <source>File Name Settings</source>
+        <translation>ファイル名の設定</translation>
+    </message>
+<message>
+        <source>Edit ordinary text directly, such as the name of a long screenshot. Use {time} for date and time, {ms} for milliseconds, and {direction} for long screenshot direction. Extensions are added automatically.</source>
+        <translation>長いスクリーンショットの名前など、通常の文字は直接変更できます。{time} は日時、{ms} はミリ秒、{direction} はスクロール方向です。拡張子は自動で付きます。</translation>
+    </message>
+<message>
+        <source>Screenshot</source>
+        <translation>スクリーンショット</translation>
+    </message>
+<message>
+        <source>Pinned Image</source>
+        <translation>ピン留め画像</translation>
+    </message>
+<message>
+        <source>Long Screenshot</source>
+        <translation>長いスクリーンショット</translation>
+    </message>
+<message>
+        <source>GIF</source>
+        <translation>GIF</translation>
+    </message>
+<message>
+        <source>MP4</source>
+        <translation>MP4</translation>
+    </message>
+<message>
+        <source>Original Suffix</source>
+        <translation>元画像の接尾辞</translation>
+    </message>
+<message>
+        <source>Restore defaults</source>
+        <translation>既定値に戻す</translation>
+    </message>
+<message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+<message>
+        <source>Cancel</source>
+        <translation>キャンセル</translation>
+    </message>
+<message>
+        <source>Preview: %1</source>
+        <translation>プレビュー：%1</translation>
+    </message>
+<message>
+        <source>Enter a file name rule.</source>
+        <translation>ファイル名のルールを入力してください。</translation>
+    </message>
+<message>
+        <source>The file name rule is too long (maximum 120 characters).</source>
+        <translation>ファイル名のルールは120文字以内で入力してください。</translation>
+    </message>
+<message>
+        <source>File names cannot contain forbidden characters or end with a dot or space.</source>
+        <translation>ファイル名に使用できない文字があるか、末尾がピリオドまたは空白です。</translation>
+    </message>
+<message>
+        <source>Unknown placeholder in the file name rule.</source>
+        <translation>ファイル名のルールに未対応の変数があります。</translation>
+    </message>
+<message>
+        <source>This file name is reserved by Windows.</source>
+        <translation>このファイル名は Windows の予約名です。</translation>
+    </message>
+<message>
+        <source>The generated file name is too long (maximum 120 characters).</source>
+        <translation>生成されるファイル名が長すぎます（展開後120文字以内）。</translation>
+    </message>
+<message>
+        <source>Leave out the file extension; it is added automatically.</source>
+        <translation>拡張子は自動で付くため、入力しないでください。</translation>
+    </message>
+</context>
 </TS>

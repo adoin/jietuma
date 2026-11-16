@@ -9,6 +9,7 @@
 #include "core/last_capture_region.h"
 #include "core/logger.h"
 #include "core/save.h"
+#include "core/file_names.h"
 #include "core/ui_scale.h"
 #include "pin/pin_manager.h"
 #include "pin/pin_window.h"
@@ -93,7 +94,7 @@ void ActionTools::handle_save(bool close_after) {
     auto selection_rect = scene->selection_model->rect();
     remember_last_region(selection_rect);
     if (selection_rect.isEmpty()) selection_rect = scene->sceneRect();
-    const auto base_name = QString("screenshot_%1").arg(QDateTime::currentDateTime().toString("yyyyMMdd_HHmmss"));
+    const auto base_name = file_names::stem(save_service->config_manager, file_names::Screenshot);
     const auto finish = [this, selection_rect, base_name, close_after] {
         const auto image = export_service.export_image(selection_rect);
         process_output(image, selection_rect, "save", [this, base_name, close_after](QImage processed) {
@@ -137,21 +138,25 @@ void ActionTools::handle_quick_save() {
     });
 }
 
-void ActionTools::save_image_interactively(QWidget *parent, const QImage &image, const QString &base_name, ToolSettingsManager *config,
+bool ActionTools::save_image_interactively(QWidget *parent, const QImage &image, const QString &base_name, ToolSettingsManager *config,
                                            const std::shared_ptr<SaveService> &service) {
     if (use_modern_save_dialog(config)) {
         const auto [outcome, path] = SaveImageDialog::run(parent, image, base_name, config);
         if (outcome == SaveImageDialog::Outcome::SAVED) log_info(T("已保存到: {file_path}", {{"file_path", path}}), "Action");
-        if (outcome != SaveImageDialog::Outcome::CLASSIC) return;
+        if (outcome != SaveImageDialog::Outcome::CLASSIC) return outcome == SaveImageDialog::Outcome::SAVED;
     }
     const auto fmt = (config ? config->get_screenshot_format() : QString("PNG")).toLower();
     auto [file_path, selected_filter] = get_save_file_name(parent, action_tr("Save Screenshot"), service->suggest_path(base_name + "." + fmt),
                                                            "PNG (*.png);;JPG (*.jpg);;BMP (*.bmp);;WebP (*.webp);;PDF (*.pdf)");
-    if (file_path.isEmpty()) return;
+    if (file_path.isEmpty()) return false;
     const auto image_format = format_from_save_path(file_path, selected_filter);
     if (QFileInfo(file_path).suffix().isEmpty()) file_path = file_path + "." + image_format.toLower();
-    if (SaveService::save_qimage_to_path(image, file_path, image_format)) log_info(T("已保存到: {file_path}", {{"file_path", file_path}}), "Action");
-    else show_warning_dialog(parent, action_tr("Save Failed"), file_path);
+    if (SaveService::save_qimage_to_path(image, file_path, image_format)) {
+        log_info(T("已保存到: {file_path}", {{"file_path", file_path}}), "Action");
+        return true;
+    }
+    show_warning_dialog(parent, action_tr("Save Failed"), file_path);
+    return false;
 }
 
 void ActionTools::handle_pin(bool close_after) {
@@ -212,7 +217,8 @@ void ActionTools::save_original_beside(const QRectF &selection_rect, const QStri
     if (!config_manager->get_screenshot_save_original_enabled()) return;
     if (!has_annotations(scene->get_drawing_items_in_rect(selection_rect))) return;
     const auto original = export_service.export_base_image_only(selection_rect);
-    background_tasks::start_thread([original, saved_path] { SaveService::save_beside(original, saved_path, "original"); }, "SaveOriginal");
+    const auto suffix = file_names::load(*config_manager).at(file_names::OriginalSuffix);
+    background_tasks::start_thread([original, saved_path, suffix] { SaveService::save_beside(original, saved_path, suffix); }, "SaveOriginal");
 }
 
 void ActionTools::handle_screenshot_translate() {

@@ -282,6 +282,10 @@ if(BUILD_TESTING)
     target_link_libraries(jietuba_text_table_tests PRIVATE jietuba_lib Qt6::Test)
     add_test(NAME text_table COMMAND jietuba_text_table_tests -o ${JIETUBA_TEST_REPORTS}/text_table.txt,txt)
     set_tests_properties(text_table PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    qt_add_executable(jietuma_capture_replacement_tests tests/test_capture_replacement.cpp)
+    target_link_libraries(jietuma_capture_replacement_tests PRIVATE jietuba_lib Qt6::Test)
+    add_test(NAME capture_replacement COMMAND jietuma_capture_replacement_tests)
+    set_tests_properties(capture_replacement PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
     qt_add_executable(jietuba_input_engine_tests tests/test_input_engine.cpp)
     target_link_libraries(jietuba_input_engine_tests PRIVATE jietuba_lib Qt6::Test)
     add_test(NAME input_engine COMMAND jietuba_input_engine_tests -o ${JIETUBA_TEST_REPORTS}/input_engine.txt,txt)
@@ -416,7 +420,9 @@ if(BUILD_TESTING)
     if(WIN32)
         # Whether texts fit needs real fonts.
         add_test(NAME settings_window_desktop COMMAND jietuba_settings_window_tests -o ${JIETUBA_TEST_REPORTS}/settings_window_desktop.txt,txt -platform windows
-                 readAloudGroupFitsEveryLanguageInTheNarrowestWindow everyPageFitsEveryLanguageAtTheMinimumWidth)
+                 readAloudGroupFitsEveryLanguageInTheNarrowestWindow everyPageFitsEveryLanguageAtTheMinimumWidth
+                 longScreenshotMousePageFitsEveryLanguage fileNameDialogFitsEveryLanguageAndFollowsWindowScale fileNameDialogDoesNotMoveWhileTyping
+                 fileNameDialogErrorsStayVisibleAndKeepPastedText)
         set_tests_properties(settings_window_desktop PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=windows")
     endif()
     qt_add_executable(jietuba_data_folder_tests tests/test_data_folder.cpp)
@@ -481,6 +487,11 @@ if(BUILD_TESTING)
     target_link_libraries(jietuba_save_image_dialog_tests PRIVATE jietuba_lib Qt6::Test)
     add_test(NAME save_image_dialog COMMAND jietuba_save_image_dialog_tests -o ${JIETUBA_TEST_REPORTS}/save_image_dialog.txt,txt)
     set_tests_properties(save_image_dialog PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    if(WIN32)
+        # Whether the size limit row fits needs real fonts.
+        add_test(NAME save_image_dialog_desktop COMMAND jietuba_save_image_dialog_tests -o ${JIETUBA_TEST_REPORTS}/save_image_dialog_desktop.txt,txt -platform windows theSizeLimitRowFitsEveryLanguage)
+        set_tests_properties(save_image_dialog_desktop PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=windows")
+    endif()
     # The PP-OCR pack is not in the repository; the PP-OCR cases copy it from this folder when set.
     # CI names it in the environment.
     set(JIETUBA_PPOCR_MODELS "$ENV{JIETUBA_PPOCR_MODELS}" CACHE PATH "Folder holding the PP-OCR pack (models and onnxruntime.dll) for the OCR tests")

@@ -153,7 +153,7 @@
         <source>Open Wizard</source>
         <translation>Open Wizard</translation>
     </message>
-    
+
     <!-- Startup Preload -->
     <message>
         <source>Startup Preload</source>
@@ -259,7 +259,7 @@
         <source>Latest Log</source>
         <translation>Latest Log</translation>
     </message>
-    
+
     <!-- Hotkey Page -->
     <message>
         <source>Global Hotkeys</source>
@@ -434,7 +434,7 @@ Replace it?</translation>
         <source>💡 Hint: You can use modifier keys like Ctrl, Shift, Alt.</source>
         <translation>💡 Hint: You can use modifier keys like Ctrl, Shift, Alt.</translation>
     </message>
-    
+
     <!-- Long Screenshot Page -->
     <message>
         <source>Stitching Engine</source>
@@ -498,7 +498,7 @@ Replace it?</translation>
         <source>Start new text annotations at about 30 characters wide and keep them inside the selection.</source>
         <translation>Start new text annotations at about 30 characters wide and keep them inside the selection.</translation>
     </message>
-    
+
     <!-- Smart Selection Page -->
     <message>
         <source>Detection Precision</source>
@@ -544,7 +544,7 @@ Replace it?</translation>
         <source>3. Click to select that area</source>
         <translation>3. Click to select that area</translation>
     </message>
-    
+
     <!-- Save Page -->
     <message>
         <source>Write File Path to Clipboard</source>
@@ -614,7 +614,7 @@ Replace it?</translation>
         <source>Select Screenshot Save Folder</source>
         <translation>Select Screenshot Save Folder</translation>
     </message>
-    
+
     <!-- OCR Page -->
     <message>
         <source>No OCR Version / OCR module not found</source>
@@ -708,7 +708,7 @@ Replace it?</translation>
         <source>💡 Supports 100+ languages: Chinese, English, Japanese, Korean, Arabic, etc.</source>
         <translation>💡 Supports 100+ languages: Chinese, English, Japanese, Korean, Arabic, etc.</translation>
     </message>
-    
+
     <!-- Log Page -->
     <message>
         <source>Save Logs</source>
@@ -774,7 +774,7 @@ Replace it?</translation>
         <source>*Changes will fully take effect after restart.</source>
         <translation>*Changes will fully take effect after restart.</translation>
     </message>
-    
+
     <!-- Misc Page -->
     <message>
         <source>Launch on Startup</source>
@@ -876,7 +876,7 @@ Replace it?</translation>
         <source>Settings imported.</source>
         <translation>Settings imported.</translation>
     </message>
-    
+
     <!-- Translation Settings Page -->
     <message>
         <source>Translation Engine</source>
@@ -1673,6 +1673,7 @@ Replace it?</translation>
         <source>Saved: %1</source>
         <translation>Saved: %1</translation>
     </message>
+
 </context>
 
 <context>
@@ -1685,6 +1686,7 @@ Replace it?</translation>
         <source>Please configure DeepL API key in Settings.</source>
         <translation>Please configure DeepL API key in Settings.</translation>
     </message>
+
 </context>
 
 <!-- ========== Toolbar ========== -->
@@ -2171,6 +2173,7 @@ Replace it?</translation>
         <source>This pin is only %1 × %2 pixels. Pin it anyway?</source>
         <translation>This pin is only %1 × %2 pixels. Pin it anyway?</translation>
     </message>
+
 </context>
 
 <!-- ========== Pin Click-Through Bar ========== -->
@@ -2188,6 +2191,7 @@ Replace it?</translation>
         <source>Exit click-through</source>
         <translation>Exit click-through</translation>
     </message>
+
 </context>
 
 <!-- ========== Scroll Screenshot (Long Screenshot) ========== -->
@@ -2289,6 +2293,7 @@ Replace it?</translation>
         <source>Cancel</source>
         <translation>Cancel</translation>
     </message>
+
 </context>
 
 <!-- ========== System Tray ========== -->
@@ -2348,6 +2353,10 @@ Replace it?</translation>
     <message>
         <source>Screen Annotation</source>
         <translation>Screen Annotation</translation>
+    </message>
+<message>
+        <source>Screen Recording</source>
+        <translation>Screen Recording</translation>
     </message>
 </context>
 
@@ -2418,6 +2427,7 @@ Replace it?</translation>
         <source>Nothing on the clipboard to pin</source>
         <translation>Nothing on the clipboard to pin</translation>
     </message>
+
 </context>
 
 <!-- ========== Translation Dialog ========== -->
@@ -2602,6 +2612,7 @@ Replace it?</translation>
         <source>Spanish</source>
         <translation>Spanish</translation>
     </message>
+
 </context>
 
 <!-- ========== Translation Settings ========== -->
@@ -3934,6 +3945,7 @@ Items in the group will be moved back to clipboard history.</translation>
         <source>Choose a content type or a source app</source>
         <translation>Choose a content type or a source app</translation>
     </message>
+
 </context>
 
 <!-- ========== Settings Dialog - Clipboard Settings ========== -->
@@ -4325,6 +4337,7 @@ This action cannot be undone.</translation>
         <source>Strength: Maximum</source>
         <translation>Strength: Maximum</translation>
     </message>
+
 </context>
 
 <context>
@@ -4421,12 +4434,14 @@ This action cannot be undone.</translation>
         <source>Outline: Extra Thick</source>
         <translation>Outline: Extra Thick</translation>
     </message>
+
 </context>
 
 <context>
     <name>MagnifierOverlay</name>
     <message><source>Shift: Switch color format</source><translation>Shift: Switch color format</translation></message>
     <message><source>C: Copy color value</source><translation>C: Copy color value</translation></message>
+
 </context>
 
 <context>
@@ -5092,6 +5107,7 @@ You can tweak more options in Settings anytime.</translation>
         <source>Save directly to the screenshot folder.</source>
         <translation>Save directly to the screenshot folder.</translation>
     </message>
+
 </context>
 
 <!-- ========== GIF Record Toolbar ========== -->
@@ -5205,6 +5221,7 @@ You can tweak more options in Settings anytime.</translation>
         <source>已复制</source>
         <translation>Copied</translation>
     </message>
+
 </context>
 
 <!-- ========== GIF Playback Toolbar ========== -->
@@ -5217,6 +5234,7 @@ You can tweak more options in Settings anytime.</translation>
     <message><source>另存为</source><translation>Save as</translation></message>
     <message><source>关闭</source><translation>Close</translation></message>
     <message><source>显示鼠标光标</source><translation>Show mouse cursor</translation></message>
+
 </context>
 
 <!-- ========== Selection Info Panel ========== -->
@@ -5226,6 +5244,7 @@ You can tweak more options in Settings anytime.</translation>
     <message><source>Rounded Corners</source><translation>Rounded Corners</translation></message>
     <message><source>Lock Aspect Ratio</source><translation>Lock Aspect Ratio</translation></message>
     <message><source>Refresh Background</source><translation>Refresh Background</translation></message>
+
 </context>
 
 <!-- ========== Border Shadow Popup ========== -->
@@ -5237,6 +5256,7 @@ You can tweak more options in Settings anytime.</translation>
     <message><source>Border</source><translation>Border</translation></message>
     <message><source>Size</source><translation>Size</translation></message>
     <message><source>Keep enabled for every screenshot</source><translation>Keep enabled for every screenshot</translation></message>
+
 </context>
 
 <!-- ========== Appearance Settings ========== -->
@@ -5389,6 +5409,7 @@ Items in the group will be moved back to clipboard history.</source>
         <translation>Are you sure you want to delete this group?
 Items in the group will be moved back to clipboard history.</translation>
     </message>
+
 </context>
 
 <context>
@@ -5405,6 +5426,7 @@ Items in the group will be moved back to clipboard history.</translation>
         <source>OK</source>
         <translation>OK</translation>
     </message>
+
 </context>
 
 <!-- ========== Clipboard Preview ========== -->
@@ -5422,6 +5444,7 @@ Items in the group will be moved back to clipboard history.</translation>
         <source>无文件信息</source>
         <translation>No file information</translation>
     </message>
+
 </context>
 
 <context>
@@ -5557,6 +5580,7 @@ Replace: move the current data there; the data already in that folder will be de
     <message><source>Paste</source><translation>Paste</translation></message>
     <message><source>Delete</source><translation>Delete</translation></message>
     <message><source>Select All</source><translation>Select All</translation></message>
+
 </context>
 
 
@@ -5570,6 +5594,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Change Number Style</source>
         <translation>Change Number Style</translation>
     </message>
+
 </context>
 <context>
     <name>HotkeyEdit</name>
@@ -5866,6 +5891,7 @@ Replace: move the current data there; the data already in that folder will be de
     <message><source>Restore defaults</source><translation>Restore defaults</translation></message>
     <message><source>OK</source><translation>OK</translation></message>
     <message><source>Cancel</source><translation>Cancel</translation></message>
+
 </context>
 <context>
     <name>KeyChip</name>
@@ -5885,6 +5911,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Press keys…</source>
         <translation>Press keys…</translation>
     </message>
+
 </context>
 <context>
     <name>HotkeyEdit</name>
@@ -5916,6 +5943,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>This key can't be used as a global hotkey.</source>
         <translation>This key can't be used as a global hotkey.</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -6097,6 +6125,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Copied table (%1 rows × %2 columns)</source>
         <translation>Copied table (%1 rows × %2 columns)</translation>
     </message>
+
 </context>
 <context>
     <name>BarcodeResultWindow</name>
@@ -6108,6 +6137,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Copied: %1</source>
         <translation>Copied: %1</translation>
     </message>
+
 </context>
 <context>
     <name>ClipboardQuickEdit</name>
@@ -6123,6 +6153,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Formatting will be removed</source>
         <translation>Formatting will be removed</translation>
     </message>
+
 </context>
 
 <context>
@@ -6151,6 +6182,35 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Long screenshot - window position corrected</source>
         <translation>Long screenshot - window position corrected</translation>
     </message>
+<message><source>Couldn't extend. Keep the page still.</source><translation>Couldn't extend. Keep the page still.</translation></message>
+<message>
+        <source>Previous long screenshot</source>
+        <translation>Previous long screenshot</translation>
+    </message>
+<message>
+        <source>Save the previous long screenshot before starting a new one?</source>
+        <translation>Save the previous long screenshot before starting a new one?</translation>
+    </message>
+<message>
+        <source>Save and continue</source>
+        <translation>Save and continue</translation>
+    </message>
+<message>
+        <source>Discard and continue</source>
+        <translation>Discard and continue</translation>
+    </message>
+<message>
+        <source>Finish extending or saving the previous capture before starting a new one.</source>
+        <translation>Finish extending or saving the previous capture before starting a new one.</translation>
+    </message>
+<message>
+        <source>The previous result could not be exported. It has been kept open.</source>
+        <translation>The previous result could not be exported. It has been kept open.</translation>
+    </message>
+<message>
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
 </context>
 <context>
     <name>ScreenshotWindow</name>
@@ -6162,6 +6222,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Please select a valid capture area first.</source>
         <translation>Please select a valid capture area first.</translation>
     </message>
+
 </context>
 <context>
     <name>GifRecorder</name>
@@ -6193,6 +6254,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>GIF animation (*.gif)</source>
         <translation>GIF animation (*.gif)</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -6239,6 +6301,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>Cancel</source>
         <translation>Cancel</translation>
     </message>
+
 </context>
 <context>
     <name>GifDrawingToolbar</name>
@@ -6254,6 +6317,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>退出绘制</source>
         <translation>Exit drawing</translation>
     </message>
+
 </context>
 <context>
     <name>InAppShortcut</name>
@@ -6261,6 +6325,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>Middle</source>
         <translation>Middle</translation>
     </message>
+
 </context>
 <context>
     <name>UpdateDialog</name>
@@ -6284,6 +6349,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>Cancel</source>
         <translation>Cancel</translation>
     </message>
+
 </context>
 <context>
     <name>UpdateController</name>
@@ -6362,6 +6428,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>The updater stopped with an error (%1).</source>
         <translation>The updater stopped with an error (%1).</translation>
     </message>
+
 </context>
 <context>
     <name>GifRecordWindow</name>
@@ -6421,6 +6488,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>无法打开，请检查默认播放器或文件管理器。</source>
         <translation>Could not open the file or folder. Check your default player or file manager.</translation>
     </message>
+
 </context>
 <context>
     <name>VideoRecorder</name>
@@ -6524,6 +6592,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>暂停或恢复录制超时，录制已停止，视频未确认保存成功。</source>
         <translation>Pausing or resuming timed out. Recording stopped, and successful saving could not be confirmed.</translation>
     </message>
+
 </context>
 <context>
     <name>SpecialPasteDialog</name>
@@ -6615,6 +6684,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>Paste full file paths.</source>
         <translation>Paste full file paths.</translation>
     </message>
+
 </context>
 <context>
     <name>Toolbar</name>
@@ -6622,6 +6692,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>Watermark</source>
         <translation>Watermark</translation>
     </message>
+
 </context>
 <context>
     <name>ToolbarLayoutDialog</name>
@@ -6629,6 +6700,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>Watermark</source>
         <translation>Watermark</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -6795,6 +6867,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>Grid lines apply to diamond watermarks</source>
         <translation>Grid lines apply to diamond watermarks</translation>
     </message>
+
 </context>
 <context>
     <name>WatermarkInputDialog</name>
@@ -6870,6 +6943,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>Compact, for file names</source>
         <translation>Compact, for file names</translation>
     </message>
+
 </context>
 <context>
     <name>TranslationLoadingDialog</name>
@@ -6877,6 +6951,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>Recognizing...</source>
         <translation>Recognizing...</translation>
     </message>
+
 </context>
 <context>
     <name>PpocrModelDialog</name>
@@ -7090,6 +7165,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>The ONNX Runtime download stopped with an error (%1).</source>
         <translation>The ONNX Runtime download stopped with an error (%1).</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7119,6 +7195,7 @@ Make sure gifrecorder is installed correctly.</translation>
         <source>Downloading...</source>
         <translation>Downloading...</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7366,6 +7443,14 @@ Replace it?</translation>
         <source>The name &quot;%1&quot; is already used by path &quot;%2&quot;. Do you want to set a new name for the current path?</source>
         <translation>The name &quot;%1&quot; is already used by path &quot;%2&quot;. Do you want to set a new name for the current path?</translation>
     </message>
+<message>
+        <source>Default size limit</source>
+        <translation>Default size limit</translation>
+    </message>
+<message>
+        <source>Even the lowest quality is larger than this. Make the image smaller to fit.</source>
+        <translation>Even the lowest quality is larger than this. Make the image smaller to fit.</translation>
+    </message>
 </context>
 <context>
     <name>ClipboardWindow</name>
@@ -7381,6 +7466,7 @@ Replace it?</translation>
         <source>Last Position</source>
         <translation>Last Position</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7453,9 +7539,135 @@ Replace it?</translation>
     <name>SettingsDialog</name>
     <message><source>Automatic Updates</source><translation>Automatic Updates</translation></message>
     <message><source>Check GitHub Releases automatically. Download, install and restart when no application windows or pinned images are open.</source><translation>Check GitHub Releases automatically. Download, install and restart when no application windows or pinned images are open.</translation></message>
-  </context>
+  <message>
+        <source>When a screenshot with annotations (including mosaic) or a watermark is saved to the save folder, a copy without them is saved too.</source>
+        <translation>When a screenshot with annotations (including mosaic) or a watermark is saved to the save folder, a copy without them is saved too.</translation>
+    </message>
+<message>
+        <source>Unassigned buttons and the wheel pass through. A double-click binding also captures single clicks of that button.</source>
+        <translation>Unassigned buttons and the wheel pass through. A double-click binding also captures single clicks of that button.</translation>
+    </message>
+<message>
+        <source>Long Screenshot Shortcuts</source>
+        <translation>Long Screenshot Shortcuts</translation>
+    </message>
+<message>
+        <source>File Name Settings</source>
+        <translation>File Name Settings</translation>
+    </message>
+<message>
+        <source>Set file names for screenshots, long screenshots, GIFs and videos.</source>
+        <translation>Set file names for screenshots, long screenshots, GIFs and videos.</translation>
+    </message>
+<message>
+        <source>Configure</source>
+        <translation>Configure</translation>
+    </message>
+<message>
+        <source>Record Content Marked Private</source>
+        <translation>Record Content Marked Private</translation>
+    </message>
+<message>
+        <source>Copies from private browser windows and password managers are skipped by default. When on, they are recorded too, passwords included, in plain text.</source>
+        <translation>Copies from private browser windows and password managers are skipped by default. When on, they are recorded too, passwords included, in plain text.</translation>
+    </message>
+<message><source>Show Selection</source><translation>Show Selection</translation></message>
+<message><source>Dim what lies outside the selection and draw its edge in the magnified view, to line the edge up pixel by pixel.</source><translation>Dim what lies outside the selection and draw its edge in the magnified view, to line the edge up pixel by pixel.</translation></message>
+<message>
+        <source>Only in the corresponding window</source>
+        <translation>Only in the corresponding window</translation>
+    </message>
+</context>
   <context>
     <name>UpdateController</name>
     <message><source>The update will install when application windows and pinned images are closed.</source><translation>The update will install when application windows and pinned images are closed.</translation></message>
-  </context>
+
+</context>
+<context>
+<name>ShortcutTabs</name>
+<message><source>Screenshot</source><translation>Screenshot</translation></message>
+<message><source>Long Screenshot</source><translation>Long Screenshot</translation></message>
+<message><source>Pin</source><translation>Pin</translation></message>
+<message><source>Clipboard</source><translation>Clipboard</translation></message>
+<message><source>Annotation Tools</source><translation>Annotation Tools</translation></message>
+</context>
+<context>
+<name>FileNameDialog</name>
+<message>
+        <source>File Name Settings</source>
+        <translation>File Name Settings</translation>
+    </message>
+<message>
+        <source>Edit ordinary text directly, such as the name of a long screenshot. Use {time} for date and time, {ms} for milliseconds, and {direction} for long screenshot direction. Extensions are added automatically.</source>
+        <translation>Edit ordinary text directly, such as the name of a long screenshot. Use {time} for date and time, {ms} for milliseconds, and {direction} for long screenshot direction. Extensions are added automatically.</translation>
+    </message>
+<message>
+        <source>Screenshot</source>
+        <translation>Screenshot</translation>
+    </message>
+<message>
+        <source>Pinned Image</source>
+        <translation>Pinned Image</translation>
+    </message>
+<message>
+        <source>Long Screenshot</source>
+        <translation>Long Screenshot</translation>
+    </message>
+<message>
+        <source>GIF</source>
+        <translation>GIF</translation>
+    </message>
+<message>
+        <source>MP4</source>
+        <translation>MP4</translation>
+    </message>
+<message>
+        <source>Original Suffix</source>
+        <translation>Original Suffix</translation>
+    </message>
+<message>
+        <source>Restore defaults</source>
+        <translation>Restore defaults</translation>
+    </message>
+<message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+<message>
+        <source>Cancel</source>
+        <translation>Cancel</translation>
+    </message>
+<message>
+        <source>Preview: %1</source>
+        <translation>Preview: %1</translation>
+    </message>
+<message>
+        <source>Enter a file name rule.</source>
+        <translation>Enter a file name rule.</translation>
+    </message>
+<message>
+        <source>The file name rule is too long (maximum 120 characters).</source>
+        <translation>The file name rule is too long (maximum 120 characters).</translation>
+    </message>
+<message>
+        <source>File names cannot contain forbidden characters or end with a dot or space.</source>
+        <translation>File names cannot contain forbidden characters or end with a dot or space.</translation>
+    </message>
+<message>
+        <source>Unknown placeholder in the file name rule.</source>
+        <translation>Unknown placeholder in the file name rule.</translation>
+    </message>
+<message>
+        <source>This file name is reserved by Windows.</source>
+        <translation>This file name is reserved by Windows.</translation>
+    </message>
+<message>
+        <source>The generated file name is too long (maximum 120 characters).</source>
+        <translation>The generated file name is too long (maximum 120 characters).</translation>
+    </message>
+<message>
+        <source>Leave out the file extension; it is added automatically.</source>
+        <translation>Leave out the file extension; it is added automatically.</translation>
+    </message>
+</context>
 </TS>

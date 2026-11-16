@@ -1701,6 +1701,7 @@ Replace it?</source>
         <source>Saved: %1</source>
         <translation>已儲存：%1</translation>
     </message>
+
 </context>
 <context>
     <name>PinTranslationHelper</name>
@@ -1712,6 +1713,7 @@ Replace it?</source>
         <source>Please configure DeepL API key in Settings.</source>
         <translation>請先在設定中配置 DeepL API 金鑰</translation>
     </message>
+
 </context>
 <context>
     <name>Toolbar</name>
@@ -2194,6 +2196,7 @@ Replace it?</source>
         <source>This pin is only %1 × %2 pixels. Pin it anyway?</source>
         <translation>這個釘圖只有 %1 × %2 像素，仍要釘到螢幕上嗎？</translation>
     </message>
+
 </context>
 <context>
     <name>PinClickThroughBar</name>
@@ -2209,6 +2212,7 @@ Replace it?</source>
         <source>Exit click-through</source>
         <translation>退出滑鼠穿透</translation>
     </message>
+
 </context>
 <context>
     <name>FloatingToolbar</name>
@@ -2308,6 +2312,7 @@ Replace it?</source>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
+
 </context>
 <context>
     <name>SystemTray</name>
@@ -2398,6 +2403,10 @@ Replace it?</source>
     <message>
         <source>Screen Annotation</source>
         <translation>螢幕標註</translation>
+    </message>
+<message>
+        <source>Screen Recording</source>
+        <translation>螢幕錄影</translation>
     </message>
 </context>
 <context>
@@ -2514,6 +2523,7 @@ This adds V to the DisabledHotkeys registry value and preserves other disabled s
         <source>The registry setting has been saved. Sign out of Windows and sign in again to apply it.</source>
         <translation>登錄設定已儲存，重新登入 Windows 後生效。</translation>
     </message>
+
 </context>
 <context>
     <name>TranslationDialog</name>
@@ -4088,6 +4098,7 @@ Items in the group will be moved back to clipboard history.</source>
         <source>Choose a content type or a source app</source>
         <translation>請選擇內容類型或來源應用</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -4476,6 +4487,7 @@ This action cannot be undone.</source>
         <source>Strength: Maximum</source>
         <translation>強度：最強</translation>
     </message>
+
 </context>
 <context>
     <name>TextSettingsPanel</name>
@@ -4571,6 +4583,7 @@ This action cannot be undone.</source>
         <source>Outline: Extra Thick</source>
         <translation>描邊：特粗</translation>
     </message>
+
 </context>
 <context>
     <name>MagnifierOverlay</name>
@@ -4582,6 +4595,7 @@ This action cannot be undone.</source>
         <source>C: Copy color value</source>
         <translation>C: 複製顏色值</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -5274,6 +5288,7 @@ This action cannot be undone.</source>
         <source>Save directly to the screenshot folder.</source>
         <translation>直接儲存到截圖資料夾。</translation>
     </message>
+
 </context>
 <context>
     <name>GifRecordToolbar</name>
@@ -5421,6 +5436,7 @@ This action cannot be undone.</source>
         <source>已复制</source>
         <translation>已複製</translation>
     </message>
+
 </context>
 <context>
     <name>GifPlaybackToolbar</name>
@@ -5452,6 +5468,7 @@ This action cannot be undone.</source>
         <source>显示鼠标光标</source>
         <translation>顯示滑鼠游標</translation>
     </message>
+
 </context>
 <context>
     <name>SelectionInfoPanel</name>
@@ -5471,6 +5488,7 @@ This action cannot be undone.</source>
         <source>Refresh Background</source>
         <translation>重新整理背景</translation>
     </message>
+
 </context>
 <context>
     <name>BorderShadowPopup</name>
@@ -5498,6 +5516,7 @@ This action cannot be undone.</source>
         <source>Keep enabled for every screenshot</source>
         <translation>每次截圖都保持開啟</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -5763,6 +5782,7 @@ SOFTWARE.</translation>
 </context>
 <context>
     <name>TranslationDialog</name>
+
 </context>
 <context>
     <name>GroupBar</name>
@@ -5816,6 +5836,7 @@ Items in the group will be moved back to clipboard history.</source>
         <translation>確定要刪除這個分組嗎？
 分組內的內容會移回剪貼簿歷史。</translation>
     </message>
+
 </context>
 <context>
     <name>StandardDialog</name>
@@ -5831,6 +5852,7 @@ Items in the group will be moved back to clipboard history.</source>
         <source>OK</source>
         <translation>確定</translation>
     </message>
+
 </context>
 <context>
     <name>ClipboardPreview</name>
@@ -5846,6 +5868,7 @@ Items in the group will be moved back to clipboard history.</source>
         <source>无文件信息</source>
         <translation>無檔案資訊</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -6057,6 +6080,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Select All</source>
         <translation>全選</translation>
     </message>
+
 </context>
 <context>
     <name>UndoCommands</name>
@@ -6068,6 +6092,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Change Number Style</source>
         <translation>更改序號樣式</translation>
     </message>
+
 </context>
 <context>
     <name>HotkeyEdit</name>
@@ -6363,6 +6388,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Middle</source>
         <translation>中鍵</translation>
     </message>
+
 </context>
 <context>
     <name>ColorFormatDialog</name>
@@ -6386,6 +6412,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
+
 </context>
 <context>
     <name>KeyChip</name>
@@ -6405,6 +6432,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Press keys…</source>
         <translation>請按下快速鍵…</translation>
     </message>
+
 </context>
 <context>
     <name>HotkeyEdit</name>
@@ -6436,6 +6464,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>This key can't be used as a global hotkey.</source>
         <translation>這個鍵不能用作全域快速鍵。</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -6617,6 +6646,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Copied table (%1 rows × %2 columns)</source>
         <translation>已複製表格（%1 列 × %2 欄）</translation>
     </message>
+
 </context>
 <context>
     <name>BarcodeResultWindow</name>
@@ -6628,6 +6658,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Copied: %1</source>
         <translation>已複製：%1</translation>
     </message>
+
 </context>
 <context>
     <name>ClipboardQuickEdit</name>
@@ -6643,6 +6674,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Formatting will be removed</source>
         <translation>儲存後將變為純文字</translation>
     </message>
+
 </context>
 <context>
     <name>ScrollCaptureWindow</name>
@@ -6670,6 +6702,35 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Long screenshot - window position corrected</source>
         <translation>長截圖 - 視窗位置已校正</translation>
     </message>
+<message><source>Couldn't extend. Keep the page still.</source><translation>無法補截，請保持頁面不動後重試。</translation></message>
+<message>
+        <source>Previous long screenshot</source>
+        <translation>上一次長截圖</translation>
+    </message>
+<message>
+        <source>Save the previous long screenshot before starting a new one?</source>
+        <translation>開始新的長截圖前，是否儲存上一次的結果？</translation>
+    </message>
+<message>
+        <source>Save and continue</source>
+        <translation>儲存並繼續</translation>
+    </message>
+<message>
+        <source>Discard and continue</source>
+        <translation>捨棄並繼續</translation>
+    </message>
+<message>
+        <source>Finish extending or saving the previous capture before starting a new one.</source>
+        <translation>上一次長截圖正在補截或儲存，請完成後再開始新的長截圖。</translation>
+    </message>
+<message>
+        <source>The previous result could not be exported. It has been kept open.</source>
+        <translation>無法匯出上一次的結果，原長截圖視窗已保留。</translation>
+    </message>
+<message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
 </context>
 <context>
     <name>ScreenshotWindow</name>
@@ -6681,6 +6742,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Please select a valid capture area first.</source>
         <translation>請先選擇一個有效的截圖區域！</translation>
     </message>
+
 </context>
 <context>
     <name>GifRecorder</name>
@@ -6712,6 +6774,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>GIF animation (*.gif)</source>
         <translation>GIF 動圖 (*.gif)</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -6758,6 +6821,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
+
 </context>
 <context>
     <name>GifDrawingToolbar</name>
@@ -6773,6 +6837,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>退出绘制</source>
         <translation>退出繪製</translation>
     </message>
+
 </context>
 <context>
     <name>UpdateDialog</name>
@@ -6796,6 +6861,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
+
 </context>
 <context>
     <name>UpdateController</name>
@@ -6874,6 +6940,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>The updater stopped with an error (%1).</source>
         <translation>更新程式出錯停止（%1）。</translation>
     </message>
+
 </context>
 <context>
     <name>GifRecordWindow</name>
@@ -6933,6 +7000,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>无法打开，请检查默认播放器或文件管理器。</source>
         <translation>無法開啟，請檢查預設播放器或檔案管理器。</translation>
     </message>
+
 </context>
 <context>
     <name>VideoRecorder</name>
@@ -7036,6 +7104,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>暂停或恢复录制超时，录制已停止，视频未确认保存成功。</source>
         <translation>暫停或恢復錄製超時，錄製已停止，影片未確認儲存成功。</translation>
     </message>
+
 </context>
 <context>
     <name>SpecialPasteDialog</name>
@@ -7127,6 +7196,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>Paste full file paths.</source>
         <translation>貼上完整的檔案路徑。</translation>
     </message>
+
 </context>
 <context>
     <name>Toolbar</name>
@@ -7134,6 +7204,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>Watermark</source>
         <translation>浮水印</translation>
     </message>
+
 </context>
 <context>
     <name>ToolbarLayoutDialog</name>
@@ -7141,6 +7212,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>Watermark</source>
         <translation>浮水印</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7287,6 +7359,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>Grid lines apply to diamond watermarks</source>
         <translation>網格線只對菱形生效</translation>
     </message>
+
 </context>
 <context>
     <name>WatermarkInputDialog</name>
@@ -7362,6 +7435,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>Compact, for file names</source>
         <translation>緊湊格式，適合檔名</translation>
     </message>
+
 </context>
 <context>
     <name>TranslationLoadingDialog</name>
@@ -7369,6 +7443,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>Recognizing...</source>
         <translation>辨識中...</translation>
     </message>
+
 </context>
 <context>
     <name>PpocrModelDialog</name>
@@ -7582,6 +7657,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>The ONNX Runtime download stopped with an error (%1).</source>
         <translation>ONNX Runtime 下載因錯誤中止（%1）。</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7611,6 +7687,7 @@ Make sure gifrecorder is installed correctly.</source>
         <source>Downloading...</source>
         <translation>下載中...</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7856,6 +7933,14 @@ Replace it?</source>
         <source>The name "%1" is already used by path "%2". Do you want to set a new name for the current path?</source>
         <translation>名稱“%1”已被路徑“%2”使用。要為目前路徑設定新名稱嗎？</translation>
     </message>
+<message>
+        <source>Default size limit</source>
+        <translation>預設最大上限</translation>
+    </message>
+<message>
+        <source>Even the lowest quality is larger than this. Make the image smaller to fit.</source>
+        <translation>最低品質也超過這個大小，請在上方縮小尺寸。</translation>
+    </message>
 </context>
 <context>
     <name>ClipboardWindow</name>
@@ -7871,6 +7956,7 @@ Replace it?</source>
         <source>Last Position</source>
         <translation>上次位置</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7943,9 +8029,141 @@ Replace it?</source>
     <name>SettingsDialog</name>
     <message><source>Automatic Updates</source><translation>自動更新</translation></message>
     <message><source>Check GitHub Releases automatically. Download, install and restart when no application windows or pinned images are open.</source><translation>自動檢查 GitHub 正式版。在所有程式視窗和釘圖關閉後下載、安裝並重新啟動。</translation></message>
-  </context>
+  <message>
+        <source>When a screenshot with annotations (including mosaic) or a watermark is saved to the save folder, a copy without them is saved too.</source>
+        <translation>截圖存進儲存資料夾時，如果加了標註（含馬賽克）或浮水印，再另存一張沒有它們的原圖。</translation>
+    </message>
+<message>
+        <source>Unassigned buttons and the wheel pass through. A double-click binding also captures single clicks of that button.</source>
+        <translation>未綁定的滑鼠按鍵與滾輪正常穿透。綁定雙擊後，也會接管該按鍵的單擊。</translation>
+    </message>
+<message>
+        <source>Long Screenshot Shortcuts</source>
+        <translation>長截圖快捷鍵</translation>
+    </message>
+<message>
+        <source>File Name Settings</source>
+        <translation>檔案名稱設定</translation>
+    </message>
+<message>
+        <source>Set file names for screenshots, long screenshots, GIFs and videos.</source>
+        <translation>設定截圖、長截圖、GIF 和影片的儲存檔名。</translation>
+    </message>
+<message>
+        <source>Configure</source>
+        <translation>設定</translation>
+    </message>
+<message>
+        <source>Record Content Marked Private</source>
+        <translation>記錄標為隱私的內容</translation>
+    </message>
+<message>
+        <source>Copies from private browser windows and password managers are skipped by default. When on, they are recorded too, passwords included, in plain text.</source>
+        <translation>瀏覽器無痕視窗和密碼管理器複製的內容預設不記錄。開啟後也會記下，密碼也會以明文存進歷史記錄。</translation>
+    </message>
+<message>
+        <source>Show Selection</source>
+        <translation>顯示選區</translation>
+    </message>
+<message>
+        <source>Dim what lies outside the selection and draw its edge in the magnified view, to line the edge up pixel by pixel.</source>
+        <translation>在放大圖上壓暗選區以外的部分並畫出選區邊框，方便把邊緣逐畫素對準。</translation>
+    </message>
+<message>
+        <source>Only in the corresponding window</source>
+        <translation>僅在對應視窗內生效</translation>
+    </message>
+</context>
   <context>
     <name>UpdateController</name>
     <message><source>The update will install when application windows and pinned images are closed.</source><translation>關閉程式視窗和釘圖後將自動安裝更新。</translation></message>
-  </context>
+
+</context>
+<context>
+<name>ShortcutTabs</name>
+<message><source>Screenshot</source><translation>截圖</translation></message>
+<message><source>Long Screenshot</source><translation>長截圖</translation></message>
+<message><source>Pin</source><translation>釘圖</translation></message>
+<message><source>Clipboard</source><translation>剪貼簿</translation></message>
+<message><source>Annotation Tools</source><translation>標註工具</translation></message>
+</context>
+<context>
+<name>FileNameDialog</name>
+<message>
+        <source>File Name Settings</source>
+        <translation>檔案名稱設定</translation>
+    </message>
+<message>
+        <source>Edit ordinary text directly, such as the name of a long screenshot. Use {time} for date and time, {ms} for milliseconds, and {direction} for long screenshot direction. Extensions are added automatically.</source>
+        <translation>一般文字可直接修改，例如「長截圖」可以改成任意名稱。{time} 表示日期時間，{ms} 表示毫秒，{direction} 表示長截圖方向。副檔名自動加入。</translation>
+    </message>
+<message>
+        <source>Screenshot</source>
+        <translation>一般截圖</translation>
+    </message>
+<message>
+        <source>Pinned Image</source>
+        <translation>釘圖</translation>
+    </message>
+<message>
+        <source>Long Screenshot</source>
+        <translation>長截圖</translation>
+    </message>
+<message>
+        <source>GIF</source>
+        <translation>GIF</translation>
+    </message>
+<message>
+        <source>MP4</source>
+        <translation>MP4</translation>
+    </message>
+<message>
+        <source>Original Suffix</source>
+        <translation>原圖後綴</translation>
+    </message>
+<message>
+        <source>Restore defaults</source>
+        <translation>還原預設</translation>
+    </message>
+<message>
+        <source>OK</source>
+        <translation>確定</translation>
+    </message>
+<message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+<message>
+        <source>Preview: %1</source>
+        <translation>範例：%1</translation>
+    </message>
+<message>
+        <source>Enter a file name rule.</source>
+        <translation>請輸入檔名規則。</translation>
+    </message>
+<message>
+        <source>The file name rule is too long (maximum 120 characters).</source>
+        <translation>檔名規則過長（最多 120 個字元）。</translation>
+    </message>
+<message>
+        <source>File names cannot contain forbidden characters or end with a dot or space.</source>
+        <translation>檔名不能含有無效字元，也不能以點或空格結尾。</translation>
+    </message>
+<message>
+        <source>Unknown placeholder in the file name rule.</source>
+        <translation>檔名規則含有不支援的預留位置。</translation>
+    </message>
+<message>
+        <source>This file name is reserved by Windows.</source>
+        <translation>此檔名是 Windows 保留名稱。</translation>
+    </message>
+<message>
+        <source>The generated file name is too long (maximum 120 characters).</source>
+        <translation>產生的檔名過長（展開後最多 120 個字元）。</translation>
+    </message>
+<message>
+        <source>Leave out the file extension; it is added automatically.</source>
+        <translation>請移除副檔名，儲存時會自動加入。</translation>
+    </message>
+</context>
 </TS>

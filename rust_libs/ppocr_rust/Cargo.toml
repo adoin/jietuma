@@ -11,7 +11,8 @@ description = "PP-OCR (PaddleOCR) ONNX inference via Rust + ort (det+rec, no ope
 load-dynamic = ["ort/load-dynamic"]
 
 [dependencies]
-ort = { version = "=2.0.0-rc.12", features = ["ndarray"] }
+# C++ 按需加载随包 ORT，不依赖复制 DirectML.dll；关闭 copy-dylibs 以避免新版 Cargo 构建目录布局导致的复制失败。
+ort = { version = "=2.0.0-rc.12", default-features = false, features = ["std", "ndarray", "tracing", "download-binaries", "tls-native", "api-24"] }
 ndarray = "0.16"
 image = { version = "0.25", default-features = false }
 imageproc = "0.25"

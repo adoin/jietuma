@@ -152,7 +152,7 @@
         <source>Open Wizard</source>
         <translation>마법사 열기</translation>
     </message>
-    
+
     <!-- Startup Preload -->
     <message>
         <source>Startup Preload</source>
@@ -258,7 +258,7 @@
         <source>Latest Log</source>
         <translation>최신 로그</translation>
     </message>
-    
+
     <!-- Hotkey Page -->
     <message>
         <source>Global Hotkeys</source>
@@ -433,7 +433,7 @@ Replace it?</source>
         <source>💡 Hint: You can use modifier keys like Ctrl, Shift, Alt.</source>
         <translation>💡 팁: Ctrl, Shift, Alt 같은 보조 키를 사용할 수 있습니다.</translation>
     </message>
-    
+
     <!-- Long Screenshot Page -->
     <message>
         <source>Stitching Engine</source>
@@ -497,7 +497,7 @@ Replace it?</source>
         <source>Start new text annotations at about 30 characters wide and keep them inside the selection.</source>
         <translation>새 텍스트 주석은 약 30자 너비로 시작하고 선택 영역 안에 유지됩니다.</translation>
     </message>
-    
+
     <!-- Smart Selection Page -->
     <message>
         <source>Detection Precision</source>
@@ -543,7 +543,7 @@ Replace it?</source>
         <source>3. Click to select that area</source>
         <translation>3. 클릭하여 해당 영역을 선택합니다</translation>
     </message>
-    
+
     <!-- Save Page -->
     <message>
         <source>Write File Path to Clipboard</source>
@@ -613,7 +613,7 @@ Replace it?</source>
         <source>Select Screenshot Save Folder</source>
         <translation>스크린샷 저장 폴더 선택</translation>
     </message>
-    
+
     <!-- OCR Page -->
     <message>
         <source>No OCR Version / OCR module not found</source>
@@ -707,7 +707,7 @@ Replace it?</source>
         <source>💡 Supports 100+ languages: Chinese, English, Japanese, Korean, Arabic, etc.</source>
         <translation>💡 중국어, 영어, 일본어, 한국어, 아랍어 등 100개 이상의 언어를 지원합니다.</translation>
     </message>
-    
+
     <!-- Log Page -->
     <message>
         <source>Save Logs</source>
@@ -773,7 +773,7 @@ Replace it?</source>
         <source>*Changes will fully take effect after restart.</source>
         <translation>*변경 사항은 재시작 후 완전히 적용됩니다.</translation>
     </message>
-    
+
     <!-- Misc Page -->
     <message>
         <source>Launch on Startup</source>
@@ -875,7 +875,7 @@ Replace it?</source>
         <source>Settings imported.</source>
         <translation>설정을 가져왔습니다.</translation>
     </message>
-    
+
     <!-- Translation Settings Page -->
     <message>
         <source>Translation Engine</source>
@@ -1712,6 +1712,7 @@ Replace it?</source>
         <source>Saved: %1</source>
         <translation>저장함: %1</translation>
     </message>
+
 </context>
 
 <context>
@@ -1724,6 +1725,7 @@ Replace it?</source>
         <source>Please configure DeepL API key in Settings.</source>
         <translation>설정에서 DeepL API 키를 구성해 주세요.</translation>
     </message>
+
 </context>
 
 <!-- ========== Toolbar ========== -->
@@ -2210,6 +2212,7 @@ Replace it?</source>
         <source>This pin is only %1 × %2 pixels. Pin it anyway?</source>
         <translation>이 이미지는 %1 × %2 픽셀밖에 되지 않습니다. 그래도 고정할까요?</translation>
     </message>
+
 </context>
 
 <!-- ========== Pin Click-Through Bar ========== -->
@@ -2227,6 +2230,7 @@ Replace it?</source>
         <source>Exit click-through</source>
         <translation>클릭 통과 종료</translation>
     </message>
+
 </context>
 
 <!-- ========== Scroll Screenshot (Long Screenshot) ========== -->
@@ -2328,6 +2332,7 @@ Replace it?</source>
         <source>Cancel</source>
         <translation>취소</translation>
     </message>
+
 </context>
 
 <!-- ========== System Tray ========== -->
@@ -2387,6 +2392,10 @@ Replace it?</source>
     <message>
         <source>Screen Annotation</source>
         <translation>화면 주석</translation>
+    </message>
+<message>
+        <source>Screen Recording</source>
+        <translation>화면 녹화</translation>
     </message>
 </context>
 
@@ -2477,6 +2486,7 @@ Replace it?</source>
         <source>Nothing on the clipboard to pin</source>
         <translation>클립보드에 고정할 내용이 없습니다</translation>
     </message>
+
 </context>
 
 <!-- ========== Translation Dialog ========== -->
@@ -2689,6 +2699,7 @@ Replace it?</source>
         <source>Dutch</source>
         <translation>네덜란드어</translation>
     </message>
+
 </context>
 
 <!-- ========== Translation Settings ========== -->
@@ -4031,6 +4042,7 @@ Items in the group will be moved back to clipboard history.</source>
         <source>Choose a content type or a source app</source>
         <translation>내용 유형이나 출처 앱을 선택하세요</translation>
     </message>
+
 </context>
 
 <!-- ========== Settings Dialog - Clipboard Settings ========== -->
@@ -4422,6 +4434,7 @@ This action cannot be undone.</source>
         <source>Strength: Maximum</source>
         <translation>강도: 최대</translation>
     </message>
+
 </context>
 
 <context>
@@ -4518,12 +4531,14 @@ This action cannot be undone.</source>
         <source>Outline: Extra Thick</source>
         <translation>외곽선: 아주 굵게</translation>
     </message>
+
 </context>
 
 <context>
     <name>MagnifierOverlay</name>
     <message><source>Shift: Switch color format</source><translation>Shift: 색상 형식 전환</translation></message>
     <message><source>C: Copy color value</source><translation>C: 색상 값 복사</translation></message>
+
 </context>
 
 <context>
@@ -5189,6 +5204,7 @@ This action cannot be undone.</source>
         <source>Save directly to the screenshot folder.</source>
         <translation>스크린샷 폴더에 바로 저장합니다.</translation>
     </message>
+
 </context>
 
 <!-- ========== GIF Record Toolbar ========== -->
@@ -5302,6 +5318,7 @@ This action cannot be undone.</source>
         <source>已复制</source>
         <translation>복사 완료</translation>
     </message>
+
 </context>
 
 <!-- ========== GIF Playback Toolbar ========== -->
@@ -5314,6 +5331,7 @@ This action cannot be undone.</source>
     <message><source>另存为</source><translation>다른 이름으로 저장</translation></message>
     <message><source>关闭</source><translation>닫기</translation></message>
     <message><source>显示鼠标光标</source><translation>마우스 커서 표시</translation></message>
+
 </context>
 
 <!-- ========== Selection Info Panel ========== -->
@@ -5323,6 +5341,7 @@ This action cannot be undone.</source>
     <message><source>Rounded Corners</source><translation>둥근 모서리</translation></message>
     <message><source>Lock Aspect Ratio</source><translation>종횡비 고정</translation></message>
     <message><source>Refresh Background</source><translation>배경 새로고침</translation></message>
+
 </context>
 
 <!-- ========== Border Shadow Popup ========== -->
@@ -5334,6 +5353,7 @@ This action cannot be undone.</source>
     <message><source>Border</source><translation>테두리</translation></message>
     <message><source>Size</source><translation>크기</translation></message>
     <message><source>Keep enabled for every screenshot</source><translation>모든 스크린샷에 계속 적용</translation></message>
+
 </context>
 
 <!-- ========== Appearance Settings ========== -->
@@ -5485,6 +5505,7 @@ Items in the group will be moved back to clipboard history.</source>
         <translation>이 그룹을 삭제하시겠습니까?
 그룹의 항목은 클립보드 기록으로 돌아갑니다.</translation>
     </message>
+
 </context>
 
 <context>
@@ -5501,6 +5522,7 @@ Items in the group will be moved back to clipboard history.</source>
         <source>OK</source>
         <translation>확인</translation>
     </message>
+
 </context>
 
 <!-- ========== Clipboard Preview ========== -->
@@ -5518,6 +5540,7 @@ Items in the group will be moved back to clipboard history.</source>
         <source>无文件信息</source>
         <translation>파일 정보 없음</translation>
     </message>
+
 </context>
 
 <context>
@@ -5649,6 +5672,7 @@ Replace: move the current data there; the data already in that folder will be de
     <message><source>Paste</source><translation>붙여넣기</translation></message>
     <message><source>Delete</source><translation>삭제</translation></message>
     <message><source>Select All</source><translation>모두 선택</translation></message>
+
 </context>
 
 
@@ -5662,6 +5686,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Change Number Style</source>
         <translation>번호 스타일 변경</translation>
     </message>
+
 </context>
 <context>
     <name>HotkeyEdit</name>
@@ -5957,6 +5982,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Middle</source>
         <translation>가운데 버튼</translation>
     </message>
+
 </context>
 <context>
     <name>ColorFormatDialog</name>
@@ -5965,6 +5991,7 @@ Replace: move the current data there; the data already in that folder will be de
     <message><source>Restore defaults</source><translation>기본값 복원</translation></message>
     <message><source>OK</source><translation>확인</translation></message>
     <message><source>Cancel</source><translation>취소</translation></message>
+
 </context>
 <context>
     <name>KeyChip</name>
@@ -5984,6 +6011,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Press keys…</source>
         <translation>키를 누르세요…</translation>
     </message>
+
 </context>
 <context>
     <name>HotkeyEdit</name>
@@ -6015,6 +6043,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>This key can't be used as a global hotkey.</source>
         <translation>이 키는 전역 단축키로 사용할 수 없습니다.</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -6196,6 +6225,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Copied table (%1 rows × %2 columns)</source>
         <translation>표를 복사했습니다(%1행 × %2열)</translation>
     </message>
+
 </context>
 <context>
     <name>BarcodeResultWindow</name>
@@ -6207,6 +6237,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Copied: %1</source>
         <translation>복사함: %1</translation>
     </message>
+
 </context>
 <context>
     <name>ClipboardQuickEdit</name>
@@ -6222,6 +6253,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Formatting will be removed</source>
         <translation>저장하면 일반 텍스트로 바뀝니다</translation>
     </message>
+
 </context>
 
 <context>
@@ -6250,6 +6282,35 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Long screenshot - window position corrected</source>
         <translation>긴 스크린샷 - 창 위치를 보정했습니다</translation>
     </message>
+<message><source>Couldn't extend. Keep the page still.</source><translation>영역을 확장할 수 없습니다. 화면을 고정한 후 다시 시도하세요.</translation></message>
+<message>
+        <source>Previous long screenshot</source>
+        <translation>이전 스크롤 캡처</translation>
+    </message>
+<message>
+        <source>Save the previous long screenshot before starting a new one?</source>
+        <translation>새 캡처를 시작하기 전에 이전 결과를 저장할까요?</translation>
+    </message>
+<message>
+        <source>Save and continue</source>
+        <translation>저장 후 계속</translation>
+    </message>
+<message>
+        <source>Discard and continue</source>
+        <translation>버리고 계속</translation>
+    </message>
+<message>
+        <source>Finish extending or saving the previous capture before starting a new one.</source>
+        <translation>이전 캡처의 확장 또는 저장이 끝난 후 새 캡처를 시작하세요.</translation>
+    </message>
+<message>
+        <source>The previous result could not be exported. It has been kept open.</source>
+        <translation>이전 결과를 내보낼 수 없습니다. 기존 캡처는 그대로 유지됩니다.</translation>
+    </message>
+<message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
 </context>
 <context>
     <name>ScreenshotWindow</name>
@@ -6261,6 +6322,7 @@ Replace: move the current data there; the data already in that folder will be de
         <source>Please select a valid capture area first.</source>
         <translation>먼저 유효한 캡처 영역을 선택하세요.</translation>
     </message>
+
 </context>
 <context>
     <name>GifRecorder</name>
@@ -6292,6 +6354,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>GIF animation (*.gif)</source>
         <translation>GIF 애니메이션 (*.gif)</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -6338,6 +6401,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>Cancel</source>
         <translation>취소</translation>
     </message>
+
 </context>
 <context>
     <name>GifDrawingToolbar</name>
@@ -6353,6 +6417,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>退出绘制</source>
         <translation>그리기 종료</translation>
     </message>
+
 </context>
 <context>
     <name>UpdateDialog</name>
@@ -6376,6 +6441,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>Cancel</source>
         <translation>취소</translation>
     </message>
+
 </context>
 <context>
     <name>UpdateController</name>
@@ -6454,6 +6520,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>The updater stopped with an error (%1).</source>
         <translation>업데이트 프로그램이 오류로 중지되었습니다(%1).</translation>
     </message>
+
 </context>
 <context>
     <name>GifRecordWindow</name>
@@ -6513,6 +6580,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>无法打开，请检查默认播放器或文件管理器。</source>
         <translation>열 수 없습니다. 기본 플레이어나 파일 관리자를 확인해 주세요.</translation>
     </message>
+
 </context>
 <context>
     <name>VideoRecorder</name>
@@ -6616,6 +6684,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>暂停或恢复录制超时，录制已停止，视频未确认保存成功。</source>
         <translation>일시 정지 또는 재개 시간이 초과되어 녹화를 중지했습니다. 동영상 저장 성공을 확인하지 못했습니다.</translation>
     </message>
+
 </context>
 <context>
     <name>SpecialPasteDialog</name>
@@ -6707,6 +6776,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>Paste full file paths.</source>
         <translation>전체 파일 경로를 붙여넣습니다.</translation>
     </message>
+
 </context>
 <context>
     <name>Toolbar</name>
@@ -6714,6 +6784,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>Watermark</source>
         <translation>워터마크</translation>
     </message>
+
 </context>
 <context>
     <name>ToolbarLayoutDialog</name>
@@ -6721,6 +6792,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>Watermark</source>
         <translation>워터마크</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -6867,6 +6939,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>Grid lines apply to diamond watermarks</source>
         <translation>격자선은 마름모에서만 적용됩니다</translation>
     </message>
+
 </context>
 <context>
     <name>WatermarkInputDialog</name>
@@ -6942,6 +7015,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>Compact, for file names</source>
         <translation>간결한 형식, 파일 이름용</translation>
     </message>
+
 </context>
 <context>
     <name>TranslationLoadingDialog</name>
@@ -6949,6 +7023,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>Recognizing...</source>
         <translation>인식 중...</translation>
     </message>
+
 </context>
 <context>
     <name>PpocrModelDialog</name>
@@ -7162,6 +7237,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>The ONNX Runtime download stopped with an error (%1).</source>
         <translation>오류로 ONNX Runtime 다운로드가 중단되었습니다(%1).</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7191,6 +7267,7 @@ gifrecorder가 올바르게 설치되었는지 확인하세요.</translation>
         <source>Downloading...</source>
         <translation>다운로드 중...</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7438,6 +7515,14 @@ Replace it?</source>
         <source>The name &quot;%1&quot; is already used by path &quot;%2&quot;. Do you want to set a new name for the current path?</source>
         <translation>이름 &quot;%1&quot;은(는) 경로 &quot;%2&quot;에서 사용 중입니다. 현재 경로에 새 이름을 지정할까요?</translation>
     </message>
+<message>
+        <source>Default size limit</source>
+        <translation>기본 최대 크기</translation>
+    </message>
+<message>
+        <source>Even the lowest quality is larger than this. Make the image smaller to fit.</source>
+        <translation>최저 품질로도 이 크기를 넘습니다. 위에서 크기를 줄이세요.</translation>
+    </message>
 </context>
 <context>
     <name>ClipboardWindow</name>
@@ -7453,6 +7538,7 @@ Replace it?</source>
         <source>Last Position</source>
         <translation>마지막 위치</translation>
     </message>
+
 </context>
 <context>
     <name>SettingsDialog</name>
@@ -7525,9 +7611,135 @@ Replace it?</source>
     <name>SettingsDialog</name>
     <message><source>Automatic Updates</source><translation>자동 업데이트</translation></message>
     <message><source>Check GitHub Releases automatically. Download, install and restart when no application windows or pinned images are open.</source><translation>GitHub 정식 릴리스를 자동 확인합니다. 앱 창과 고정 이미지를 모두 닫으면 다운로드, 설치 후 재시작합니다。</translation></message>
-  </context>
+  <message>
+        <source>When a screenshot with annotations (including mosaic) or a watermark is saved to the save folder, a copy without them is saved too.</source>
+        <translation>주석(모자이크 포함)이나 워터마크가 있는 스크린샷을 저장 폴더에 저장할 때, 이를 제외한 원본도 함께 저장합니다.</translation>
+    </message>
+<message>
+        <source>Unassigned buttons and the wheel pass through. A double-click binding also captures single clicks of that button.</source>
+        <translation>지정하지 않은 버튼과 휠 입력은 아래 창으로 전달됩니다. 더블 클릭을 지정하면 해당 버튼의 한 번 클릭도 가로챕니다.</translation>
+    </message>
+<message>
+        <source>Long Screenshot Shortcuts</source>
+        <translation>스크롤 캡처 단축키</translation>
+    </message>
+<message>
+        <source>File Name Settings</source>
+        <translation>파일 이름 설정</translation>
+    </message>
+<message>
+        <source>Set file names for screenshots, long screenshots, GIFs and videos.</source>
+        <translation>스크린샷, 긴 스크린샷, GIF 및 동영상의 저장 파일 이름을 설정합니다.</translation>
+    </message>
+<message>
+        <source>Configure</source>
+        <translation>설정</translation>
+    </message>
+<message>
+        <source>Record Content Marked Private</source>
+        <translation>비공개로 표시된 내용도 기록</translation>
+    </message>
+<message>
+        <source>Copies from private browser windows and password managers are skipped by default. When on, they are recorded too, passwords included, in plain text.</source>
+        <translation>브라우저 시크릿 창이나 비밀번호 관리자에서 복사한 내용은 기본적으로 기록하지 않습니다. 켜면 함께 기록하며, 비밀번호도 평문 그대로 기록에 저장됩니다.</translation>
+    </message>
+<message><source>Show Selection</source><translation>선택 영역 표시</translation></message>
+<message><source>Dim what lies outside the selection and draw its edge in the magnified view, to line the edge up pixel by pixel.</source><translation>확대 화면에서 선택 영역 바깥을 어둡게 하고 테두리를 그립니다. 가장자리를 픽셀 단위로 맞추기 쉬워집니다.</translation></message>
+<message>
+        <source>Only in the corresponding window</source>
+        <translation>해당 창 안에서만 작동</translation>
+    </message>
+</context>
   <context>
     <name>UpdateController</name>
     <message><source>The update will install when application windows and pinned images are closed.</source><translation>앱 창과 고정 이미지를 닫으면 업데이트를 설치합니다.</translation></message>
-  </context>
+
+</context>
+<context>
+<name>ShortcutTabs</name>
+<message><source>Screenshot</source><translation>캡처</translation></message>
+<message><source>Long Screenshot</source><translation>스크롤 캡처</translation></message>
+<message><source>Pin</source><translation>고정</translation></message>
+<message><source>Clipboard</source><translation>클립보드</translation></message>
+<message><source>Annotation Tools</source><translation>주석 도구</translation></message>
+</context>
+<context>
+<name>FileNameDialog</name>
+<message>
+        <source>File Name Settings</source>
+        <translation>파일 이름 설정</translation>
+    </message>
+<message>
+        <source>Edit ordinary text directly, such as the name of a long screenshot. Use {time} for date and time, {ms} for milliseconds, and {direction} for long screenshot direction. Extensions are added automatically.</source>
+        <translation>긴 스크린샷의 이름 등 일반 텍스트는 직접 바꿀 수 있습니다. {time}은 날짜와 시간, {ms}는 밀리초, {direction}은 긴 스크린샷의 방향입니다. 확장자는 자동으로 추가됩니다.</translation>
+    </message>
+<message>
+        <source>Screenshot</source>
+        <translation>스크린샷</translation>
+    </message>
+<message>
+        <source>Pinned Image</source>
+        <translation>고정 이미지</translation>
+    </message>
+<message>
+        <source>Long Screenshot</source>
+        <translation>긴 스크린샷</translation>
+    </message>
+<message>
+        <source>GIF</source>
+        <translation>GIF</translation>
+    </message>
+<message>
+        <source>MP4</source>
+        <translation>MP4</translation>
+    </message>
+<message>
+        <source>Original Suffix</source>
+        <translation>원본 접미사</translation>
+    </message>
+<message>
+        <source>Restore defaults</source>
+        <translation>기본값 복원</translation>
+    </message>
+<message>
+        <source>OK</source>
+        <translation>확인</translation>
+    </message>
+<message>
+        <source>Cancel</source>
+        <translation>취소</translation>
+    </message>
+<message>
+        <source>Preview: %1</source>
+        <translation>미리 보기: %1</translation>
+    </message>
+<message>
+        <source>Enter a file name rule.</source>
+        <translation>파일 이름 규칙을 입력하세요.</translation>
+    </message>
+<message>
+        <source>The file name rule is too long (maximum 120 characters).</source>
+        <translation>파일 이름 규칙은 최대 120자까지 입력할 수 있습니다.</translation>
+    </message>
+<message>
+        <source>File names cannot contain forbidden characters or end with a dot or space.</source>
+        <translation>파일 이름에 금지된 문자를 쓰거나 마침표 또는 공백으로 끝낼 수 없습니다.</translation>
+    </message>
+<message>
+        <source>Unknown placeholder in the file name rule.</source>
+        <translation>파일 이름 규칙에 지원하지 않는 자리 표시자가 있습니다.</translation>
+    </message>
+<message>
+        <source>This file name is reserved by Windows.</source>
+        <translation>Windows에서 예약한 파일 이름입니다.</translation>
+    </message>
+<message>
+        <source>The generated file name is too long (maximum 120 characters).</source>
+        <translation>생성되는 파일 이름이 너무 깁니다(변환 후 최대 120자).</translation>
+    </message>
+<message>
+        <source>Leave out the file extension; it is added automatically.</source>
+        <translation>확장자는 저장할 때 자동으로 추가되므로 입력하지 마세요.</translation>
+    </message>
+</context>
 </TS>
