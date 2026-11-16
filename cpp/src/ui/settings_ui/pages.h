@@ -31,6 +31,7 @@ class ToolSettingsManager;
 QWidget *create_hotkey_page(SettingsDialog *dialog);
 QWidget *create_capture_page(SettingsDialog *dialog);
 QWidget *create_clipboard_page(SettingsDialog *dialog);
+QWidget *create_plugins_page(SettingsDialog *dialog);
 QWidget *create_appearance_page(SettingsDialog *dialog);
 QWidget *create_translation_page(SettingsDialog *dialog);
 QWidget *create_log_page(SettingsDialog *dialog);

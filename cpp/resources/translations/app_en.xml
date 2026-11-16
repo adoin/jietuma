@@ -7670,4 +7670,22 @@ Replace it?</translation>
         <translation>Leave out the file extension; it is added automatically.</translation>
     </message>
 </context>
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Plugins</source>
+        <translation>Plugins</translation>
+    </message>
+</context>
+<context>
+    <name>PluginMarket</name>
+    <message>
+        <source>Installed: %1</source>
+        <translation>Installed: %1</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>Disabled</translation>
+    </message>
+</context>
 </TS>

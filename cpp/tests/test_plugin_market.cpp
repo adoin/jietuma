@@ -5,6 +5,12 @@
 #include "core/background_tasks.h"
 #include "core/ui_theme.h"
 #include "core/i18n.h"
+#include "core/app_version.h"
+#include <QDateTime>
+#include "ui/settings_ui/dialog.h"
+#include "ui/settings_ui/search.h"
+#include <QPushButton>
+#include <QStackedWidget>
 #include <QtCore/private/qzipwriter_p.h>
 #include <QApplication>
 #include <QCryptographicHash>
@@ -18,6 +24,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <atomic>
+#include <algorithm>
 
 using namespace jietuba;
 using namespace jietuba::plugins;
@@ -135,13 +142,19 @@ private slots:
         }
     }
     void widgetLoadsOnlyTheSelectedSourceAndFiltersLocally() {
-        QTemporaryDir folder;const auto source=market::official_source();auto calls=std::make_shared<std::atomic<int>>(0);
+        QTemporaryDir folder;const auto path=archive(folder.path(),"1.0.0");
+        QVERIFY(install_plugin_package(path,folder.path()).ok);QVERIFY(set_plugin_enabled("fixture",false,folder.path()));
+        const auto source=market::official_source();auto calls=std::make_shared<std::atomic<int>>(0);
         auto client=std::make_shared<market::Client>(folder.path(),transport(source.id,catalog(source.id,{entry()}),calls));
         I18nManager::load_language("zh");get_ui_theme()->init(get_tool_settings_manager(),qApp);
         auto *installed=new QWidget;PluginMarketWidget widget(installed,folder.path(),client);widget.resize(740,500);widget.show();
         auto *tabs=widget.findChild<QTabWidget *>("pluginCenterTabs");QVERIFY(tabs);QCOMPARE(int(*calls),0);
         tabs->setCurrentIndex(1);auto *list=widget.findChild<QListWidget *>("pluginMarketList_"+QString::number(source.id));QVERIFY(list);
         QTRY_COMPARE_WITH_TIMEOUT(list->count(),1,10000);const int fetched=*calls;
+        QVERIFY(list->item(0)->text().contains(i18n_tr("Installed: %1","PluginMarket").arg("1.0.0")));
+        QVERIFY(list->item(0)->text().contains(i18n_tr("Disabled","PluginMarket")));
+        QVERIFY(uninstall_plugin("fixture",folder.path()));widget.refresh_installed();
+        QVERIFY(!list->item(0)->text().contains(i18n_tr("Installed: %1","PluginMarket").arg("1.0.0")));
         auto *search=widget.findChild<QLineEdit *>("marketSearch_"+QString::number(source.id));QVERIFY(search);search->setText("no-match");QCOMPARE(list->count(),0);
         search->setText("Fixture");QCOMPARE(list->count(),1);QCOMPARE(int(*calls),fetched);
         const QString screenshots=qEnvironmentVariable("JTM_MARKET_SCREENSHOTS");
@@ -151,6 +164,41 @@ private slots:
         }
         QTRY_VERIFY_WITH_TIMEOUT(!background_tasks::busy(),10000);
     }
+    void settingsOwnsPluginPageAndRestoresItsRoute() {
+        QTemporaryDir fixture;
+        QVERIFY(install_plugin_package(archive(fixture.path(),"1.0.0"),plugin_directory()).ok);
+        const auto source=market::official_source();
+        const auto cache=QDir(plugin_directory()).filePath(".market-cache");QVERIFY(QDir().mkpath(cache));
+        QFile file(QDir(cache).filePath(QString::number(source.id)+".json"));QVERIFY(file.open(QIODevice::WriteOnly));
+        const auto body=json({{"fetched_at",QDateTime::currentMSecsSinceEpoch()},{"host_version",APP_VERSION},
+            {"catalog",QJsonDocument::fromJson(catalog(source.id,{entry()})).object()}});
+        QCOMPARE(file.write(body),body.size());file.close();
+        SettingsDialog dialog(get_tool_settings_manager());
+        QVERIFY(!dialog.has_attr("plugin_manager_page"));
+        dialog.on_nav_changed(SettingsDialog::PLUGINS_PAGE,"plugins");
+        auto *page=dialog.attr_widget("plugin_manager_page");QVERIFY(page);QVERIFY(!page->isWindow());
+        QCOMPARE(dialog.content_stack->currentWidget(),page);
+        QCOMPARE(dialog.view_state().route_key,QString("plugins"));
+        QVERIFY(dialog.findChild<QListWidget *>("pluginList"));
+        QVERIFY(dialog.findChild<QTabWidget *>("pluginCenterTabs"));
+        dialog.on_nav_changed(2,"clipboard");dialog.restore_view_state({SettingsDialog::PLUGINS_PAGE,"plugins"});
+        dialog.show();QCoreApplication::processEvents();
+        QCOMPARE(dialog.content_stack->currentWidget(),page);
+        for(auto *button:dialog.findChildren<QPushButton *>())if(button->text()==dialog.tr_text("Reset This Page"))QVERIFY(button->isHidden());
+        const auto entries=dialog.search_entries();
+        QVERIFY(std::any_of(entries.begin(),entries.end(),[](const auto &entry){return entry.route_key=="plugins";}));
+        auto *tabs=dialog.findChild<QTabWidget *>("pluginCenterTabs");tabs->setCurrentIndex(1);
+        auto *list=dialog.findChild<QListWidget *>("pluginMarketList_"+QString::number(source.id));QVERIFY(list);
+        QTRY_COMPARE_WITH_TIMEOUT(list->count(),1,10000);
+        QVERIFY(list->item(0)->text().contains(i18n_tr("Installed: %1","PluginMarket").arg("1.0.0")));
+        const auto folder=qEnvironmentVariable("JTM_MARKET_SCREENSHOTS");
+        if(!folder.isEmpty())for(const auto &mode:{QString("light"),QString("dark")}) {
+            get_ui_theme()->set_mode(mode,false);QCoreApplication::processEvents();
+            QVERIFY(dialog.grab().save(QDir(folder).filePath("settings-plugins-"+mode+".png")));
+        }
+        QVERIFY(uninstall_plugin("fixture",plugin_directory()));
+    }
+
 };
 QTEST_MAIN(PluginMarketTests)
 #include "test_plugin_market.moc"

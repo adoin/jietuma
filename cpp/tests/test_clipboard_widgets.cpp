@@ -782,21 +782,11 @@ private slots:
         QCOMPARE(preview->provider_id, QString("example"));
         QVERIFY(!resolve_preview(make_item(2, "file", "{}"), ClipboardManager::instance(), root));
         QCOMPARE(jietuba::plugins::installed_plugins(root).size(), 1);
-        bool manager_seen = false;
-        QTimer::singleShot(0, [&] {
-            QWidget *dialog = QApplication::activeModalWidget();
-            if (!dialog) for (auto *window : QApplication::topLevelWidgets())
-                if (window->objectName() == "pluginManagerDialog") { dialog = window; break; }
-            auto *list = dialog ? dialog->findChild<QListWidget *>("pluginList") : nullptr;
-            if (list && list->count() == 1) {
-                manager_seen = true;
-                list->item(0)->setCheckState(Qt::Unchecked);
-            }
-            if (auto *window = qobject_cast<QDialog *>(dialog)) window->accept();
-        });
         QWidget owner;
-        jietuba::plugins::show_plugin_manager(&owner, root);
-        QVERIFY(manager_seen);
+        auto *manager=jietuba::plugins::create_plugin_manager(&owner,root);
+        auto *list=manager->findChild<QListWidget *>("pluginList");
+        QVERIFY(list);QCOMPARE(list->count(),1);
+        list->item(0)->setCheckState(Qt::Unchecked);
         QVERIFY(!jietuba::plugins::installed_plugins(root).first().enabled);
         QVERIFY(jietuba::plugins::set_plugin_enabled("example", true, root));
         QVERIFY(jietuba::plugins::set_plugin_enabled("example", false, root));
@@ -1097,20 +1087,17 @@ private slots:
         const auto package=qEnvironmentVariable("JIETUMA_TEST_CODE_PACKAGE");if(package.isEmpty()) QSKIP("No code plugin package supplied");
         QTemporaryDir root;QVERIFY(root.isValid());const auto installed=jietuba::plugins::install_plugin_package(package,root.path());QVERIFY2(installed.ok,qPrintable(installed.error));
         QWidget host;bool edited=false;
-        QTimer::singleShot(0,&host,[&] {
-            auto *manager=qobject_cast<QDialog *>(QApplication::activeModalWidget());if(!manager) return;
-            if(auto *list=manager->findChild<QListWidget *>("pluginList")) list->setCurrentRow(0);
-            auto *settings=manager->findChild<QPushButton *>("pluginSettings");if(!settings) {manager->reject();return;}
-            QTimer::singleShot(0,manager,[&] {
-                auto *dialog=qobject_cast<QDialog *>(QApplication::activeModalWidget());if(!dialog) return;
-                auto *theme=dialog->findChild<QComboBox *>("pluginSetting_theme");auto *lines=dialog->findChild<QCheckBox *>("pluginSetting_line_numbers");auto *limit=dialog->findChild<QSpinBox *>("pluginSetting_max_lines");
-                auto *buttons=dialog->findChild<QDialogButtonBox *>();
-                if(!theme || !lines || !limit || !buttons || theme->findData(QString("dark"))<0) {dialog->reject();return;}
-                theme->setCurrentIndex(theme->findData(QString("dark")));lines->setChecked(false);limit->setValue(17);edited=true;buttons->button(QDialogButtonBox::Save)->click();
-            });
-            settings->click();manager->accept();
+        auto *manager=jietuba::plugins::create_plugin_manager(&host,root.path());
+        auto *list=manager->findChild<QListWidget *>("pluginList");QVERIFY(list);list->setCurrentRow(0);
+        auto *settings=manager->findChild<QPushButton *>("pluginSettings");QVERIFY(settings);
+        QTimer::singleShot(0,manager,[&] {
+            auto *dialog=qobject_cast<QDialog *>(QApplication::activeModalWidget());if(!dialog)return;
+            auto *theme=dialog->findChild<QComboBox *>("pluginSetting_theme");auto *lines=dialog->findChild<QCheckBox *>("pluginSetting_line_numbers");auto *limit=dialog->findChild<QSpinBox *>("pluginSetting_max_lines");
+            auto *buttons=dialog->findChild<QDialogButtonBox *>();
+            if(!theme||!lines||!limit||!buttons||theme->findData(QString("dark"))<0){dialog->reject();return;}
+            theme->setCurrentIndex(theme->findData(QString("dark")));lines->setChecked(false);limit->setValue(17);edited=true;buttons->button(QDialogButtonBox::Save)->click();
         });
-        jietuba::plugins::show_plugin_manager(&host,root.path());QVERIFY(edited);
+        settings->click();QVERIFY(edited);
         const auto config=jietuba::plugins::read_plugin_config("code-highlight",root.path());
         QCOMPARE(config.value("theme").toString(),QString("dark"));QVERIFY(config.value("line_numbers").isBool());QVERIFY(!config.value("line_numbers").toBool());QCOMPARE(config.value("max_lines").toInt(),17);
     }
@@ -1174,27 +1161,17 @@ private slots:
         QVERIFY2(installed.ok, qPrintable(installed.error));
         bool configured = false;
         QWidget owner;
-        QTimer::singleShot(0, [&] {
-            auto *manager_dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget());
-            auto *list = manager_dialog ? manager_dialog->findChild<QListWidget *>("pluginList") : nullptr;
-            auto *button = manager_dialog ? manager_dialog->findChild<QPushButton *>("pluginSettings") : nullptr;
-            if (list && button && list->count() == 1) {
-                list->setCurrentRow(0);
-                QTimer::singleShot(0, [&] {
-                    auto *settings = qobject_cast<QDialog *>(QApplication::activeModalWidget());
-                    auto *editor = settings ? settings->findChild<QPlainTextEdit *>("pluginSetting_ignored_apps") : nullptr;
-                    auto *buttons = settings ? settings->findChild<QDialogButtonBox *>() : nullptr;
-                    if (editor && buttons) {
-                        editor->setPlainText("secret.exe\nother.exe");
-                        configured = true;
-                        buttons->button(QDialogButtonBox::Save)->click();
-                    }
-                });
-                button->click();
-            }
-            if (manager_dialog) manager_dialog->accept();
+        auto *page=jietuba::plugins::create_plugin_manager(&owner,dir.path());
+        auto *list=page->findChild<QListWidget *>("pluginList");QVERIFY(list);QCOMPARE(list->count(),1);list->setCurrentRow(0);
+        auto *button=page->findChild<QPushButton *>("pluginSettings");QVERIFY(button);
+        QTimer::singleShot(0,page,[&] {
+            auto *settings=qobject_cast<QDialog *>(QApplication::activeModalWidget());
+            auto *editor=settings?settings->findChild<QPlainTextEdit *>("pluginSetting_ignored_apps"):nullptr;
+            auto *buttons=settings?settings->findChild<QDialogButtonBox *>():nullptr;
+            if(editor&&buttons){editor->setPlainText("secret.exe\nother.exe");configured=true;buttons->button(QDialogButtonBox::Save)->click();}
+            else if(settings)settings->reject();
         });
-        jietuba::plugins::show_plugin_manager(&owner, dir.path());
+        button->click();
         QVERIFY(configured);
         bool failed = false;
         const QByteArray blocked = R"({"content_type":"text","source_app":"Secret.EXE","content":"sample"})";

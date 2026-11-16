@@ -7,6 +7,7 @@
 #include "ui/dialogs.h"
 #include "ui/fluent_lite/fluent_lite.h"
 #include <QDialog>
+#include <QEvent>
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QJsonDocument>
@@ -31,11 +32,22 @@
 namespace jietuba::plugins {
 namespace {
 QString tr(const char *text) { return i18n_tr(text, "ClipboardWindow"); }
+class PluginManagerPage : public QWidget {
+public:
+    using QWidget::QWidget;
+    std::function<void()> refresh;
+protected:
+    bool event(QEvent *event) override {
+        const bool result=QWidget::event(event);
+        if(refresh&&(event->type()==QEvent::Show||event->type()==QEvent::WindowActivate))refresh();
+        return result;
+    }
+};
 
 void style_dialog(QDialog &dialog) {
     const auto &t = get_ui_theme()->tokens();
     apply_style_sheet(&dialog, QString(R"(
-        QDialog#pluginManagerDialog, QDialog#pluginSettingsDialog { background: %1; color: %2; }
+        QDialog#pluginSettingsDialog { background: %1; color: %2; }
         QListWidget#pluginList, QPlainTextEdit { background: %3; color: %2; border: 1px solid %4; border-radius: %5px; padding: %6px; }
         QListWidget#pluginList::item { padding: %7px; border-radius: %8px; }
         QListWidget#pluginList::item:selected { background: %9; color: %2; }
@@ -173,43 +185,40 @@ bool install_plugin_packages_interactively(QWidget *parent,const QStringList &pa
     return installed>0;
 }
 
-void show_plugin_manager(QWidget *parent, const QString &plugin_root) {
-    QDialog dialog(parent);
-    dialog.setObjectName("pluginManagerDialog");
-    style_dialog(dialog);
-    QObject::connect(get_ui_theme(),&UIThemeManager::theme_changed,&dialog,[&dialog]{style_dialog(dialog);});
-    dialog.setWindowTitle(tr("Manage Plugins"));
-    dialog.resize(scaled(760), scaled(560));
-    auto *layout = new QVBoxLayout(&dialog);
+QWidget *create_plugin_manager(QWidget *parent, const QString &plugin_root) {
+    auto *page = new PluginManagerPage(parent);
+    page->setObjectName("pluginManagerPage");
+    auto *layout = new QVBoxLayout(page);
     layout->setContentsMargins(scaled(16), scaled(16), scaled(16), scaled(16));
     layout->setSpacing(scaled(12));
-    auto *installed_page=new QWidget(&dialog);
+    auto *installed_page=new QWidget(page);
     auto *installed_layout=new QVBoxLayout(installed_page);installed_layout->setContentsMargins(0,scaled(8),0,0);
     auto *list = new QListWidget(installed_page);
     list->setObjectName("pluginList");
     list->setIconSize(QSize(scaled(32),scaled(32)));
     installed_layout->addWidget(list,1);
-    auto *market=new PluginMarketWidget(installed_page,plugin_root,{},&dialog);
+    auto *market=new PluginMarketWidget(installed_page,plugin_root,{},page);
     layout->addWidget(market,1);
     auto *updates=new QHBoxLayout;
     auto *check_updates=new SecondaryPushButton(tr("Check Plugin Updates"),installed_page);check_updates->setObjectName("checkPluginUpdates");
     auto *update=new PrimaryPushButton(tr("Update Plugin"),installed_page);update->setObjectName("updatePlugin");update->setEnabled(false);
     updates->addWidget(check_updates);updates->addStretch();updates->addWidget(update);installed_layout->addLayout(updates);
     auto *buttons = new QHBoxLayout;
-    auto *add = new PrimaryPushButton(tr("Install Plugin"), &dialog);
+    auto *add = new PrimaryPushButton(tr("Install Plugin"), page);
     add->setObjectName("installPlugins");
-    auto *remove = new QPushButton(tr("Uninstall"), &dialog);
+    auto *remove = new QPushButton(tr("Uninstall"), page);
     remove->setObjectName("uninstallPlugin");
-    auto *settings = new QPushButton(tr("Plugin Settings"), &dialog);
+    auto *settings = new QPushButton(tr("Plugin Settings"), page);
     settings->setObjectName("pluginSettings");
-    auto *close = new QPushButton(tr("Close"), &dialog);
+
     buttons->addWidget(add);
     buttons->addWidget(remove);
     buttons->addWidget(settings);
     buttons->addStretch();
-    buttons->addWidget(close);
+
     installed_layout->addLayout(buttons);
-    auto refresh = [&] {
+    auto refresh = [=] {
+        market->refresh_installed();
         const auto selected=list->currentItem()?list->currentItem()->data(Qt::UserRole).toString():QString();
         list->blockSignals(true);
         list->clear();
@@ -233,34 +242,34 @@ void show_plugin_manager(QWidget *parent, const QString &plugin_root) {
         settings->setEnabled(list->currentItem() && !QJsonDocument::fromJson(list->currentItem()->data(Qt::UserRole + 1).toByteArray()).array().isEmpty());
         update->setEnabled(list->currentItem()&&market->update_for(list->currentItem()->data(Qt::UserRole).toString()).has_value());
     };
-    QObject::connect(list, &QListWidget::currentItemChanged, &dialog, [=](QListWidgetItem *item) {
+    QObject::connect(list, &QListWidget::currentItemChanged, page, [=](QListWidgetItem *item) {
         remove->setEnabled(item != nullptr);
         settings->setEnabled(item && !QJsonDocument::fromJson(item->data(Qt::UserRole + 1).toByteArray()).array().isEmpty());
         update->setEnabled(item&&market->update_for(item->data(Qt::UserRole).toString()).has_value());
     });
-    QObject::connect(list, &QListWidget::itemChanged, &dialog, [&](QListWidgetItem *item) {
+    QObject::connect(list, &QListWidget::itemChanged, page, [=](QListWidgetItem *item) {
         if (!set_plugin_enabled(item->data(Qt::UserRole).toString(), item->checkState() == Qt::Checked, plugin_root)) {
-            show_warning_dialog(&dialog, tr("Manage Plugins"), tr("Could not change plugin state."));
+            show_warning_dialog(page, tr("Manage Plugins"), tr("Could not change plugin state."));
             refresh();
-        }
+        } else market->refresh_installed();
     });
-    QObject::connect(remove, &QPushButton::clicked, &dialog, [&] {
+    QObject::connect(remove, &QPushButton::clicked, page, [=] {
         auto *item = list->currentItem();
-        if (!item || !show_confirm_dialog(&dialog, tr("Uninstall"), tr("Uninstall plugin %1?").arg(item->text()))) return;
-        if (!uninstall_plugin(item->data(Qt::UserRole).toString(), plugin_root)) show_warning_dialog(&dialog, tr("Uninstall"), tr("Could not uninstall plugin."));
+        if (!item || !show_confirm_dialog(page, tr("Uninstall"), tr("Uninstall plugin %1?").arg(item->text()))) return;
+        if (!uninstall_plugin(item->data(Qt::UserRole).toString(), plugin_root)) show_warning_dialog(page, tr("Uninstall"), tr("Could not uninstall plugin."));
         refresh();
     });
-    QObject::connect(settings, &QPushButton::clicked, &dialog, [&] {
-        if (auto *item = list->currentItem()) edit_settings(&dialog, item->data(Qt::UserRole).toString(),
+    QObject::connect(settings, &QPushButton::clicked, page, [=] {
+        if (auto *item = list->currentItem()) edit_settings(page, item->data(Qt::UserRole).toString(),
                                                            QJsonDocument::fromJson(item->data(Qt::UserRole + 1).toByteArray()).array(), plugin_root);
     });
-    QObject::connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
     QObject::connect(check_updates,&QPushButton::clicked,market,&PluginMarketWidget::check_updates);
     QObject::connect(update,&QPushButton::clicked,market,[=]{if(auto *item=list->currentItem())if(const auto entry=market->update_for(item->data(Qt::UserRole).toString()))market->install(*entry);});
-    QObject::connect(market,&PluginMarketWidget::installed_changed,&dialog,refresh);
-    QObject::connect(market,&PluginMarketWidget::updates_changed,&dialog,refresh);
-    QObject::connect(add,&QPushButton::clicked,&dialog,[&]{install_plugin_interactively(&dialog,plugin_root);refresh();});
+    QObject::connect(market,&PluginMarketWidget::installed_changed,page,refresh);
+    QObject::connect(market,&PluginMarketWidget::updates_changed,page,refresh);
+    QObject::connect(add,&QPushButton::clicked,page,[=]{install_plugin_interactively(page,plugin_root);refresh();});
+    page->refresh=refresh;
     refresh();
-    exec_dialog(&dialog, parent);
+    return page;
 }
 }

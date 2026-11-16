@@ -10,6 +10,7 @@ public:
     PluginMarketWidget(QWidget *installed_page,QString root={},std::shared_ptr<market::Client> client={},QWidget *parent=nullptr);
     ~PluginMarketWidget() override;
     std::optional<market::Entry> update_for(const QString &id) const;
+    void refresh_installed();
     void check_updates();
     void install(const market::Entry &entry);
 signals:

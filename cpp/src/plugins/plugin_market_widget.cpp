@@ -68,11 +68,17 @@ struct PluginMarketWidget::Impl {
     void render(Page &page) {
         const auto previous=page.list->currentItem()?page.list->currentItem()->data(Qt::UserRole).toString():QString();
         page.list->clear();const QString needle=page.search->text().trimmed();
+        QMap<QString,InstalledPlugin> installed;for(const auto &plugin:installed_plugins(root))installed.insert(plugin.id,plugin);
         for(const auto &entry:page.entries) {
             const auto name=localized(entry.name_i18n,entry.name).left(160);
             const auto description=localized(entry.description_i18n,entry.description).left(300);
             if(!needle.isEmpty()&&!(name+' '+entry.id+' '+description).contains(needle,Qt::CaseInsensitive))continue;
-            QString text=name+"  "+entry.version+"\n"+description;
+            QString text=name+"  "+entry.version;
+            if(const auto found=installed.constFind(entry.id);found!=installed.cend()) {
+                text+=" · "+market_text("Installed: %1").arg(found->version);
+                if(!found->enabled)text+=" · "+market_text("Disabled");
+            }
+            text+="\n"+description;
             text+="\n"+(entry.compatible?entry.platform:market_text("Requires: %1 · %2").arg(entry.host,entry.platform));
             auto *row=new QListWidgetItem(icon(entry.icon),text,page.list);row->setData(Qt::UserRole,entry.id);row->setSizeHint(QSize(0,scaled(92)));
             row->setToolTip(entry.id.toHtmlEscaped());if(entry.id==previous)page.list->setCurrentItem(row);
@@ -168,6 +174,9 @@ std::optional<market::Entry> PluginMarketWidget::update_for(const QString &id) c
         if(cmp>0 || (cmp==0&&!installed.compatible))return *found;
     }
     return std::nullopt;
+}
+void PluginMarketWidget::refresh_installed() {
+    for(auto &page:d_->pages)d_->render(page);
 }
 void PluginMarketWidget::check_updates() {
     if(d_->busy)return;set_busy(true);d_->status->setText(market_text("Checking plugin updates…"));

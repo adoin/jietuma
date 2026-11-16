@@ -156,6 +156,7 @@ signals:
     void closed();
     // The menu's More Settings: the clipboard page of the settings window.
     void settings_requested();
+    void plugins_requested();
     void new_item_received(const std::optional<jietuba::clipboard::ClipboardItem> &item);
 
 protected:

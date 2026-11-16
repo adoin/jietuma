@@ -7742,4 +7742,22 @@ Replace it?</source>
         <translation>확장자는 저장할 때 자동으로 추가되므로 입력하지 마세요.</translation>
     </message>
 </context>
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Plugins</source>
+        <translation>플러그인</translation>
+    </message>
+</context>
+<context>
+    <name>PluginMarket</name>
+    <message>
+        <source>Installed: %1</source>
+        <translation>설치됨: %1</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>사용 안 함</translation>
+    </message>
+</context>
 </TS>

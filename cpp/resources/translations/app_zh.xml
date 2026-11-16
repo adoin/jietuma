@@ -7945,4 +7945,22 @@ Replace it?</source>
         <translation>市场安装包信息不符</translation>
     </message>
 </context>
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Plugins</source>
+        <translation>插件</translation>
+    </message>
+</context>
+<context>
+    <name>PluginMarket</name>
+    <message>
+        <source>Installed: %1</source>
+        <translation>已安装：%1</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>已停用</translation>
+    </message>
+</context>
 </TS>

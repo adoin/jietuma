@@ -51,6 +51,7 @@ QSize settings_window_size(int available_width, int available_height, double fac
 class SettingsDialog : public FrostedFramelessDialog {
     Q_OBJECT
 public:
+    static constexpr int PLUGINS_PAGE = 13;
     explicit SettingsDialog(ToolSettingsManager *config_manager, const QString &current_hotkey = "ctrl+shift+a", QWidget *parent = nullptr);
     QString tr_text(const char *text) const { return settings_tr(text); }
 

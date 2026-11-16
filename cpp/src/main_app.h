@@ -64,6 +64,7 @@ public:
     // A capture whose selection opens the recording window.
     void start_screen_recording();
     void open_settings();
+    void open_plugins();
     // Opens the settings window on one page (SettingsDialog::on_nav_changed's index and route).
     void open_settings_page(int stack_index, const QString &route_key);
     void open_translator();

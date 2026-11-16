@@ -75,6 +75,7 @@ QWidget *(*const PAGE_BUILDERS[])(SettingsDialog *) = {
     create_mouse_page,          // 10
     create_pin_page,            // 11
     create_screen_annotation_page,  // 12
+    create_plugins_page,        // 13
 };
 constexpr int PAGE_COUNT = static_cast<int>(std::size(PAGE_BUILDERS));
 
@@ -175,6 +176,7 @@ std::vector<NavItem> nav_items() {
         {"screen_annotation", ResourceManager::get_icon_path(QString::fromUtf8("画笔.svg")), "Screen Annotation", 12, NavigationItemPosition::TOP, "capture"},
         {"clipboard", FluentIcon::Paste, "Clipboard", 2, NavigationItemPosition::TOP, "clipboard"},
         {"translation", FluentIcon::Language, "Translation", 4, NavigationItemPosition::TOP, "translate"},
+        {"plugins", FluentIcon::Application, "Plugins", SettingsDialog::PLUGINS_PAGE, NavigationItemPosition::TOP, {}},
         {"appearance", FluentIcon::Brush, "Appearance", 3, NavigationItemPosition::TOP, {}},
         {"log", FluentIcon::History, "Log Settings", 5, NavigationItemPosition::TOP, {}},
         {"other", FluentIcon::Application, "Other", 6, NavigationItemPosition::TOP, {}},
@@ -411,7 +413,7 @@ void SettingsDialog::on_nav_changed(int stack_index, const QString &route_key) {
     static const QMap<int, const char *> title_map{
         {0, "Shortcut Settings"}, {1, "Capture Settings"}, {2, "Clipboard Settings"}, {3, "Appearance Settings"},
         {4, "Translation Settings"}, {5, "Log Settings"}, {6, "Other Settings"}, {8, "Software Information"},
-        {10, "Mouse Shortcuts"}, {11, "Pin Settings"}, {12, "Screen Annotation Settings"},
+        {10, "Mouse Shortcuts"}, {11, "Pin Settings"}, {12, "Screen Annotation Settings"}, {PLUGINS_PAGE, "Plugins"},
     };
     if (!title_map.contains(stack_index)) return;
     ensure_page(stack_index);
@@ -451,8 +453,8 @@ void SettingsDialog::open_developer_page() {
 }
 
 void SettingsDialog::refresh_after_page_change() {
-    // The information page has nothing to reset.
-    if (page_reset_btn_) page_reset_btn_->setVisible(content_stack->currentIndex() != 8);
+    // Information and plugin management do not expose a page-wide reset.
+    if (page_reset_btn_) page_reset_btn_->setVisible(content_stack->currentIndex() != 8 && content_stack->currentIndex() != PLUGINS_PAGE);
     update();
     right_area_->update();
     content_stack->update();

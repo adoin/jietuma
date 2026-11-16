@@ -1829,29 +1829,20 @@ private slots:
         QVERIFY(preview && preview->isVisible());
         QVERIFY(preview->grab().save(QDir(dir).filePath("preview.png")));
         preview->close();
-        bool captured = false;
-        QTimer::singleShot(100, [&] {
-            QWidget *dialog = QApplication::activeModalWidget();
-            if (!dialog) for (auto *surface : QApplication::topLevelWidgets())
-                if (surface->objectName() == "pluginManagerDialog") { dialog = surface; break; }
-            if (dialog && dialog->objectName() == "pluginManagerDialog") {
-                auto *list = dialog->findChild<QListWidget *>("pluginList");
-                if (list) for (int row = 0; row < list->count(); ++row)
-                    if (list->item(row)->data(Qt::UserRole).toString() == "source-exclusions") list->setCurrentRow(row);
-                captured = dialog->grab().save(QDir(dir).filePath("plugins.png"));
-                if (auto *settings_button = dialog->findChild<QPushButton *>("pluginSettings"); settings_button && settings_button->isEnabled()) {
-                    QTimer::singleShot(100, [&] {
-                        if (auto *settings = qobject_cast<QDialog *>(QApplication::activeModalWidget()); settings && settings->objectName() == "pluginSettingsDialog") {
-                            captured = captured && settings->grab().save(QDir(dir).filePath("plugin-settings.png"));
-                            settings->reject();
-                        }
-                    });
-                    settings_button->click();
+        auto *page=jietuba::plugins::create_plugin_manager(window);
+        page->resize(760,560);page->show();QApplication::processEvents();
+        auto *list=page->findChild<QListWidget *>("pluginList");
+        if(list)for(int row=0;row<list->count();++row)if(list->item(row)->data(Qt::UserRole).toString()=="source-exclusions")list->setCurrentRow(row);
+        bool captured=page->grab().save(QDir(dir).filePath("plugins.png"));
+        if(auto *button=page->findChild<QPushButton *>("pluginSettings");button&&button->isEnabled()) {
+            QTimer::singleShot(100,[&] {
+                if(auto *settings=qobject_cast<QDialog *>(QApplication::activeModalWidget());settings&&settings->objectName()=="pluginSettingsDialog") {
+                    captured=captured&&settings->grab().save(QDir(dir).filePath("plugin-settings.png"));settings->reject();
                 }
-                qobject_cast<QDialog *>(dialog)->accept();
-            }
-        });
-        jietuba::plugins::show_plugin_manager(window);
+            });
+            button->click();
+        }
+        delete page;
         QVERIFY(captured);
     }
 

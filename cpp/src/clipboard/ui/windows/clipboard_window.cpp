@@ -730,7 +730,7 @@ void ClipboardWindow::show_main_menu() {
     options.on_set_theme = [](const QString &name) { get_theme_manager()->set_theme(name); };
     options.on_add_item = [this] { on_add_item_clicked(); };
     options.on_install_plugin = [this] { plugins::install_plugin_interactively(this); };
-    options.on_manage_plugins = [this] { plugins::show_plugin_manager(this); };
+    options.on_manage_plugins = [this] { emit plugins_requested(); };
     if (plugins::has_backup_plugin()) {
         options.on_backup_clipboard = [this] { plugins::backup_clipboard(this, manager); };
         options.on_restore_clipboard = [this] { plugins::restore_clipboard(this, manager); };

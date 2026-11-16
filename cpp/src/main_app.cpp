@@ -609,6 +609,8 @@ void MainApp::open_settings() {
     settings_window->activateWindow();
 }
 
+void MainApp::open_plugins() { open_settings_page(SettingsDialog::PLUGINS_PAGE, "plugins"); }
+
 void MainApp::open_settings_page(int stack_index, const QString &route_key) {
     if (update_preparing) return;
     if (!settings_window) preload_settings();
@@ -688,6 +690,7 @@ void MainApp::release_clipboard_from_capture() {
 clipboard::ClipboardWindow *MainApp::ensure_clipboard_window() {
     if (!clipboard_window) {
         clipboard_window = new clipboard::ClipboardWindow;
+        connect(clipboard_window, &clipboard::ClipboardWindow::plugins_requested, this, &MainApp::open_plugins);
         connect(clipboard_window, &clipboard::ClipboardWindow::settings_requested, this, [this] { open_settings_page(2, "clipboard"); });
     }
     return clipboard_window;

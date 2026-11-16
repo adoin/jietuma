@@ -8320,4 +8320,22 @@ Replace it?</source>
         <translation>市集安裝套件資訊不符</translation>
     </message>
 </context>
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Plugins</source>
+        <translation>外掛</translation>
+    </message>
+</context>
+<context>
+    <name>PluginMarket</name>
+    <message>
+        <source>Installed: %1</source>
+        <translation>已安裝：%1</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>已停用</translation>
+    </message>
+</context>
 </TS>

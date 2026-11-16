@@ -186,7 +186,7 @@ QMenu *create_tray_menu(MainApp *app) {
     QObject::connect(action_install_plugin, &QAction::triggered, app, [] { plugins::install_plugin_interactively(nullptr); });
     menu->addAction(action_install_plugin);
     auto *action_manage_plugins = new QAction(i18n_tr("Manage Plugins", "ClipboardWindow"), menu);
-    QObject::connect(action_manage_plugins, &QAction::triggered, app, [] { plugins::show_plugin_manager(nullptr); });
+    QObject::connect(action_manage_plugins, &QAction::triggered, app, [app] { app->open_plugins(); });
     menu->addAction(action_manage_plugins);
 
     auto *action_settings = new QAction(tr_text("Settings"), menu);

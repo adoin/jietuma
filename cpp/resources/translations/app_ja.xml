@@ -7751,4 +7751,22 @@ Replace it?</source>
         <translation>拡張子は自動で付くため、入力しないでください。</translation>
     </message>
 </context>
+<context>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Plugins</source>
+        <translation>プラグイン</translation>
+    </message>
+</context>
+<context>
+    <name>PluginMarket</name>
+    <message>
+        <source>Installed: %1</source>
+        <translation>インストール済み：%1</translation>
+    </message>
+    <message>
+        <source>Disabled</source>
+        <translation>無効</translation>
+    </message>
+</context>
 </TS>
