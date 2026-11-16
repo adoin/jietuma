@@ -10,6 +10,7 @@
 #include "ui/fluent_lite/buttons.h"
 #include "ui/fluent_lite/titlebar.h"
 #include "ui/welcome/pages.h"
+#include "plugins/plugin_setup_widget.h"
 #include <QCloseEvent>
 #include <QHBoxLayout>
 #include <QIcon>
@@ -17,6 +18,7 @@
 #include <QMouseEvent>
 #include <QStackedWidget>
 #include <QVBoxLayout>
+#include <algorithm>
 
 namespace jietuba {
 namespace {
@@ -267,6 +269,7 @@ void WelcomeWizard::build_ui() {
     nav_layout->setContentsMargins(dialog_scaled(30), dialog_scaled(14), dialog_scaled(30), dialog_scaled(14));
     nav_layout->setSpacing(dialog_scaled(10));
     btn_skip_ = new TransparentPushButton;
+    btn_skip_->setObjectName("btnSkip");
     btn_skip_->setFixedHeight(dialog_scaled(36));
     btn_skip_->setCursor(Qt::PointingHandCursor);
     connect(btn_skip_, &QPushButton::clicked, this, &WelcomeWizard::finish);
@@ -328,6 +331,10 @@ void WelcomeWizard::build_pages() {
         new FinishPage(config_),
     };
     for (auto *page : pages_) stack_->addWidget(page);
+    auto *setup=static_cast<FinishPage *>(pages_.back())->plugin_setup();
+    connect(setup,&plugins::PluginSetupWidget::selection_changed,this,&WelcomeWizard::update_nav);
+    connect(setup,&plugins::PluginSetupWidget::busy_changed,this,&WelcomeWizard::update_nav);
+    connect(setup,&plugins::PluginSetupWidget::completed,this,&WelcomeWizard::finish);
     // Every page is built at once and switching only changes visibility, so one sweep covers
     // the fluent_lite controls (self-painted widgets keep their own base sizes).
     configure_dialog_controls(*stack_);
@@ -342,7 +349,7 @@ void WelcomeWizard::refresh_theme_scope() {
 }
 
 void WelcomeWizard::go_to_page(int index) {
-    if (index < 0 || index >= page_count()) return;
+    if (index < 0 || index >= page_count() || static_cast<FinishPage *>(pages_.back())->plugin_setup()->busy()) return;
     current_ = index;
     stack_->setCurrentIndex(index);
     update_nav();
@@ -350,7 +357,10 @@ void WelcomeWizard::go_to_page(int index) {
 
 void WelcomeWizard::go_next() {
     if (current_ < page_count() - 1) go_to_page(current_ + 1);
-    else finish();
+    else {
+        auto *setup=static_cast<FinishPage *>(pages_.back())->plugin_setup();
+        if(setup->selected_count()>0)setup->install_selected();else finish();
+    }
 }
 
 void WelcomeWizard::go_back() {
@@ -360,14 +370,19 @@ void WelcomeWizard::go_back() {
 void WelcomeWizard::update_nav() {
     for (int idx = 0; idx < static_cast<int>(step_items_.size()); ++idx) step_items_[idx]->set_state(idx == current_, idx < current_);
     page_count_->setText(QString("%1 / %2").arg(current_ + 1).arg(page_count()));
-    btn_back_->setEnabled(current_ > 0);
+    auto *setup=pages_.empty()?nullptr:static_cast<FinishPage *>(pages_.back())->plugin_setup();
+    const bool busy=setup&&setup->busy();
+    btn_back_->setEnabled(current_ > 0&&!busy);
+    btn_next_->setEnabled(!busy);
     const bool is_last = current_ == page_count() - 1;
-    btn_skip_->setVisible(!is_last);
+    btn_skip_->setVisible(true);
+    btn_skip_->setText(is_last?welcome_tr("跳过插件安装"):welcome_tr("跳过"));
     btn_back_->setText(welcome_tr("上一步"));
     btn_back_->setToolTip(welcome_tr("上一步"));
     btn_back_->setIcon(QIcon());
-    const QString next = is_last ? welcome_tr("完成") : welcome_tr("下一步");
+    const QString next = is_last ? (setup&&setup->selected_count()>0?welcome_tr("安装并完成"):welcome_tr("完成")) : welcome_tr("下一步");
     btn_next_->setText(next);
+    btn_next_->setFixedWidth(std::max(dialog_scaled(112),btn_next_->fontMetrics().horizontalAdvance(next)+dialog_scaled(36)));
     btn_next_->setToolTip(next);
     btn_next_->setIcon(QIcon());
 }
@@ -404,11 +419,13 @@ void WelcomeWizard::save_all() {
 }
 
 void WelcomeWizard::finish() {
+    static_cast<FinishPage *>(pages_.back())->plugin_setup()->cancel();
     save_all();
     accept();
 }
 
 void WelcomeWizard::closeEvent(QCloseEvent *event) {
+    static_cast<FinishPage *>(pages_.back())->plugin_setup()->cancel();
     save_all();
     FrostedFramelessDialog::closeEvent(event);
 }

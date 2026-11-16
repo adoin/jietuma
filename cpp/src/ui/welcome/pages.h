@@ -16,6 +16,7 @@ class QStackedWidget;
 
 // The wizard pages.
 namespace jietuba {
+namespace plugins { class PluginSetupWidget; }
 class HotkeyEdit;
 class MouseBindingEditor;
 class ProviderRegistry;
@@ -230,6 +231,7 @@ class FinishPage : public BasePage {
 public:
     explicit FinishPage(ToolSettingsManager *config, QWidget *parent = nullptr);
     void retranslate() override;
+    plugins::PluginSetupWidget *plugin_setup() const { return plugin_setup_; }
     // Marks the wizard done and stores preferences; autostart and the desktop shortcut run in
     // the background so file and network path checks never block the UI thread.
     void save() override;
@@ -242,6 +244,7 @@ protected:
     void build_controls(QVBoxLayout *layout) override;
 private:
     ToolSettingsManager *config_;
+    plugins::PluginSetupWidget *plugin_setup_ = nullptr;
     WelcomeToggleSwitch *autostart_switch_ = nullptr;
     WelcomeToggleSwitch *show_main_switch_ = nullptr;
     WelcomeToggleSwitch *desktop_switch_ = nullptr;

@@ -1,5 +1,13 @@
 #include "plugins/plugin_market.h"
 #include "plugins/plugin_market_widget.h"
+#include "plugins/plugin_setup_widget.h"
+#include "ui/dialogs.h"
+#include "ui/welcome/wizard.h"
+#include "ui/welcome/pages.h"
+#include <QSemaphore>
+#include <QScopeGuard>
+#include <QSignalSpy>
+#include <QTimer>
 #include "plugins/plugin_package.h"
 #include "settings/tool_settings.h"
 #include "core/background_tasks.h"
@@ -52,9 +60,9 @@ market::Request transport(qint64 id,const QByteArray &body,std::shared_ptr<std::
         throw market::Error("Unexpected test request");
     };
 }
-QString archive(const QString &folder,const QString &version,const QString &host=">=2.3.0,<3.0.0",bool forged=false) {
-    const auto path=QDir(folder).filePath("fixture-"+version+".jtbplugin");QZipWriter writer(path);
-    writer.addFile("plugin.json",json({{"id","fixture"},{"name","Fixture"},{"version",version},{"api_version",2},{"type","extension"},
+QString archive(const QString &folder,const QString &version,const QString &host=">=2.3.0,<3.0.0",bool forged=false,const QString &identity="fixture") {
+    const auto path=QDir(folder).filePath(identity+"-"+version+".jtbplugin");QZipWriter writer(path);
+    writer.addFile("plugin.json",json({{"id",identity},{"name",identity},{"version",version},{"api_version",2},{"type","extension"},
         {"host",host},{"platform",plugin_platform()},{"contributes",QJsonObject{{"clipboard",QJsonObject{{"metadata",QJsonObject{{"content_types",QJsonArray{"text"}},{"fields",QJsonArray{QJsonObject{{"key","note"},{"label","Note"},{"type","line"}}}}}}}}}}}));
     if(forged)writer.addFile(".market-source.json","{}");writer.close();return path;
 }
@@ -197,6 +205,83 @@ private slots:
             QVERIFY(dialog.grab().save(QDir(folder).filePath("settings-plugins-"+mode+".png")));
         }
         QVERIFY(uninstall_plugin("fixture",plugin_directory()));
+    }
+
+    void setupLoadsOnlyOnRequestAndCancellationNeverInstalls() {
+        QTemporaryDir folder;const auto source=market::official_source();
+        const auto calls=std::make_shared<std::atomic<int>>(0);const auto started=std::make_shared<std::atomic_bool>(false);
+        const auto gate=std::make_shared<QSemaphore>();
+        auto base=transport(source.id,catalog(source.id,{entry()}),calls);
+        market::Request request=[base,started,gate](const QString &endpoint,bool binary,qint64 limit){
+            if(endpoint.endsWith("/releases/assets/100")){started->store(true);if(!gate->tryAcquire(1,5000))throw market::Error("Timed out waiting for test cancellation");}
+            return base(endpoint,binary,limit);
+        };
+        auto release=qScopeGuard([gate]{gate->release();});
+        plugins::PluginSetupWidget widget(nullptr,folder.path(),std::make_shared<market::Client>(folder.path(),request));widget.show();
+        QCoreApplication::processEvents();QCOMPARE(int(*calls),0);QCOMPARE(widget.selected_count(),0);
+        widget.findChild<QPushButton *>("browseSetupPlugins")->click();auto *list=widget.findChild<QListWidget *>("pluginSetupList");
+        QTRY_COMPARE_WITH_TIMEOUT(list->count(),1,10000);QCOMPARE(widget.selected_count(),0);
+        list->item(0)->setCheckState(Qt::Checked);QCOMPARE(widget.selected_count(),1);
+        QSignalSpy done(&widget,&plugins::PluginSetupWidget::completed);widget.install_selected();
+        QTRY_VERIFY_WITH_TIMEOUT(started->load(),10000);widget.cancel();gate->release();
+        QTRY_VERIFY_WITH_TIMEOUT(!background_tasks::busy(),10000);
+        QVERIFY(installed_plugins(folder.path()).isEmpty());QCOMPARE(done.count(),0);QVERIFY(!widget.busy());QVERIFY(!QApplication::activeModalWidget());
+    }
+    void setupReportsOfflineFailureWithoutBlockingCompletion() {
+        QTemporaryDir folder;auto client=std::make_shared<market::Client>(folder.path(),[](const QString &,bool,qint64)->QByteArray{throw market::Error("offline");});
+        plugins::PluginSetupWidget widget(nullptr,folder.path(),client);widget.show();
+        widget.findChild<QPushButton *>("browseSetupPlugins")->click();QTRY_VERIFY_WITH_TIMEOUT(!widget.busy(),10000);
+        QVERIFY(widget.findChild<QLabel *>("pluginSetupStatus")->text().contains("offline"));QCOMPARE(widget.selected_count(),0);
+        QVERIFY(installed_plugins(folder.path()).isEmpty());
+    }
+    void setupInstallsTheSelectedBatchWithOneConfirmationAndBoundOrigins() {
+        QTemporaryDir folder;const auto root=folder.filePath("plugins");
+        QVERIFY(install_plugin_package(archive(folder.path(),"1.0.0"),root).ok);
+        QVERIFY(set_plugin_enabled("fixture",false,root));QVERIFY(save_plugin_config("fixture",{{"keep","yes"}},root));
+        QMap<int,QPair<QJsonObject,QByteArray>> packages;QJsonArray rows;
+        for(int number=0;number<2;++number){
+            const QString id=number?"second":"fixture";const QString version=number?"1.0.0":"1.1.0";
+            const auto path=archive(folder.path(),version,">=2.3.0,<3.0.0",false,id);QFile file(path);QVERIFY(file.open(QIODevice::ReadOnly));const auto bytes=file.readAll();
+            auto e=entry(version);const auto tag=id+"/v"+version;const auto name=id+"-"+version+"-"+plugin_platform()+".jtbplugin";
+            e.insert("id",id);e.insert("name",id);e.insert("release_tag",tag);e.insert("asset",name);e.insert("asset_id",100+number);e.insert("size",bytes.size());e.insert("sha256",hash(bytes));
+            e.insert("download_url","https://github.com/owner/plugins/releases/download/"+QString::fromLatin1(QUrl::toPercentEncoding(tag))+"/"+name);
+            packages.insert(100+number,{e,bytes});rows.append(e);
+        }
+        const auto source=market::official_source();const auto body=catalog(source.id,rows);const auto base=transport(source.id,body);
+        market::Request request=[base,packages](const QString &endpoint,bool binary,qint64 limit)->QByteArray{
+            for(auto it=packages.cbegin();it!=packages.cend();++it){const auto &e=it->first;
+                if(endpoint.endsWith("/releases/assets/"+QString::number(it.key())))return it->second;
+                if(endpoint.endsWith("/releases/tags/"+QString::fromLatin1(QUrl::toPercentEncoding(e.value("release_tag").toString()))))
+                    return json({{"draft",false},{"prerelease",false},{"tag_name",e.value("release_tag")},{"assets",QJsonArray{QJsonObject{{"id",it.key()},{"name",e.value("asset")},{"size",e.value("size")},{"digest","sha256:"+e.value("sha256").toString()}}}}});
+            }
+            return base(endpoint,binary,limit);
+        };
+        plugins::PluginSetupWidget widget(nullptr,root,std::make_shared<market::Client>(root,request));widget.resize(304,430);widget.show();
+        widget.findChild<QPushButton *>("browseSetupPlugins")->click();auto *list=widget.findChild<QListWidget *>("pluginSetupList");
+        QTRY_COMPARE_WITH_TIMEOUT(list->count(),2,10000);QCOMPARE(widget.selected_count(),0);
+        for(int row=0;row<list->count();++row)list->item(row)->setCheckState(Qt::Checked);
+        const auto screenshots=qEnvironmentVariable("JTM_MARKET_SCREENSHOTS");
+        if(!screenshots.isEmpty())for(const auto &mode:{QString("light"),QString("dark")}){get_ui_theme()->set_mode(mode,false);QCoreApplication::processEvents();QVERIFY(widget.grab().save(QDir(screenshots).filePath("plugin-setup-"+mode+".png")));}
+        int confirmations=0;QTimer answer;answer.setInterval(10);
+        connect(&answer,&QTimer::timeout,&widget,[&]{if(auto *dialog=qobject_cast<StandardDialog *>(QApplication::activeModalWidget())){
+            if(auto *items=dialog->findChild<QListWidget *>("pluginInstallList")){++confirmations;QCOMPARE(items->count(),2);}
+            for(auto *button:dialog->button_box->buttons())if(dialog->button_box->buttonRole(button)==QDialogButtonBox::AcceptRole){button->click();break;}
+        }});answer.start();
+        QSignalSpy done(&widget,&plugins::PluginSetupWidget::completed);widget.install_selected();QTRY_COMPARE_WITH_TIMEOUT(done.count(),1,15000);answer.stop();
+        QCOMPARE(confirmations,1);QCOMPARE(installed_plugins(root).size(),2);QCOMPARE(widget.selected_count(),0);
+        for(int row=0;row<list->count();++row)QVERIFY(!(list->item(row)->flags()&Qt::ItemIsUserCheckable));
+        for(const auto &p:installed_plugins(root))QCOMPARE(plugin_install_source(p.id,root).value("repository_id").toInteger(),source.id);
+        QCOMPARE(read_plugin_config("fixture",root).value("keep").toString(),QString("yes"));
+        for(const auto &p:installed_plugins(root))if(p.id=="fixture")QVERIFY(!p.enabled);
+    }
+    void wizardOffersSkipOnItsLastPageWithoutStartingNetworkRequests() {
+        WelcomeWizard wizard(get_tool_settings_manager());wizard.show();wizard.go_to_page(wizard.page_count()-1);
+        auto *setup=wizard.findChild<plugins::PluginSetupWidget *>();QVERIFY(setup);QCOMPARE(setup->selected_count(),0);QVERIFY(!setup->busy());
+        auto *skip=wizard.findChild<QPushButton *>("btnSkip");QVERIFY(skip&&skip->isVisible());QCOMPARE(skip->text(),welcome_tr("跳过插件安装"));
+        auto *next=wizard.findChild<QPushButton *>("btnNext");QVERIFY(next&&next->isEnabled());QCOMPARE(next->text(),welcome_tr("完成"));
+        const auto folder=qEnvironmentVariable("JTM_MARKET_SCREENSHOTS");
+        if(!folder.isEmpty())for(const auto &mode:{QString("light"),QString("dark")}){get_ui_theme()->set_mode(mode,false);QCoreApplication::processEvents();QVERIFY(wizard.grab().save(QDir(folder).filePath("wizard-plugin-setup-"+mode+".png")));}
+        wizard.hide();
     }
 
 };

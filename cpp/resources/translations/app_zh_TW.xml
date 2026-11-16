@@ -8338,4 +8338,78 @@ Replace it?</source>
         <translation>已停用</translation>
     </message>
 </context>
+<context>
+    <name>WelcomeWizard</name>
+    <message>
+        <source>跳过插件安装</source>
+        <translation>略過外掛安裝</translation>
+    </message>
+    <message>
+        <source>安装并完成</source>
+        <translation>安裝並完成</translation>
+    </message>
+</context>
+<context>
+    <name>PluginSetup</name>
+    <message>
+        <source>Optional plugins</source>
+        <translation>可選外掛</translation>
+    </message>
+    <message>
+        <source>Choose features to add. You can skip installation and add plugins later in Settings.</source>
+        <translation>選擇需要的功能，也可略過，稍後在設定中安裝。</translation>
+    </message>
+    <message>
+        <source>Browse official plugins</source>
+        <translation>瀏覽官方外掛</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>重新整理</translation>
+    </message>
+    <message>
+        <source>Cancel download</source>
+        <translation>取消下載</translation>
+    </message>
+    <message>
+        <source>Installed: %1</source>
+        <translation>已安裝：%1</translation>
+    </message>
+    <message>
+        <source>Loading plugins…</source>
+        <translation>正在載入外掛…</translation>
+    </message>
+    <message>
+        <source>Could not load plugins: %1</source>
+        <translation>無法載入外掛：%1</translation>
+    </message>
+    <message>
+        <source>No compatible plugins are available.</source>
+        <translation>暫無相容的外掛。</translation>
+    </message>
+    <message>
+        <source>Select plugins, then choose Install and finish.</source>
+        <translation>勾選外掛後，點選「安裝並完成」。</translation>
+    </message>
+    <message>
+        <source>Downloading selected plugins…</source>
+        <translation>正在下載所選外掛…</translation>
+    </message>
+    <message>
+        <source>Could not download plugins: %1</source>
+        <translation>無法下載外掛：%1</translation>
+    </message>
+    <message>
+        <source>Cancelled. You can retry or finish without plugins.</source>
+        <translation>已取消，可重試或略過外掛安裝。</translation>
+    </message>
+    <message>
+        <source>Plugins installed.</source>
+        <translation>外掛已安裝。</translation>
+    </message>
+    <message>
+        <source>Installation was cancelled or incomplete. You can retry or skip.</source>
+        <translation>安裝已取消或未完成，可重試或略過。</translation>
+    </message>
+</context>
 </TS>

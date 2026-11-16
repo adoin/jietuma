@@ -7,6 +7,7 @@
 #include "core/ui_theme.h"
 #include "settings/tool_settings.h"
 #include "ui/welcome/pages.h"
+#include "plugins/plugin_setup_widget.h"
 #include <QCoreApplication>
 #include <QDir>
 #include <QEasingCurve>
@@ -63,7 +64,7 @@ protected:
         const auto theme = welcome_theme();
         const QPointF center(w / 2.0, h / 2.0);
         const double now = time_ms_;
-        const double base_r = std::min(44.0, std::max(34.0, std::min(w, h) * 0.13));
+        const double base_r = std::min(44.0, std::max(20.0, std::min(w, h) * 0.13));
         const double circle_scale = ease(QEasingCurve::OutBack, progress(now, 70, 410));
         const double check_t = ease(QEasingCurve::OutCubic, progress(now, 330, 690));
         const double effects_t = progress(now, 560, 1040);
@@ -152,7 +153,7 @@ private:
 
 class FinishIllus : public IllustrationArea {
 public:
-    using IllustrationArea::IllustrationArea;
+    FinishIllus(plugins::PluginSetupWidget *plugins,QWidget *parent):IllustrationArea(parent),plugins_(plugins) {}
     // The badge floats on the page rather than inside a large empty card.
     void apply_welcome_theme() override {
         apply_style_sheet(this, R"(
@@ -166,9 +167,14 @@ public:
 protected:
     void build_content() override {
         auto *anim = new CheckAnim(this);
-        anim->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        layout_->setContentsMargins(dialog_scaled(8),0,dialog_scaled(8),0);
+        layout_->setAlignment(Qt::Alignment{});
+        anim->setFixedHeight(dialog_scaled(64));
         layout_->addWidget(anim);
+        layout_->addWidget(plugins_,1);
     }
+private:
+    plugins::PluginSetupWidget *plugins_;
 };
 
 QString page_title() { return welcome_tr("🎉 一切就绪！").remove(QString::fromUtf8("🎉")).trimmed(); }
@@ -177,7 +183,10 @@ QString page_subtitle() { return welcome_tr("你已完成基础设置，截图�
 
 FinishPage::FinishPage(ToolSettingsManager *config, QWidget *parent) : BasePage(page_title(), page_subtitle(), parent), config_(config) { init(); }
 
-IllustrationArea *FinishPage::create_illustration() { return new FinishIllus(this); }
+IllustrationArea *FinishPage::create_illustration() {
+    plugin_setup_=new plugins::PluginSetupWidget(this);
+    return new FinishIllus(plugin_setup_,this);
+}
 
 void FinishPage::build_controls(QVBoxLayout *layout) {
     // Launch at sign-in.

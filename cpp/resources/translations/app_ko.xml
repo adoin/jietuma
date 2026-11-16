@@ -7760,4 +7760,78 @@ Replace it?</source>
         <translation>사용 안 함</translation>
     </message>
 </context>
+<context>
+    <name>WelcomeWizard</name>
+    <message>
+        <source>跳过插件安装</source>
+        <translation>플러그인 설치 건너뛰기</translation>
+    </message>
+    <message>
+        <source>安装并完成</source>
+        <translation>설치 후 완료</translation>
+    </message>
+</context>
+<context>
+    <name>PluginSetup</name>
+    <message>
+        <source>Optional plugins</source>
+        <translation>Optional plugins</translation>
+    </message>
+    <message>
+        <source>Choose features to add. You can skip installation and add plugins later in Settings.</source>
+        <translation>Choose features to add. You can skip installation and add plugins later in Settings.</translation>
+    </message>
+    <message>
+        <source>Browse official plugins</source>
+        <translation>Browse official plugins</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Refresh</translation>
+    </message>
+    <message>
+        <source>Cancel download</source>
+        <translation>Cancel download</translation>
+    </message>
+    <message>
+        <source>Installed: %1</source>
+        <translation>Installed: %1</translation>
+    </message>
+    <message>
+        <source>Loading plugins…</source>
+        <translation>Loading plugins…</translation>
+    </message>
+    <message>
+        <source>Could not load plugins: %1</source>
+        <translation>Could not load plugins: %1</translation>
+    </message>
+    <message>
+        <source>No compatible plugins are available.</source>
+        <translation>No compatible plugins are available.</translation>
+    </message>
+    <message>
+        <source>Select plugins, then choose Install and finish.</source>
+        <translation>Select plugins, then choose Install and finish.</translation>
+    </message>
+    <message>
+        <source>Downloading selected plugins…</source>
+        <translation>Downloading selected plugins…</translation>
+    </message>
+    <message>
+        <source>Could not download plugins: %1</source>
+        <translation>Could not download plugins: %1</translation>
+    </message>
+    <message>
+        <source>Cancelled. You can retry or finish without plugins.</source>
+        <translation>Cancelled. You can retry or finish without plugins.</translation>
+    </message>
+    <message>
+        <source>Plugins installed.</source>
+        <translation>Plugins installed.</translation>
+    </message>
+    <message>
+        <source>Installation was cancelled or incomplete. You can retry or skip.</source>
+        <translation>Installation was cancelled or incomplete. You can retry or skip.</translation>
+    </message>
+</context>
 </TS>

@@ -126,12 +126,15 @@ void install_plugin_interactively(QWidget *parent, const QString &plugin_root) {
     install_plugin_packages_interactively(parent,chooser.selectedFiles(),plugin_root);
 }
 
-bool install_plugin_packages_interactively(QWidget *parent,const QStringList &paths,const QString &plugin_root,const PluginInstallOptions &options,bool remember_directory) {
+bool install_plugin_packages_interactively(QWidget *parent,const QStringList &paths,const QString &plugin_root,const PluginInstallOptions &default_options,bool remember_directory,const QMap<QString,PluginInstallOptions> &per_plugin) {
     auto plan=plan_plugin_install(paths,plugin_root);if(plan.isEmpty())return false;
     if(remember_directory)get_tool_settings_manager()->set_app_setting("plugin_install_directory",QFileInfo(paths.front()).absolutePath());
+    const auto context_for=[&](const QString &id){return per_plugin.value(id,default_options);};
     QMap<QString,QJsonObject> previous_sources;
     bool changing_source=false;
     for(auto &entry:plan) {
+        const auto options=context_for(entry.package.id);
+        if(!per_plugin.isEmpty()&&!per_plugin.contains(entry.package.id)&&entry.package.ok){entry.installable=false;entry.status="Marketplace package identity does not match";continue;}
         if(!options.source.isEmpty()) {
             if(entry.package.id!=options.expected_id || entry.package.version!=options.expected_version) {entry.installable=false;entry.status="Marketplace package identity does not match";continue;}
             previous_sources[entry.package.id]=plugin_install_source(entry.package.id,plugin_root);
@@ -140,7 +143,9 @@ bool install_plugin_packages_interactively(QWidget *parent,const QStringList &pa
         }
     }
     StandardDialog dialog(parent,tr("Install Plugin"),tr("Plugins can access screenshots, clipboard contents and files. Install only plugins you trust."));
-    if(!options.source.isEmpty())dialog.label->setText(dialog.label->text()+"\n\n"+tr("Source: %1").arg(options.source.value("full_name").toString()));
+    QStringList sources;
+    for(const auto &entry:plan){const auto name=context_for(entry.package.id).source.value("full_name").toString();if(!name.isEmpty()&&!sources.contains(name))sources.append(name);}
+    if(!sources.isEmpty())dialog.label->setText(dialog.label->text()+"\n\n"+tr("Source: %1").arg(sources.join(", ")));
     dialog.setObjectName("standardDialog");dialog.resize(scaled(590),scaled(420));
     auto *list=new QListWidget(&dialog);list->setObjectName("pluginInstallList");list->setIconSize(QSize(scaled(36),scaled(36)));
     const auto &tokens=get_ui_theme()->tokens();
@@ -148,6 +153,7 @@ bool install_plugin_packages_interactively(QWidget *parent,const QStringList &pa
     int eligible=0;
     for(const auto &entry:plan) {
         const auto &package=entry.package;
+        const auto options=context_for(package.id);
         const QString name=package.name.isEmpty()?QFileInfo(package.path).fileName():package.name;
         QString description=entry.status;
         if(package.ok)description=tr(entry.status.toUtf8().constData());
@@ -170,7 +176,7 @@ bool install_plugin_packages_interactively(QWidget *parent,const QStringList &pa
     int installed=0,skipped=0;QStringList errors;
     for(const auto &entry:plan) {
         if(!entry.installable){++skipped;continue;}
-        auto context=options;
+        auto context=context_for(entry.package.id);
         if(!context.source.isEmpty()) {
             context.expected_previous_repository=qint64(previous_sources.value(entry.package.id).value("repository_id").toDouble());
             context.allow_source_change=changing_source;

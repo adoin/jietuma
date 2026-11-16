@@ -7963,4 +7963,78 @@ Replace it?</source>
         <translation>已停用</translation>
     </message>
 </context>
+<context>
+    <name>WelcomeWizard</name>
+    <message>
+        <source>跳过插件安装</source>
+        <translation>跳过插件安装</translation>
+    </message>
+    <message>
+        <source>安装并完成</source>
+        <translation>安装并完成</translation>
+    </message>
+</context>
+<context>
+    <name>PluginSetup</name>
+    <message>
+        <source>Optional plugins</source>
+        <translation>可选插件</translation>
+    </message>
+    <message>
+        <source>Choose features to add. You can skip installation and add plugins later in Settings.</source>
+        <translation>选择需要的功能，也可跳过，稍后在设置中安装。</translation>
+    </message>
+    <message>
+        <source>Browse official plugins</source>
+        <translation>浏览官方插件</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>刷新</translation>
+    </message>
+    <message>
+        <source>Cancel download</source>
+        <translation>取消下载</translation>
+    </message>
+    <message>
+        <source>Installed: %1</source>
+        <translation>已安装：%1</translation>
+    </message>
+    <message>
+        <source>Loading plugins…</source>
+        <translation>正在加载插件…</translation>
+    </message>
+    <message>
+        <source>Could not load plugins: %1</source>
+        <translation>无法加载插件：%1</translation>
+    </message>
+    <message>
+        <source>No compatible plugins are available.</source>
+        <translation>暂无兼容的插件。</translation>
+    </message>
+    <message>
+        <source>Select plugins, then choose Install and finish.</source>
+        <translation>勾选插件后，点击“安装并完成”。</translation>
+    </message>
+    <message>
+        <source>Downloading selected plugins…</source>
+        <translation>正在下载所选插件…</translation>
+    </message>
+    <message>
+        <source>Could not download plugins: %1</source>
+        <translation>无法下载插件：%1</translation>
+    </message>
+    <message>
+        <source>Cancelled. You can retry or finish without plugins.</source>
+        <translation>已取消，可重试或跳过插件安装。</translation>
+    </message>
+    <message>
+        <source>Plugins installed.</source>
+        <translation>插件已安装。</translation>
+    </message>
+    <message>
+        <source>Installation was cancelled or incomplete. You can retry or skip.</source>
+        <translation>安装已取消或未完成，可重试或跳过。</translation>
+    </message>
+</context>
 </TS>

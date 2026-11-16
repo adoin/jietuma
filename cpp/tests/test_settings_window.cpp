@@ -1822,6 +1822,7 @@ private slots:
         }
         QVERIFY(button("完成"));
         QVERIFY(!button("跳过"));
+        QVERIFY(button("跳过插件安装"));
         QElapsedTimer animation;
         animation.start();
         while (animation.elapsed() < 1400) {
