@@ -29,6 +29,7 @@ QList<ActionSpec> actions(const clipboard::ClipboardItem &item, const QString &r
         QFile file(QDir(dir.absoluteFilePath()).filePath("plugin.json"));
         if (!file.open(QIODevice::ReadOnly) || file.size() > 65536) continue;
         const auto object = QJsonDocument::fromJson(file.readAll()).object();
+        if (!plugin_runtime_compatible(object)) continue;
         const auto capability = object.value("contributes").toObject().value("clipboard").toObject().value("action").toObject();
         const QString id = object.value("id").toString();
         if(capability.contains("when_formats_any") || capability.contains("when_text_contains")) {

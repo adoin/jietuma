@@ -34,6 +34,10 @@ bool allow_capture(const QByteArray &request, const QString &root, bool *failed)
         QJsonObject hook;
         for (const auto &value : spec.value("contributes").toObject().value("hooks").toArray())
             if (value.toObject().value("event").toString() == "clipboard.before_capture") hook = value.toObject();
+        if (!plugin_runtime_compatible(spec)) {
+            if (was_filter || !hook.isEmpty()) { if (failed) *failed=true; return false; }
+            continue;
+        }
         if (was_filter && (spec.value("api_version").toInt() != 2 || spec.value("type").toString() != "extension" ||
                            spec.value("id").toString() != dir.fileName() || !hook.value("content_types").isArray())) {
             if (failed) *failed = true;

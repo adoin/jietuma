@@ -39,6 +39,7 @@ std::optional<PreviewContent> external_preview(const ClipboardItem &item, Clipbo
         const auto doc = QJsonDocument::fromJson(manifest.readAll());
         if (!doc.isObject()) continue;
         const auto manifest_data = doc.object();
+        if (!plugins::plugin_runtime_compatible(manifest_data)) continue;
         const auto spec = manifest_data.value("contributes").toObject().value("clipboard").toObject().value("preview").toObject();
         const QString id = manifest_data.value("id").toString();
         if (manifest_data.value("api_version").toInt() != 2 || manifest_data.value("type").toString() != "extension" ||

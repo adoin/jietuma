@@ -17,6 +17,8 @@
 #include <QBuffer>
 #include <QtEndian>
 #include <memory>
+#include <QCryptographicHash>
+
 
 namespace jietuba::plugins {
 namespace {
@@ -33,6 +35,7 @@ bool valid_choices(const QJsonValue &value) {
 }
 
 bool safe_path(const QString &path) {
+    for(const auto c:path)if(c.unicode()<32 || c.unicode()==127)return false;
     if (path.isEmpty() || path.size() > 180 || path.startsWith('/') || path.contains('\\') || path.contains(':')) return false;
     const QStringList segments = path.split('/', Qt::SkipEmptyParts);
     if (segments.isEmpty() || path.contains("//")) return false;
@@ -51,12 +54,25 @@ QString installed_path(const QString &root, const QString &id) {
     const QString path = folder.canonicalFilePath();
     return !base.isEmpty() && path.startsWith(base + '/', Qt::CaseInsensitive) ? path : QString();
 }
+QJsonObject source_locked(const QString &root,const QString &id) {
+    const auto folder=installed_path(root,id);if(folder.isEmpty())return {};
+    const auto path=QDir(folder).filePath(".market-source.json");
+    if(!QFileInfo::exists(path))return {};
+    QFile file(path);
+    if(QFileInfo(path).isSymLink() || !file.open(QIODevice::ReadOnly) || file.size()>16384)return {{"invalid",true}};
+    const auto document=QJsonDocument::fromJson(file.readAll());const auto value=document.object();
+    if(!document.isObject() || value.value("repository_id").toDouble()<=0 || value.value("version").toString().isEmpty())return {{"invalid",true}};
+    return value;
+}
 }
 
 QString plugin_directory() { return QDir(data_location().dir).filePath("plugins"); }
 QReadWriteLock &plugin_lock() { static QReadWriteLock lock; return lock; }
 
-static PluginInstallResult install_impl(const QString &package_path, const QString &plugin_root, PluginPackageInfo *inspection) {
+QJsonObject plugin_install_source(const QString &id,const QString &root) {
+    QReadLocker lock(&plugin_lock());return source_locked(root.isEmpty()?plugin_directory():root,id);
+}
+static PluginInstallResult install_impl(const QString &package_path, const QString &plugin_root, PluginPackageInfo *inspection,const PluginInstallOptions &options = {}) {
     const QFileInfo package(package_path);
     if (package.suffix().compare("jtbplugin", Qt::CaseInsensitive) != 0 || !package.isFile() || package.size() > 64 * 1024 * 1024)
         return fail("Invalid plugin package");
@@ -113,6 +129,22 @@ static PluginInstallResult install_impl(const QString &package_path, const QStri
         return fail("Unsupported plugin manifest");
     const QString version=object.value("version").toString();
     if(!compare_plugin_versions(version,version))return fail("Invalid plugin version");
+    if(!plugin_runtime_compatible(object))return fail("Plugin is not compatible with this application");
+    if(object.contains("platform") && !command.isEmpty()) {
+        const auto executable=zip.fileData(command);
+        if(executable.size()<64 || executable.left(2)!="MZ")return fail("Invalid plugin executable architecture");
+        const auto offset=qFromLittleEndian<quint32>(reinterpret_cast<const uchar *>(executable.constData()+60));
+        if(offset>quint32(executable.size()-6) || executable.mid(offset,4)!=QByteArray("PE\0\0",4))return fail("Invalid plugin executable architecture");
+        const auto machine=qFromLittleEndian<quint16>(reinterpret_cast<const uchar *>(executable.constData()+offset+4));
+        if(machine!=(object.value("platform")=="windows-arm64"?0xaa64:0x8664))return fail("Invalid plugin executable architecture");
+    }
+    if(!options.expected_id.isEmpty() && (options.expected_id!=id || options.expected_version!=version ||
+        options.expected_platform!=object.value("platform").toString() || options.expected_host!=object.value("host").toString()))return fail("Marketplace package identity does not match");
+    if(!options.expected_sha256.isEmpty()) {
+        QFile hash_file(package_path);
+        if(!hash_file.open(QIODevice::ReadOnly) || QString::fromLatin1(QCryptographicHash::hash(hash_file.readAll(),QCryptographicHash::Sha256).toHex())!=options.expected_sha256)
+            return fail("Marketplace package checksum does not match");
+    }
     const QString icon=object.value("icon").toString();
     if(!icon.isEmpty() && (!safe_path(icon) || !regular_files.contains(icon.toCaseFolded()) || (!icon.endsWith(".ico",Qt::CaseInsensitive) && !icon.endsWith(".png",Qt::CaseInsensitive) && !icon.endsWith(".svg",Qt::CaseInsensitive))))return fail("Invalid plugin icon");
     if (object.contains("settings")) {
@@ -233,20 +265,32 @@ static PluginInstallResult install_impl(const QString &package_path, const QStri
             }
         }
     }
-    if (names.contains(".disabled") || names.contains(".capture-filter")) return fail("Unsafe plugin package contents");
+    // QZipReader can strip leading dots from entry names; reserve those aliases too.
+    if (names.contains(".disabled") || names.contains("disabled") || names.contains(".capture-filter") || names.contains("capture-filter") || names.contains(".market-source.json") || names.contains("market-source.json")) return fail("Unsafe plugin package contents");
     if(inspection) {
         inspection->ok=true;inspection->path=package.absoluteFilePath();inspection->id=id;inspection->version=version;
         inspection->name=object.value("name_i18n").toObject().value(I18nManager::get_current_language()).toString(object.value("name").toString(id));
+        inspection->host=object.value("host").toString();inspection->platform=object.value("platform").toString();
         if(!icon.isEmpty())for(const auto &entry:entries)if(entry.filePath==icon && entry.size<=1024*1024)inspection->icon=zip.fileData(icon);
         return {true,id,{}};
     }
     const QString root = plugin_root.isEmpty() ? plugin_directory() : plugin_root;
     if (!QDir().mkpath(root)) return fail("Cannot create plugin directory");
+    const auto previous_source=source_locked(root,id);
+    if(previous_source.value("invalid").toBool())return fail("Cannot read plugin installation source");
+    const qint64 previous_repository=qint64(previous_source.value("repository_id").toDouble());
+    if(!options.source.isEmpty()) {
+        if(options.expected_id!=id || options.expected_version!=version || options.expected_sha256.isEmpty() ||
+            options.source.value("repository_id").toDouble()<=0)return fail("Invalid marketplace installation request");
+        if(options.expected_previous_repository>=0 && previous_repository!=options.expected_previous_repository)return fail("Plugin source changed during installation");
+        if(!installed_path(root,id).isEmpty() && previous_repository!=qint64(options.source.value("repository_id").toDouble()) && !options.allow_source_change)
+            return fail("Changing plugin source requires confirmation");
+    }
     QFile current(QDir(root).filePath(id+"/plugin.json"));
     if(current.open(QIODevice::ReadOnly) && current.size()<=65536) {
         const auto bytes=current.readAll();current.close();
         const auto old=QJsonDocument::fromJson(bytes).object();
-        if(old.value("id")==id)if(const auto cmp=compare_plugin_versions(version,old.value("version").toString());cmp&&*cmp<=0)return {true,id,{},true};
+        if(old.value("id")==id)if(const auto cmp=compare_plugin_versions(version,old.value("version").toString());cmp&&(*cmp<0 || (*cmp==0 && !(options.reinstall_equal&&!options.source.isEmpty()))))return {true,id,{},true};
     }
     current.close();
     QTemporaryDir staging(QDir(root).filePath(".install-XXXXXX"));
@@ -280,6 +324,12 @@ static PluginInstallResult install_impl(const QString &package_path, const QStri
         if (!marker.open(QIODevice::WriteOnly)) return fail("Cannot prepare plugin installation");
     }
     const QString old_path = QDir(backup.path()).filePath("previous");
+    if(!options.source.isEmpty()) {
+        auto record=options.source;record.insert("version",version);record.insert("sha256",options.expected_sha256);record.insert("platform",object.value("platform"));
+        QSaveFile source_file(QDir(staging.path()).filePath(".market-source.json"));
+        const auto bytes=QJsonDocument(record).toJson(QJsonDocument::Compact);
+        if(bytes.size()>16384 || !source_file.open(QIODevice::WriteOnly) || source_file.write(bytes)!=bytes.size() || !source_file.commit())return fail("Cannot save plugin installation source");
+    }
     const bool replacing = existing.exists();
     if (replacing && !QDir().rename(destination, old_path)) return fail("Cannot install plugin");
     if (!QDir().rename(staging.path(), destination)) {
@@ -293,13 +343,13 @@ static PluginInstallResult install_impl(const QString &package_path, const QStri
     return {true, id, {}};
 }
 
-PluginInstallResult install_plugin_package(const QString &path,const QString &root) {
+PluginInstallResult install_plugin_package(const QString &path,const QString &root,const PluginInstallOptions &options) {
     QWriteLocker guard(&plugin_lock());
     const QString actual=root.isEmpty()?plugin_directory():root;
     if(!QDir().mkpath(actual))return fail("Cannot create plugin directory");
     QLockFile lock(QDir(actual).filePath(".install.lock"));
     if(!lock.tryLock(1000))return fail("Another plugin installation is running");
-    return install_impl(path,actual,nullptr);
+    return install_impl(path,actual,nullptr,options);
 }
 PluginPackageInfo inspect_plugin_package(const QString &path) {
     QReadLocker guard(&plugin_lock());PluginPackageInfo result;
@@ -329,9 +379,11 @@ QList<InstalledPlugin> installed_plugins(const QString &plugin_root) {
         }
         const auto data = doc.object();
         const QString name = data.value("name_i18n").toObject().value(I18nManager::get_current_language()).toString(data.value("name").toString(dir.fileName()));
+        const bool compatible=plugin_runtime_compatible(data);
         result.append({dir.fileName(), name, data.value("version").toString(),
                        data.value("type").toString(), enabled, data.value("settings").toArray(),
-                       safe_path(data.value("icon").toString()) ? QDir(path).filePath(data.value("icon").toString()) : QString()});
+                       safe_path(data.value("icon").toString()) ? QDir(path).filePath(data.value("icon").toString()) : QString(),
+                       data.value("host").toString(),data.value("platform").toString(),compatible});
     }
     return result;
 }

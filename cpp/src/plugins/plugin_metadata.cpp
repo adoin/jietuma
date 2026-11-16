@@ -34,6 +34,7 @@ QList<Spec> metadata_specs(const clipboard::ClipboardItem &item, const QString &
         QFile file(QDir(dir.absoluteFilePath()).filePath("plugin.json"));
         if (!file.open(QIODevice::ReadOnly) || file.size() > 65536) continue;
         const auto spec = QJsonDocument::fromJson(file.readAll()).object();
+        if (!plugin_runtime_compatible(spec)) continue;
         const auto capability = spec.value("contributes").toObject().value("clipboard").toObject().value("metadata").toObject();
         const QString id = spec.value("id").toString();
         if (id != dir.fileName() || spec.value("api_version").toInt() != 2 || spec.value("type").toString() != "extension" ||

@@ -20,11 +20,21 @@ struct InstalledPlugin {
     bool enabled = true;
     QJsonArray settings;
     QString icon_path;
+    QString host, platform;
+    bool compatible = true;
 };
 struct PluginPackageInfo {
     bool ok=false;
     QString path,id,name,version,error;
     QByteArray icon;
+    QString host, platform;
+};
+struct PluginInstallOptions {
+    QJsonObject source;
+    QString expected_id, expected_version, expected_sha256, expected_platform, expected_host;
+    qint64 expected_previous_repository = -1;
+    bool allow_source_change = false;
+    bool reinstall_equal = false;
 };
 struct PluginInstallPlanItem {
     PluginPackageInfo package;
@@ -32,12 +42,16 @@ struct PluginInstallPlanItem {
     bool installable=false;
 };
 std::optional<int> compare_plugin_versions(const QString &left,const QString &right);
+std::optional<bool> plugin_version_satisfies(const QString &version, const QString &range);
+QString plugin_platform();
+bool plugin_runtime_compatible(const QJsonObject &manifest);
+QJsonObject plugin_install_source(const QString &id, const QString &plugin_root = {});
 PluginPackageInfo inspect_plugin_package(const QString &path);
 QList<PluginInstallPlanItem> plan_plugin_install(const QStringList &paths,const QString &root={});
 
 // Installs a .jtbplugin ZIP, staging it alongside the destination and restoring
 // the old version if replacement fails. Never executes package contents.
-PluginInstallResult install_plugin_package(const QString &package_path, const QString &plugin_root = {});
+PluginInstallResult install_plugin_package(const QString &package_path, const QString &plugin_root = {}, const PluginInstallOptions &options = {});
 QString plugin_directory();
 QReadWriteLock &plugin_lock();
 QList<InstalledPlugin> installed_plugins(const QString &plugin_root = {});

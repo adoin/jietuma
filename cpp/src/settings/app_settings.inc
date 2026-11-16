@@ -9,6 +9,8 @@
 //           Internal: no settings page shows it, so imports leave it out
 //   getter  Gen: generated; Own: written by hand in ToolSettingsManager
 //   setter  Gen: generated; Trim: generated, stores the text trimmed; Own: by hand; None: read-only
+SETTING(plugin_market_sources, "plugins/market_sources", QVariantList, QVariantList{}, Local, Gen, Gen)
+SETTING(plugin_install_directory, "app/plugin_install_directory", QString, "", Local, Gen, Gen)
 SETTING(hotkey, "app/hotkey", QString, "ctrl+1", Import, Gen, Gen)
 SETTING(hotkey_2, "app/hotkey_2", QString, "", Import, Gen, Gen)
 SETTING(clipboard_hotkey, "clipboard/hotkey", QString, "ctrl+2", Import, Gen, Gen)

@@ -4,6 +4,8 @@
 
 插件项目和示例位于 [jietuma-plugins](https://github.com/adoin/jietuma-plugins)。发布页提供已构建的 `.jtbplugin` 文件。插件单独发布，不依赖截图吧的 Qt 版本。
 
+官方在线浏览与发布协议见 [插件市场](plugin-market.md)。
+
 ## 清单与执行
 
 ZIP 根目录包含 `plugin.json`，其中 `id` 由小写字母、数字、点、下划线或短横线组成；`api_version` 为 `2`，`type` 为 `extension`。插件在 `contributes` 下组合声明命令、钩子、工具栏和剪贴板能力。`command` 是包内相对路径的 Windows `.exe`；仅提供声明式内容的插件可省略。进程插件从标准输入读取 UTF-8 JSON，从标准输出写回一个 JSON 对象，不得在标准输出写日志。旧协议插件包不受支持，需要使用新协议重新打包。

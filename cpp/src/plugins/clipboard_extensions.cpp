@@ -16,6 +16,7 @@ QList<QJsonObject> manifests(const QString &root) {
         if(entry.isJunction() || QFileInfo::exists(entry.absoluteFilePath()+"/.disabled")) continue;
         QFile file(entry.absoluteFilePath()+"/plugin.json");if(!file.open(QIODevice::ReadOnly)||file.size()>65536) continue;
         const auto object=QJsonDocument::fromJson(file.readAll()).object();
+        if (!plugin_runtime_compatible(object)) continue;
         if(object.value("id").toString()==entry.fileName() && object.value("api_version").toInt()==2 && object.value("type")=="extension") out.append(object);
     }
     return out;

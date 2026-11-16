@@ -1,4 +1,6 @@
 #include "plugins/plugin_package.h"
+#include "core/app_version.h"
+#include <QSysInfo>
 #include <QRegularExpression>
 #include <QMap>
 #include <QFileInfo>
@@ -6,7 +8,7 @@ namespace jietuba::plugins {
 namespace {
 struct Version {QStringList numbers,pre;};
 std::optional<Version> parse(const QString &s) {
-    static const QRegularExpression pattern(R"(^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$)");
+    static const QRegularExpression pattern(R"(^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?\z)");
     if(s.size()>128)return std::nullopt;
     const auto match=pattern.match(s);if(!match.hasMatch())return std::nullopt;
     Version v{{match.captured(1),match.captured(2),match.captured(3)}, {}};
@@ -41,5 +43,34 @@ QList<PluginInstallPlanItem> plan_plugin_install(const QStringList &paths,const 
         else {item.installable=true;item.status=item.installed_version.isEmpty()?"Install":"Update";}
     }
     return plan;
+}
+
+std::optional<bool> plugin_version_satisfies(const QString &version, const QString &range) {
+    if (!compare_plugin_versions(version, version)) return std::nullopt;
+    if (range.isEmpty()) return true;
+    if (range.size() > 512) return std::nullopt;
+    const auto clauses = range.split(',');
+    if (clauses.size() > 8) return std::nullopt;
+    bool matches = true;
+    static const QRegularExpression part(R"(^(>=|<=|>|<|=)?\s*(\S+)$)");
+    for (const auto &clause : clauses) {
+        const auto parsed = part.match(clause.trimmed());
+        if (!parsed.hasMatch()) return std::nullopt;
+        const auto cmp = compare_plugin_versions(version, parsed.captured(2));
+        if (!cmp) return std::nullopt;
+        const auto op = parsed.captured(1);
+        matches &= op == ">=" ? *cmp >= 0 : op == ">" ? *cmp > 0 : op == "<=" ? *cmp <= 0 : op == "<" ? *cmp < 0 : *cmp == 0;
+    }
+    return matches;
+}
+QString plugin_platform() {
+    const auto arch = QSysInfo::buildCpuArchitecture();
+    return arch == "arm64" ? "windows-arm64" : arch == "x86_64" ? "windows-x86_64" : QString();
+}
+bool plugin_runtime_compatible(const QJsonObject &manifest) {
+    if (manifest.contains("host") && (!manifest.value("host").isString() || manifest.value("host").toString().isEmpty() ||
+        !plugin_version_satisfies(APP_VERSION, manifest.value("host").toString()).value_or(false))) return false;
+    if (manifest.contains("platform") && manifest.value("platform").toString() != plugin_platform()) return false;
+    return true;
 }
 }

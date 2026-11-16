@@ -2,5 +2,7 @@
   "name": "jietuma",
   "display_name": "Jietuma",
   "display_name_zh": "截图妈",
-  "repository": "adoin/jietuma"
+  "repository": "adoin/jietuma",
+  "plugins_repository": "adoin/jietuma-plugins",
+  "plugins_repository_id": 1435541663
 }

@@ -7791,4 +7791,158 @@ Replace it?</source>
         <translation>请去掉扩展名，保存时会自动添加。</translation>
     </message>
 </context>
+<context>
+    <name>PluginMarket</name>
+    <message>
+        <source>Installed</source>
+        <translation>已安装</translation>
+    </message>
+    <message>
+        <source>Install</source>
+        <translation>安装</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>更新</translation>
+    </message>
+    <message>
+        <source>Reinstall from this source</source>
+        <translation>从此来源重新安装</translation>
+    </message>
+    <message>
+        <source>Requires: %1 · %2</source>
+        <translation>需要：%1 · %2</translation>
+    </message>
+    <message>
+        <source>GitHub owner/repository or repository URL</source>
+        <translation>GitHub 用户/仓库或仓库链接</translation>
+    </message>
+    <message>
+        <source>Add source</source>
+        <translation>添加来源</translation>
+    </message>
+    <message>
+        <source>Remove source</source>
+        <translation>移除来源</translation>
+    </message>
+    <message>
+        <source>Looking up repository…</source>
+        <translation>正在查找仓库…</translation>
+    </message>
+    <message>
+        <source>Could not add source: %1</source>
+        <translation>无法添加来源：%1</translation>
+    </message>
+    <message>
+        <source>This repository is already added.</source>
+        <translation>已添加此仓库。</translation>
+    </message>
+    <message>
+        <source>Could not save plugin sources.</source>
+        <translation>无法保存插件来源。</translation>
+    </message>
+    <message>
+        <source>Remove this repository from the plugin center? Installed plugins and their data will be kept.</source>
+        <translation>从插件中心移除此仓库？已安装的插件和数据将被保留。</translation>
+    </message>
+    <message>
+        <source>Search plugins</source>
+        <translation>搜索插件</translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>刷新</translation>
+    </message>
+    <message>
+        <source>Official plugins</source>
+        <translation>官方市场</translation>
+    </message>
+    <message>
+        <source>Loading plugins…</source>
+        <translation>正在加载插件…</translation>
+    </message>
+    <message>
+        <source>Could not load plugins: %1</source>
+        <translation>无法加载插件：%1</translation>
+    </message>
+    <message>
+        <source>Cached</source>
+        <translation>缓存</translation>
+    </message>
+    <message>
+        <source>Checking plugin updates…</source>
+        <translation>正在检查插件更新…</translation>
+    </message>
+    <message>
+        <source>Could not check updates: %1</source>
+        <translation>无法检查更新：%1</translation>
+    </message>
+    <message>
+        <source>Updates available: %1</source>
+        <translation>可更新插件：%1</translation>
+    </message>
+    <message>
+        <source>Some sources could not be checked. Source fallback was paused.</source>
+        <translation>部分来源检查失败，暂未采用其他来源的更新。</translation>
+    </message>
+    <message>
+        <source>Downloading %1…</source>
+        <translation>正在下载 %1…</translation>
+    </message>
+    <message>
+        <source>Could not download plugin: %1</source>
+        <translation>无法下载插件：%1</translation>
+    </message>
+    <message>
+        <source>Installed: %1 %2</source>
+        <translation>已安装：%1 %2</translation>
+    </message>
+    <message>
+        <source>Installation was cancelled or not completed.</source>
+        <translation>安装已取消或未完成。</translation>
+    </message>
+</context>
+<context>
+    <name>ClipboardWindow</name>
+    <message>
+        <source>Source: %1</source>
+        <translation>来源：%1</translation>
+    </message>
+    <message>
+        <source>Local package</source>
+        <translation>本地安装包</translation>
+    </message>
+    <message>
+        <source>Switch source: %1 → %2</source>
+        <translation>切换来源：%1 → %2</translation>
+    </message>
+    <message>
+        <source>Switch source and install</source>
+        <translation>切换来源并安装</translation>
+    </message>
+    <message>
+        <source>Check Plugin Updates</source>
+        <translation>检查插件更新</translation>
+    </message>
+    <message>
+        <source>Update Plugin</source>
+        <translation>更新插件</translation>
+    </message>
+    <message>
+        <source>Incompatible build or host version</source>
+        <translation>架构或主程序版本不兼容</translation>
+    </message>
+    <message>
+        <source>Update: %1</source>
+        <translation>可更新至 %1</translation>
+    </message>
+    <message>
+        <source>Reinstall from selected source</source>
+        <translation>从所选来源重新安装</translation>
+    </message>
+    <message>
+        <source>Marketplace package identity does not match</source>
+        <translation>市场安装包信息不符</translation>
+    </message>
+</context>
 </TS>

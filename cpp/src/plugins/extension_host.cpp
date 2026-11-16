@@ -35,6 +35,7 @@ QList<Spec> specifications(const QString &root) {
         QFile file(QDir(dir.absoluteFilePath()).filePath("plugin.json"));
         if (!file.open(QIODevice::ReadOnly) || file.size() > 65536) continue;
         const auto manifest = QJsonDocument::fromJson(file.readAll()).object();
+        if (!plugin_runtime_compatible(manifest)) continue;
         const QString id = manifest.value("id").toString();
         if (manifest.value("api_version").toInt() != 2 || manifest.value("type").toString() != "extension" || id != dir.fileName()) continue;
         const QString command = manifest.value("command").toString();

@@ -44,6 +44,7 @@ std::pair<QString, QString> backup_executable(const QString &root) {
         QFile manifest(QDir(folder).filePath("plugin.json"));
         if (!manifest.open(QIODevice::ReadOnly) || manifest.size() > 65536) continue;
         const auto spec = QJsonDocument::fromJson(manifest.readAll()).object();
+        if (!plugin_runtime_compatible(spec)) continue;
         const QString command = spec.value("command").toString();
         const auto contributions = spec.value("contributes").toObject();
         const auto backup = contributions.value("clipboard").toObject().value("backup").toObject();

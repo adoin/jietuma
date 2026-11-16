@@ -1,5 +1,6 @@
 #include "plugins/plugin_manager_dialog.h"
 #include "plugins/plugin_package.h"
+#include "plugins/plugin_market_widget.h"
 #include "core/i18n.h"
 #include "core/ui_scale.h"
 #include "core/ui_theme.h"
@@ -113,10 +114,21 @@ void install_plugin_interactively(QWidget *parent, const QString &plugin_root) {
     install_plugin_packages_interactively(parent,chooser.selectedFiles(),plugin_root);
 }
 
-void install_plugin_packages_interactively(QWidget *parent,const QStringList &paths,const QString &plugin_root) {
-    const auto plan=plan_plugin_install(paths,plugin_root);if(plan.isEmpty())return;
-    get_tool_settings_manager()->set_app_setting("plugin_install_directory",QFileInfo(paths.front()).absolutePath());
+bool install_plugin_packages_interactively(QWidget *parent,const QStringList &paths,const QString &plugin_root,const PluginInstallOptions &options,bool remember_directory) {
+    auto plan=plan_plugin_install(paths,plugin_root);if(plan.isEmpty())return false;
+    if(remember_directory)get_tool_settings_manager()->set_app_setting("plugin_install_directory",QFileInfo(paths.front()).absolutePath());
+    QMap<QString,QJsonObject> previous_sources;
+    bool changing_source=false;
+    for(auto &entry:plan) {
+        if(!options.source.isEmpty()) {
+            if(entry.package.id!=options.expected_id || entry.package.version!=options.expected_version) {entry.installable=false;entry.status="Marketplace package identity does not match";continue;}
+            previous_sources[entry.package.id]=plugin_install_source(entry.package.id,plugin_root);
+            if(options.reinstall_equal && compare_plugin_versions(entry.package.version,entry.installed_version).value_or(1)==0) {entry.installable=true;entry.status="Reinstall from selected source";}
+            changing_source|=entry.installable&&!entry.installed_version.isEmpty() && previous_sources[entry.package.id].value("repository_id")!=options.source.value("repository_id");
+        }
+    }
     StandardDialog dialog(parent,tr("Install Plugin"),tr("Plugins can access screenshots, clipboard contents and files. Install only plugins you trust."));
+    if(!options.source.isEmpty())dialog.label->setText(dialog.label->text()+"\n\n"+tr("Source: %1").arg(options.source.value("full_name").toString()));
     dialog.setObjectName("standardDialog");dialog.resize(scaled(590),scaled(420));
     auto *list=new QListWidget(&dialog);list->setObjectName("pluginInstallList");list->setIconSize(QSize(scaled(36),scaled(36)));
     const auto &tokens=get_ui_theme()->tokens();
@@ -127,6 +139,10 @@ void install_plugin_packages_interactively(QWidget *parent,const QStringList &pa
         const QString name=package.name.isEmpty()?QFileInfo(package.path).fileName():package.name;
         QString description=entry.status;
         if(package.ok)description=tr(entry.status.toUtf8().constData());
+        if(!options.source.isEmpty() && !entry.installed_version.isEmpty()) {
+            const auto previous=previous_sources.value(package.id);
+            if(previous.value("repository_id")!=options.source.value("repository_id"))description+="\n"+tr("Switch source: %1 → %2").arg(previous.value("full_name").toString(tr("Local package")),options.source.value("full_name").toString());
+        }
         auto *item=new QListWidgetItem(name+"  "+package.version+"\n"+(entry.installed_version.isEmpty()?QString():tr("Installed: %1").arg(entry.installed_version)+" · ")+description,list);
         QBuffer image_data;image_data.setData(package.icon);image_data.open(QIODevice::ReadOnly);QImageReader reader(&image_data);
         const auto size=reader.size();
@@ -135,35 +151,50 @@ void install_plugin_packages_interactively(QWidget *parent,const QStringList &pa
         item->setSizeHint(QSize(0,scaled(64)));item->setToolTip(package.id+"\n"+package.path);eligible+=entry.installable;
     }
     static_cast<QVBoxLayout *>(dialog.layout())->insertWidget(1,list,1);
-    auto *install=dialog.add_button(tr("Install %1 plugins").arg(eligible),QDialogButtonBox::AcceptRole);install->setEnabled(eligible>0);
+    auto *install=dialog.add_button(changing_source?tr("Switch source and install"):tr("Install %1 plugins").arg(eligible),QDialogButtonBox::AcceptRole);install->setEnabled(eligible>0);
     auto *cancel=dialog.add_button(tr("Cancel"),QDialogButtonBox::RejectRole);cancel->setDefault(true);cancel->setFocus();
     QObject::connect(install,&QPushButton::clicked,&dialog,&QDialog::accept);QObject::connect(cancel,&QPushButton::clicked,&dialog,&QDialog::reject);
-    if(exec_dialog(&dialog)!=QDialog::Accepted)return;
+    if(exec_dialog(&dialog)!=QDialog::Accepted)return false;
     int installed=0,skipped=0;QStringList errors;
     for(const auto &entry:plan) {
         if(!entry.installable){++skipped;continue;}
-        const auto result=install_plugin_package(entry.package.path,plugin_root);
+        auto context=options;
+        if(!context.source.isEmpty()) {
+            context.expected_previous_repository=qint64(previous_sources.value(entry.package.id).value("repository_id").toDouble());
+            context.allow_source_change=changing_source;
+        }
+        const auto result=install_plugin_package(entry.package.path,plugin_root,context);
         if(!result.ok)errors<<entry.package.name+": "+tr(result.error.toUtf8().constData());
         else if(result.skipped)++skipped;else ++installed;
     }
     QString summary=tr("Installed: %1; skipped: %2").arg(installed).arg(skipped);
     if(!errors.isEmpty())show_warning_dialog(parent,tr("Install Plugin"),summary+"\n\n"+errors.join('\n'));
     else show_info_dialog(parent,tr("Install Plugin"),summary);
+    return installed>0;
 }
 
 void show_plugin_manager(QWidget *parent, const QString &plugin_root) {
     QDialog dialog(parent);
     dialog.setObjectName("pluginManagerDialog");
     style_dialog(dialog);
+    QObject::connect(get_ui_theme(),&UIThemeManager::theme_changed,&dialog,[&dialog]{style_dialog(dialog);});
     dialog.setWindowTitle(tr("Manage Plugins"));
-    dialog.resize(scaled(480), scaled(360));
+    dialog.resize(scaled(760), scaled(560));
     auto *layout = new QVBoxLayout(&dialog);
     layout->setContentsMargins(scaled(16), scaled(16), scaled(16), scaled(16));
     layout->setSpacing(scaled(12));
-    auto *list = new QListWidget(&dialog);
+    auto *installed_page=new QWidget(&dialog);
+    auto *installed_layout=new QVBoxLayout(installed_page);installed_layout->setContentsMargins(0,scaled(8),0,0);
+    auto *list = new QListWidget(installed_page);
     list->setObjectName("pluginList");
     list->setIconSize(QSize(scaled(32),scaled(32)));
-    layout->addWidget(list);
+    installed_layout->addWidget(list,1);
+    auto *market=new PluginMarketWidget(installed_page,plugin_root,{},&dialog);
+    layout->addWidget(market,1);
+    auto *updates=new QHBoxLayout;
+    auto *check_updates=new SecondaryPushButton(tr("Check Plugin Updates"),installed_page);check_updates->setObjectName("checkPluginUpdates");
+    auto *update=new PrimaryPushButton(tr("Update Plugin"),installed_page);update->setObjectName("updatePlugin");update->setEnabled(false);
+    updates->addWidget(check_updates);updates->addStretch();updates->addWidget(update);installed_layout->addLayout(updates);
     auto *buttons = new QHBoxLayout;
     auto *add = new PrimaryPushButton(tr("Install Plugin"), &dialog);
     add->setObjectName("installPlugins");
@@ -177,12 +208,17 @@ void show_plugin_manager(QWidget *parent, const QString &plugin_root) {
     buttons->addWidget(settings);
     buttons->addStretch();
     buttons->addWidget(close);
-    layout->addLayout(buttons);
+    installed_layout->addLayout(buttons);
     auto refresh = [&] {
+        const auto selected=list->currentItem()?list->currentItem()->data(Qt::UserRole).toString():QString();
         list->blockSignals(true);
         list->clear();
         for (const auto &plugin : installed_plugins(plugin_root)) {
-            const QString caption = plugin.version.isEmpty() ? plugin.name : plugin.name + "  " + plugin.version;
+            QString caption = plugin.version.isEmpty() ? plugin.name : plugin.name + "  " + plugin.version;
+            const auto source=plugin_install_source(plugin.id,plugin_root);
+            caption+="\n"+source.value("full_name").toString(tr("Local package"));
+            if(!plugin.compatible)caption+=" · "+tr("Incompatible build or host version");
+            if(const auto candidate=market->update_for(plugin.id))caption+=" · "+tr("Update: %1").arg(candidate->version);
             auto *row = new QListWidgetItem(caption, list);
             row->setIcon(plugin.icon_path.isEmpty()?QIcon(":/app.ico"):QIcon(plugin.icon_path));
             row->setData(Qt::UserRole, plugin.id);
@@ -190,14 +226,17 @@ void show_plugin_manager(QWidget *parent, const QString &plugin_root) {
             row->setToolTip(plugin.id);
             row->setFlags(row->flags() | Qt::ItemIsUserCheckable);
             row->setCheckState(plugin.enabled ? Qt::Checked : Qt::Unchecked);
+            row->setSizeHint(QSize(0,scaled(64)));if(plugin.id==selected)list->setCurrentItem(row);
         }
         list->blockSignals(false);
         remove->setEnabled(list->currentItem() != nullptr);
         settings->setEnabled(list->currentItem() && !QJsonDocument::fromJson(list->currentItem()->data(Qt::UserRole + 1).toByteArray()).array().isEmpty());
+        update->setEnabled(list->currentItem()&&market->update_for(list->currentItem()->data(Qt::UserRole).toString()).has_value());
     };
     QObject::connect(list, &QListWidget::currentItemChanged, &dialog, [=](QListWidgetItem *item) {
         remove->setEnabled(item != nullptr);
         settings->setEnabled(item && !QJsonDocument::fromJson(item->data(Qt::UserRole + 1).toByteArray()).array().isEmpty());
+        update->setEnabled(item&&market->update_for(item->data(Qt::UserRole).toString()).has_value());
     });
     QObject::connect(list, &QListWidget::itemChanged, &dialog, [&](QListWidgetItem *item) {
         if (!set_plugin_enabled(item->data(Qt::UserRole).toString(), item->checkState() == Qt::Checked, plugin_root)) {
@@ -216,6 +255,10 @@ void show_plugin_manager(QWidget *parent, const QString &plugin_root) {
                                                            QJsonDocument::fromJson(item->data(Qt::UserRole + 1).toByteArray()).array(), plugin_root);
     });
     QObject::connect(close, &QPushButton::clicked, &dialog, &QDialog::accept);
+    QObject::connect(check_updates,&QPushButton::clicked,market,&PluginMarketWidget::check_updates);
+    QObject::connect(update,&QPushButton::clicked,market,[=]{if(auto *item=list->currentItem())if(const auto entry=market->update_for(item->data(Qt::UserRole).toString()))market->install(*entry);});
+    QObject::connect(market,&PluginMarketWidget::installed_changed,&dialog,refresh);
+    QObject::connect(market,&PluginMarketWidget::updates_changed,&dialog,refresh);
     QObject::connect(add,&QPushButton::clicked,&dialog,[&]{install_plugin_interactively(&dialog,plugin_root);refresh();});
     refresh();
     exec_dialog(&dialog, parent);
