@@ -8412,4 +8412,30 @@ Replace it?</source>
         <translation>安裝已取消或未完成，可重試或略過。</translation>
     </message>
 </context>
+<context>
+    <name>UpdateChecker</name>
+    <message>
+        <source>GitHub API rate limit reached. Try again later, or sign in to GitHub CLI (gh).</source>
+        <translation>GitHub 請求已達到限額。請稍後重試，或先登入 GitHub CLI（gh）。</translation>
+    </message>
+    <message>
+        <source>GitHub CLI could not check for updates. Check its sign-in and network connection.</source>
+        <translation>GitHub CLI 無法檢查更新，請檢查 gh 的登入狀態和網路連線。</translation>
+    </message>
+    <message>
+        <source>The update check timed out. Please try again.</source>
+        <translation>檢查更新逾時，請重試。</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateChecker</name>
+    <message>
+        <source>GitHub CLI sign-in is invalid. Run gh auth login and try again.</source>
+        <translation>GitHub CLI 登入狀態無效，請執行 gh auth login 後重試。</translation>
+    </message>
+    <message>
+        <source>Cannot access the GitHub repository or release. Check account permissions.</source>
+        <translation>無法存取 GitHub 儲存庫或發行版本，請檢查帳號權限。</translation>
+    </message>
+</context>
 </TS>

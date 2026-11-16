@@ -1,6 +1,8 @@
 #include "plugins/plugin_market.h"
 #include "core/brand_config.h"
 #include <QElapsedTimer>
+#include <QDir>
+#include <QFileInfo>
 #include <QProcess>
 #include <QStandardPaths>
 #include <QThread>
@@ -60,11 +62,40 @@ QByteArray http(const QString &endpoint,bool binary,qint64 limit) {
 }
 #endif
 }
+namespace {
+bool gh_authenticated(const QString &gh) {
+    QProcess process;
+#ifdef Q_OS_WIN
+    process.setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments *args){args->flags|=CREATE_NO_WINDOW;});
+#endif
+    process.setStandardInputFile(QProcess::nullDevice());
+    process.start(gh,{"auth","status","--active","--hostname","github.com"});
+    if(!process.waitForStarted(5000))throw Error("Could not start GitHub CLI.");
+    QElapsedTimer timer;timer.start();QByteArray output;
+    while(process.state()!=QProcess::NotRunning) {
+        process.waitForReadyRead(50);output+=process.readAllStandardOutput();output+=process.readAllStandardError();
+        if(output.size()>65536||timer.elapsed()>5000||QThread::currentThread()->isInterruptionRequested()) {
+            process.kill();process.waitForFinished(1000);throw Error("GitHub CLI authentication check timed out or failed.");
+        }
+    }
+    output+=process.readAllStandardOutput();output+=process.readAllStandardError();
+    if(output.size()>65536)throw Error("GitHub CLI authentication response is too large.");
+    if(process.exitStatus()==QProcess::NormalExit&&process.exitCode()==0)return true;
+    const auto message=output.toLower();
+    if(message.contains("not logged in")||message.contains("not logged into")||message.contains("http 401")||(message.contains("token")&&message.contains("invalid")))return false;
+    throw Error("GitHub CLI authentication check failed. Check gh auth login and network access.");
+}
+}
+
 QByteArray github_request(const QString &endpoint,bool binary,qint64 limit) {
     if((!endpoint.startsWith("repos/")&&!endpoint.startsWith("repositories/")) || endpoint.contains('\\') || endpoint.section('?',0,0).split('/').contains("..") || endpoint.contains('#') || limit<=0)
         throw Error("Invalid GitHub API request.");
-    const auto gh=QStandardPaths::findExecutable("gh");
+    auto gh=QStandardPaths::findExecutable("gh");
     if(gh.isEmpty()) {
+        const auto candidate=QDir(qEnvironmentVariable("ProgramFiles")).filePath("GitHub CLI/gh.exe");
+        if(QFileInfo(candidate).isAbsolute()&&QFileInfo(candidate).isFile())gh=candidate;
+    }
+    if(gh.isEmpty()||!gh_authenticated(gh)) {
 #ifdef Q_OS_WIN
         return http(endpoint,binary,limit);
 #else
@@ -77,15 +108,21 @@ QByteArray github_request(const QString &endpoint,bool binary,qint64 limit) {
 #endif
     process.start(gh,{"api","--hostname","github.com",endpoint,"-H",binary?"Accept: application/octet-stream":"Accept: application/vnd.github+json","-H","X-GitHub-Api-Version: 2026-03-10"});
     if(!process.waitForStarted(5000))throw Error("Could not start GitHub CLI.");
-    QElapsedTimer timer;timer.start();QByteArray bytes;
+    QElapsedTimer timer;timer.start();QByteArray bytes,errors;
     while(process.state()!=QProcess::NotRunning) {
-        process.waitForReadyRead(50);bytes+=process.readAllStandardOutput();process.readAllStandardError();
-        if(bytes.size()>limit || timer.elapsed()>90000 || QThread::currentThread()->isInterruptionRequested()) {
+        process.waitForReadyRead(50);bytes+=process.readAllStandardOutput();errors+=process.readAllStandardError();
+        if(bytes.size()>limit || errors.size()>16384 || timer.elapsed()>90000 || QThread::currentThread()->isInterruptionRequested()) {
             process.kill();process.waitForFinished(1000);throw Error("GitHub response exceeded its limit or timed out.");
         }
     }
-    bytes+=process.readAllStandardOutput();
-    if(process.exitStatus()!=QProcess::NormalExit || process.exitCode()!=0)throw Error("GitHub CLI request failed. Check gh auth login and repository access.");
+    bytes+=process.readAllStandardOutput();errors+=process.readAllStandardError();
+    if(process.exitStatus()!=QProcess::NormalExit || process.exitCode()!=0) {
+        const auto message=errors.toLower();
+        if(message.contains("rate limit")||message.contains("http 429"))throw Error("GitHub API rate limit reached. Try again later.");
+        if(message.contains("http 401"))throw Error("GitHub CLI sign-in is invalid. Run gh auth login and try again.");
+        if(message.contains("http 403")||message.contains("http 404"))throw Error("Cannot access the GitHub repository or release. Check account permissions.");
+        throw Error("GitHub CLI request failed. Check gh auth login and repository access.");
+    }
     if(bytes.size()>limit)throw Error("GitHub response is too large.");
     return bytes;
 }

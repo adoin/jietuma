@@ -137,14 +137,25 @@ pub async fn cancelled(flag: &AtomicBool) {
     }
 }
 pub async fn fetch_latest(arch: Arch, variant: AppVariant, flag: &AtomicBool) -> Result<Release> {
+    if let Some(bytes) = crate::github_cli::latest(flag).await? {
+        return parse_release(&serde_json::from_slice(&bytes)?, arch, variant);
+    }
     let client = client()?;
-    let response = tokio::select! {
-        r = client.get(LATEST).header("Accept", "application/vnd.github+json").send() => r.map_err(network)?.error_for_status().map_err(network)?,
+    let mut response = tokio::select! {
+        r = client.get(LATEST).timeout(Duration::from_secs(20)).header("Accept", "application/vnd.github+json").send() => r.map_err(network)?,
         _ = cancelled(flag) => return fail("cancelled", "检查已取消"),
     };
-    let bytes = tokio::select! { r = response.bytes() => r.map_err(network)?, _ = cancelled(flag) => return fail("cancelled", "检查已取消") };
-    if bytes.len() > 1024 * 1024 {
-        return fail("release", "Release 响应过大");
+    if response.status().as_u16() == 429 || (response.status().as_u16() == 403
+        && response.headers().get("x-ratelimit-remaining").is_some_and(|value| value == "0")) {
+        return fail("github_rate_limit", "GitHub API rate limit exceeded");
+    }
+    response = response.error_for_status().map_err(network)?;
+    let mut bytes = Vec::new();
+    loop {
+        let chunk = tokio::select! { r = response.chunk() => r.map_err(network)?, _ = cancelled(flag) => return fail("cancelled", "检查已取消") };
+        let Some(chunk) = chunk else { break; };
+        if bytes.len() + chunk.len() > 1024 * 1024 { return fail("release", "Release 响应过大"); }
+        bytes.extend_from_slice(&chunk);
     }
     parse_release(&serde_json::from_slice(&bytes)?, arch, variant)
 }

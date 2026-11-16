@@ -284,6 +284,13 @@ private slots:
         wizard.hide();
     }
 
+    void liveAuthenticatedOfficialRepositoryResolve() {
+        if(qEnvironmentVariable("JIETUMA_LIVE_GH_CHECK")!="1")QSKIP("Live authenticated gh check is opt-in");
+        QTemporaryDir folder;market::Client client(folder.path());
+        const auto source=client.resolve(market::official_source().id);
+        QCOMPARE(source.id,market::official_source().id);QVERIFY(market::valid_repository_name(source.full_name));
+    }
+
 };
 QTEST_MAIN(PluginMarketTests)
 #include "test_plugin_market.moc"

@@ -58,7 +58,7 @@ ReleaseInfo release_from_check_output(const QByteArray &output, int exit_code) {
         if (event.value("protocol") != QJsonValue(1)) throw UpdateCheckError("Invalid updater protocol");
         const QString name = event.value("event").toString();
         const QJsonObject data = event.value("data").toObject();
-        if (name == "error") throw UpdateCheckError(data.value("message").toString("Update check failed").toStdString());
+        if (name == "error") throw UpdateCheckError(data.value("message").toString("Update check failed").toStdString(),data.value("code").toString());
         if ((name == "available" || name == "up_to_date") && exit_code == 0) {
             for (const char *key : {"tag_name", "title", "notes", "url", "asset_name", "arch"})
                 if (!data.value(key).isString()) throw UpdateCheckError(std::string("Missing release field: ") + key);
@@ -87,6 +87,7 @@ GitHubReleaseChecker::~GitHubReleaseChecker() {
 
 bool GitHubReleaseChecker::check() {
     if (is_checking()) return false;
+    last_error_code_.clear();
     try {
         helper_ = helper_path();
     } catch (const std::exception &e) {
@@ -117,11 +118,13 @@ void GitHubReleaseChecker::finish(int exit_code, QProcess::ExitStatus status) {
     try {
         emit release_found(release_from_check_output(output, status == QProcess::NormalExit ? exit_code : -1));
     } catch (const UpdateCheckError &e) {
+        last_error_code_=e.code;
         emit failed(QString::fromStdString(e.what()));
     }
 }
 
 void GitHubReleaseChecker::stop(const QString &error) {
+    if(error=="Update check timed out")last_error_code_="github_cli_timeout";
     timer_.stop();
     if (process_) {
         process_->disconnect(this);
@@ -134,4 +137,14 @@ void GitHubReleaseChecker::stop(const QString &error) {
     helper_.clear();
     emit failed(error);
 }
+QString GitHubReleaseChecker::error_message() const {
+    const auto text=[](const char *value){return QCoreApplication::translate("UpdateChecker",value);};
+    if(last_error_code_=="github_rate_limit")return text("GitHub API rate limit reached. Try again later, or sign in to GitHub CLI (gh).");
+    if(last_error_code_=="github_auth")return text("GitHub CLI sign-in is invalid. Run gh auth login and try again.");
+    if(last_error_code_=="github_access")return text("Cannot access the GitHub repository or release. Check account permissions.");
+    if(last_error_code_=="github_cli")return text("GitHub CLI could not check for updates. Check its sign-in and network connection.");
+    if(last_error_code_=="github_cli_timeout")return text("The update check timed out. Please try again.");
+    return QCoreApplication::translate("SettingsDialog","Unable to check for updates. Please check your network connection and try again.");
+}
+
 }

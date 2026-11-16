@@ -9,11 +9,14 @@
 #include <array>
 #include <optional>
 #include <stdexcept>
+#include <utility>
 
 namespace jietuba {
 // Raised when GitHub or the helper does not return a usable release.
 struct UpdateCheckError : std::runtime_error {
     using std::runtime_error::runtime_error;
+    UpdateCheckError(const std::string &message,QString value):std::runtime_error(message),code(std::move(value)) {}
+    QString code;
 };
 
 struct ReleaseInfo {
@@ -42,10 +45,11 @@ ReleaseInfo release_from_check_output(const QByteArray &output, int exit_code);
 class GitHubReleaseChecker : public QObject {
     Q_OBJECT
 public:
-    explicit GitHubReleaseChecker(QObject *parent = nullptr, int timeout_ms = 10000);
+    explicit GitHubReleaseChecker(QObject *parent = nullptr, int timeout_ms = 35000);
     ~GitHubReleaseChecker() override;
     bool is_checking() const { return process_ != nullptr; }
     bool check();
+    QString error_message() const;
 signals:
     void release_found(const ReleaseInfo &release);
     void failed(const QString &reason);
@@ -56,6 +60,7 @@ private:
     QPointer<QProcess> process_;
     QTimer timer_;
     QString helper_;
+    QString last_error_code_;
 };
 }
 

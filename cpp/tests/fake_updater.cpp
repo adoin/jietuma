@@ -57,6 +57,10 @@ int main(int argc, char **argv) {
         emit_event(scenario == "check-available" ? "available" : "up_to_date", release(tag));
         return 0;
     }
+    if (scenario == "check-rate-limit" || scenario == "check-gh-error") {
+        emit_event("error", {{"code", scenario == "check-rate-limit" ? "github_rate_limit" : "github_cli"}, {"message", "classified failure"}});
+        return 1;
+    }
     if (scenario == "check-error") {
         emit_event("error", {{"code", "network"}, {"message", "network unavailable"}});
         return 1;

@@ -2,6 +2,7 @@ pub mod archive;
 pub mod cache;
 pub mod contract;
 pub mod download;
+mod github_cli;
 pub mod models;
 pub mod platform;
 pub mod protocol;

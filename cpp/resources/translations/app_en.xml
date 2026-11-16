@@ -7762,4 +7762,30 @@ Replace it?</translation>
         <translation>Installation was cancelled or incomplete. You can retry or skip.</translation>
     </message>
 </context>
+<context>
+    <name>UpdateChecker</name>
+    <message>
+        <source>GitHub API rate limit reached. Try again later, or sign in to GitHub CLI (gh).</source>
+        <translation>GitHub API rate limit reached. Try again later, or sign in to GitHub CLI (gh).</translation>
+    </message>
+    <message>
+        <source>GitHub CLI could not check for updates. Check its sign-in and network connection.</source>
+        <translation>GitHub CLI could not check for updates. Check its sign-in and network connection.</translation>
+    </message>
+    <message>
+        <source>The update check timed out. Please try again.</source>
+        <translation>The update check timed out. Please try again.</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateChecker</name>
+    <message>
+        <source>GitHub CLI sign-in is invalid. Run gh auth login and try again.</source>
+        <translation>GitHub CLI sign-in is invalid. Run gh auth login and try again.</translation>
+    </message>
+    <message>
+        <source>Cannot access the GitHub repository or release. Check account permissions.</source>
+        <translation>Cannot access the GitHub repository or release. Check account permissions.</translation>
+    </message>
+</context>
 </TS>

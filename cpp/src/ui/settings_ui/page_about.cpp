@@ -36,11 +36,11 @@ QWidget *create_about_page(SettingsDialog *dialog) {
             check_update_btn->setEnabled(true);
             check_update_btn->setText(dialog->tr_text("Check for Updates"));
         };
-        auto show_check_error = [dialog, finish_check](const QString &reason) {
+        auto show_check_error = [dialog, finish_check, release_checker](const QString &reason) {
             finish_check();
             log_warning(T("检查更新失败: {reason}", {{"reason", reason}}), "Update");
             show_warning_dialog(dialog, dialog->tr_text("Update Check Failed"),
-                                dialog->tr_text("Unable to check for updates. Please check your network connection and try again."));
+                                release_checker->error_message());
         };
         QObject::connect(release_checker, &GitHubReleaseChecker::release_found, dialog, [dialog, finish_check, show_check_error](const ReleaseInfo &release) {
             bool available = false;

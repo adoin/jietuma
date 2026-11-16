@@ -8037,4 +8037,30 @@ Replace it?</source>
         <translation>安装已取消或未完成，可重试或跳过。</translation>
     </message>
 </context>
+<context>
+    <name>UpdateChecker</name>
+    <message>
+        <source>GitHub API rate limit reached. Try again later, or sign in to GitHub CLI (gh).</source>
+        <translation>GitHub 请求已达到限额。请稍后重试，或先登录 GitHub CLI（gh）。</translation>
+    </message>
+    <message>
+        <source>GitHub CLI could not check for updates. Check its sign-in and network connection.</source>
+        <translation>GitHub CLI 无法检查更新，请检查 gh 的登录状态和网络连接。</translation>
+    </message>
+    <message>
+        <source>The update check timed out. Please try again.</source>
+        <translation>检查更新超时，请重试。</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateChecker</name>
+    <message>
+        <source>GitHub CLI sign-in is invalid. Run gh auth login and try again.</source>
+        <translation>GitHub CLI 登录状态无效，请执行 gh auth login 后重试。</translation>
+    </message>
+    <message>
+        <source>Cannot access the GitHub repository or release. Check account permissions.</source>
+        <translation>无法访问 GitHub 仓库或发布版本，请检查账号权限。</translation>
+    </message>
+</context>
 </TS>

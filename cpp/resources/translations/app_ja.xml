@@ -7843,4 +7843,30 @@ Replace it?</source>
         <translation>Installation was cancelled or incomplete. You can retry or skip.</translation>
     </message>
 </context>
+<context>
+    <name>UpdateChecker</name>
+    <message>
+        <source>GitHub API rate limit reached. Try again later, or sign in to GitHub CLI (gh).</source>
+        <translation>GitHub API のリクエスト制限に達しました。時間を置くか、GitHub CLI（gh）にログインしてください。</translation>
+    </message>
+    <message>
+        <source>GitHub CLI could not check for updates. Check its sign-in and network connection.</source>
+        <translation>GitHub CLI で更新を確認できません。ログイン状態とネットワーク接続を確認してください。</translation>
+    </message>
+    <message>
+        <source>The update check timed out. Please try again.</source>
+        <translation>更新の確認がタイムアウトしました。もう一度お試しください。</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateChecker</name>
+    <message>
+        <source>GitHub CLI sign-in is invalid. Run gh auth login and try again.</source>
+        <translation>GitHub CLI の認証が無効です。gh auth login を実行して再試行してください。</translation>
+    </message>
+    <message>
+        <source>Cannot access the GitHub repository or release. Check account permissions.</source>
+        <translation>GitHub リポジトリまたはリリースにアクセスできません。アカウントの権限を確認してください。</translation>
+    </message>
+</context>
 </TS>

@@ -7834,4 +7834,30 @@ Replace it?</source>
         <translation>Installation was cancelled or incomplete. You can retry or skip.</translation>
     </message>
 </context>
+<context>
+    <name>UpdateChecker</name>
+    <message>
+        <source>GitHub API rate limit reached. Try again later, or sign in to GitHub CLI (gh).</source>
+        <translation>GitHub API 요청 한도에 도달했습니다. 나중에 다시 시도하거나 GitHub CLI(gh)에 로그인하세요。</translation>
+    </message>
+    <message>
+        <source>GitHub CLI could not check for updates. Check its sign-in and network connection.</source>
+        <translation>GitHub CLI에서 업데이트를 확인할 수 없습니다. 로그인 상태와 네트워크 연결을 확인하세요.</translation>
+    </message>
+    <message>
+        <source>The update check timed out. Please try again.</source>
+        <translation>업데이트 확인 시간이 초과되었습니다. 다시 시도하세요.</translation>
+    </message>
+</context>
+<context>
+    <name>UpdateChecker</name>
+    <message>
+        <source>GitHub CLI sign-in is invalid. Run gh auth login and try again.</source>
+        <translation>GitHub CLI 로그인이 유효하지 않습니다. gh auth login 후 다시 시도하세요.</translation>
+    </message>
+    <message>
+        <source>Cannot access the GitHub repository or release. Check account permissions.</source>
+        <translation>GitHub 저장소 또는 릴리스에 접근할 수 없습니다. 계정 권한을 확인하세요.</translation>
+    </message>
+</context>
 </TS>

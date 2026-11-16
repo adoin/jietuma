@@ -242,6 +242,19 @@ private slots:
         QTRY_COMPARE(failed.count(), 2);
     }
 
+    void checkerShowsRateLimitsAndAuthenticatedCliFailuresSeparately() {
+        GitHubReleaseChecker checker;QSignalSpy failed(&checker,&GitHubReleaseChecker::failed);
+        qputenv("JIETUBA_FAKE_UPDATER","check-rate-limit");QVERIFY(checker.check());
+        QTRY_COMPARE_WITH_TIMEOUT(failed.count(),1,10000);
+        QVERIFY(checker.error_message().contains("rate limit"));
+        qputenv("JIETUBA_FAKE_UPDATER","check-gh-error");QVERIFY(checker.check());
+        QTRY_COMPARE_WITH_TIMEOUT(failed.count(),2,10000);
+        QVERIFY(checker.error_message().startsWith("GitHub CLI"));
+        qputenv("JIETUBA_FAKE_UPDATER","check-error");QVERIFY(checker.check());
+        QTRY_COMPARE_WITH_TIMEOUT(failed.count(),3,10000);
+        QVERIFY(!checker.error_message().contains("rate limit"));
+    }
+
     void downloadProgressDuplicateClickAndHandoff() {
         use_controller();
         QCOMPARE(controller_->dialog->windowModality(), Qt::NonModal);
